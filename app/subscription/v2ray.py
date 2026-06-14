@@ -78,6 +78,12 @@ class V2rayShareLink(str):
                 x_padding_bytes=inbound.get("xPaddingBytes", "100-1000"),
                 mode=inbound.get("mode", "auto"),
                 noGRPCHeader=inbound.get("noGRPCHeader", False),
+                uplinkHTTPMethod=inbound.get("uplinkHTTPMethod", ""),
+                xPaddingKey=inbound.get("xPaddingKey", ""),
+                xPaddingMethod=inbound.get("xPaddingMethod", ""),
+                xPaddingObfsMode=inbound.get("xPaddingObfsMode", False),
+                xPaddingPlacement=inbound.get("xPaddingPlacement", ""),
+                scStreamUpServerSecs=inbound.get("scStreamUpServerSecs", ""),
                 heartbeatPeriod=inbound.get("heartbeatPeriod", 0),
                 keepAlivePeriod=inbound.get("keepAlivePeriod", 0),
                 xmux=inbound.get("xmux", {}),
@@ -110,6 +116,12 @@ class V2rayShareLink(str):
                 x_padding_bytes=inbound.get("xPaddingBytes", "100-1000"),
                 mode=inbound.get("mode", "auto"),
                 noGRPCHeader=inbound.get("noGRPCHeader", False),
+                uplinkHTTPMethod=inbound.get("uplinkHTTPMethod", ""),
+                xPaddingKey=inbound.get("xPaddingKey", ""),
+                xPaddingMethod=inbound.get("xPaddingMethod", ""),
+                xPaddingObfsMode=inbound.get("xPaddingObfsMode", False),
+                xPaddingPlacement=inbound.get("xPaddingPlacement", ""),
+                scStreamUpServerSecs=inbound.get("scStreamUpServerSecs", ""),
                 heartbeatPeriod=inbound.get("heartbeatPeriod", 0),
                 keepAlivePeriod=inbound.get("keepAlivePeriod", 0),
                 xmux=inbound.get("xmux", {}),
@@ -142,6 +154,12 @@ class V2rayShareLink(str):
                 x_padding_bytes=inbound.get("xPaddingBytes", "100-1000"),
                 mode=inbound.get("mode", "auto"),
                 noGRPCHeader=inbound.get("noGRPCHeader", False),
+                uplinkHTTPMethod=inbound.get("uplinkHTTPMethod", ""),
+                xPaddingKey=inbound.get("xPaddingKey", ""),
+                xPaddingMethod=inbound.get("xPaddingMethod", ""),
+                xPaddingObfsMode=inbound.get("xPaddingObfsMode", False),
+                xPaddingPlacement=inbound.get("xPaddingPlacement", ""),
+                scStreamUpServerSecs=inbound.get("scStreamUpServerSecs", ""),
                 heartbeatPeriod=inbound.get("heartbeatPeriod", 0),
                 keepAlivePeriod=inbound.get("keepAlivePeriod", 0),
                 xmux=inbound.get("xmux", {}),
@@ -187,6 +205,12 @@ class V2rayShareLink(str):
             x_padding_bytes: str = "100-1000",
             mode: str = "auto",
             noGRPCHeader: bool = False,
+                         uplinkHTTPMethod: str = "",
+                         xPaddingKey: str = "",
+                         xPaddingMethod: str = "",
+                         xPaddingObfsMode: bool = False,
+                         xPaddingPlacement: str = "",
+                         scStreamUpServerSecs: str = "",
             heartbeatPeriod: int = 0,
             keepAlivePeriod: int = 0,
             xmux: dict = {},
@@ -241,6 +265,18 @@ class V2rayShareLink(str):
                 "xPaddingBytes": x_padding_bytes,
                 "noGRPCHeader": noGRPCHeader,
             }
+            if uplinkHTTPMethod:
+                extra["uplinkHTTPMethod"] = uplinkHTTPMethod
+            if xPaddingKey:
+                extra["xPaddingKey"] = xPaddingKey
+            if xPaddingMethod:
+                extra["xPaddingMethod"] = xPaddingMethod
+            if xPaddingObfsMode:
+                extra["xPaddingObfsMode"] = xPaddingObfsMode
+            if xPaddingPlacement:
+                extra["xPaddingPlacement"] = xPaddingPlacement
+            if scStreamUpServerSecs:
+                extra["scStreamUpServerSecs"] = scStreamUpServerSecs
             if xmux:
                 extra["xmux"] = xmux
             payload["type"] = mode
@@ -286,6 +322,12 @@ class V2rayShareLink(str):
               x_padding_bytes: str = "100-1000",
               mode: str = "auto",
               noGRPCHeader: bool = False,
+                         uplinkHTTPMethod: str = "",
+                         xPaddingKey: str = "",
+                         xPaddingMethod: str = "",
+                         xPaddingObfsMode: bool = False,
+                         xPaddingPlacement: str = "",
+                         scStreamUpServerSecs: str = "",
               heartbeatPeriod: int = 0,
               keepAlivePeriod: int = 0,
               xmux: dict = {},
@@ -322,6 +364,18 @@ class V2rayShareLink(str):
                 "xPaddingBytes": x_padding_bytes,
                 "noGRPCHeader": noGRPCHeader,
             }
+            if uplinkHTTPMethod:
+                extra["uplinkHTTPMethod"] = uplinkHTTPMethod
+            if xPaddingKey:
+                extra["xPaddingKey"] = xPaddingKey
+            if xPaddingMethod:
+                extra["xPaddingMethod"] = xPaddingMethod
+            if xPaddingObfsMode:
+                extra["xPaddingObfsMode"] = xPaddingObfsMode
+            if xPaddingPlacement:
+                extra["xPaddingPlacement"] = xPaddingPlacement
+            if scStreamUpServerSecs:
+                extra["scStreamUpServerSecs"] = scStreamUpServerSecs
             if keepAlivePeriod > 0:
                 extra["keepAlivePeriod"] = keepAlivePeriod
             if xmux:
@@ -394,6 +448,12 @@ class V2rayShareLink(str):
                x_padding_bytes: str = "100-1000",
                mode: str = "auto",
                noGRPCHeader: bool = False,
+                         uplinkHTTPMethod: str = "",
+                         xPaddingKey: str = "",
+                         xPaddingMethod: str = "",
+                         xPaddingObfsMode: bool = False,
+                         xPaddingPlacement: str = "",
+                         scStreamUpServerSecs: str = "",
                heartbeatPeriod: int = 0,
                keepAlivePeriod: int = 0,
                xmux: dict = {},
@@ -426,6 +486,18 @@ class V2rayShareLink(str):
                 "xPaddingBytes": x_padding_bytes,
                 "noGRPCHeader": noGRPCHeader,
             }
+            if uplinkHTTPMethod:
+                extra["uplinkHTTPMethod"] = uplinkHTTPMethod
+            if xPaddingKey:
+                extra["xPaddingKey"] = xPaddingKey
+            if xPaddingMethod:
+                extra["xPaddingMethod"] = xPaddingMethod
+            if xPaddingObfsMode:
+                extra["xPaddingObfsMode"] = xPaddingObfsMode
+            if xPaddingPlacement:
+                extra["xPaddingPlacement"] = xPaddingPlacement
+            if scStreamUpServerSecs:
+                extra["scStreamUpServerSecs"] = scStreamUpServerSecs
             if keepAlivePeriod > 0:
                 extra["keepAlivePeriod"] = keepAlivePeriod
             if xmux:
@@ -601,6 +673,12 @@ class V2rayJsonConfig(str):
                          xmux: dict = {},
                          mode: str = "auto",
                          noGRPCHeader: bool = False,
+                         uplinkHTTPMethod: str = "",
+                         xPaddingKey: str = "",
+                         xPaddingMethod: str = "",
+                         xPaddingObfsMode: bool = False,
+                         xPaddingPlacement: str = "",
+                         scStreamUpServerSecs: str = "",
                          keepAlivePeriod: int = 0,
                          ) -> dict:
         config = copy.deepcopy(self.settings.get("splithttpSettings", {}))
@@ -622,7 +700,18 @@ class V2rayJsonConfig(str):
             config["xmux"] = xmux
         if keepAlivePeriod > 0:
             config["keepAlivePeriod"] = keepAlivePeriod
-        # core will ignore unknown variables
+        if uplinkHTTPMethod:
+            config["uplinkHTTPMethod"] = uplinkHTTPMethod
+        if xPaddingKey:
+            config["xPaddingKey"] = xPaddingKey
+        if xPaddingMethod:
+            config["xPaddingMethod"] = xPaddingMethod
+        if xPaddingObfsMode:
+            config["xPaddingObfsMode"] = xPaddingObfsMode
+        if xPaddingPlacement:
+            config["xPaddingPlacement"] = xPaddingPlacement
+        if scStreamUpServerSecs:
+            config["scStreamUpServerSecs"] = scStreamUpServerSecs
 
         return config
 
@@ -924,6 +1013,12 @@ class V2rayJsonConfig(str):
                             xmux: dict = {},
                             mode: str = "auto",
                             noGRPCHeader: bool = False,
+                         uplinkHTTPMethod: str = "",
+                         xPaddingKey: str = "",
+                         xPaddingMethod: str = "",
+                         xPaddingObfsMode: bool = False,
+                         xPaddingPlacement: str = "",
+                         scStreamUpServerSecs: str = "",
                             heartbeatPeriod: int = 0,
                             keepAlivePeriod: int = 0,
                             ) -> dict:
@@ -959,6 +1054,12 @@ class V2rayJsonConfig(str):
                                                     mode=mode,
                                                     noGRPCHeader=noGRPCHeader,
                                                     keepAlivePeriod=keepAlivePeriod,
+                                                    uplinkHTTPMethod=uplinkHTTPMethod,
+                                                    xPaddingKey=xPaddingKey,
+                                                    xPaddingMethod=xPaddingMethod,
+                                                    xPaddingObfsMode=xPaddingObfsMode,
+                                                    xPaddingPlacement=xPaddingPlacement,
+                                                    scStreamUpServerSecs=scStreamUpServerSecs,
                                                     )
         else:
             network_setting = {}
@@ -1068,6 +1169,12 @@ class V2rayJsonConfig(str):
             xmux=inbound.get("xmux", {}),
             mode=inbound.get("mode", "auto"),
             noGRPCHeader=inbound.get("noGRPCHeader", False),
+            uplinkHTTPMethod=inbound.get("uplinkHTTPMethod", ""),
+            xPaddingKey=inbound.get("xPaddingKey", ""),
+            xPaddingMethod=inbound.get("xPaddingMethod", ""),
+            xPaddingObfsMode=inbound.get("xPaddingObfsMode", False),
+            xPaddingPlacement=inbound.get("xPaddingPlacement", ""),
+            scStreamUpServerSecs=inbound.get("scStreamUpServerSecs", ""),
             heartbeatPeriod=inbound.get("heartbeatPeriod", 0),
             keepAlivePeriod=inbound.get("keepAlivePeriod", 0),
         )

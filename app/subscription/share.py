@@ -97,6 +97,40 @@ def generate_v2ray_json_subscription(
     )
 
 
+DUMMY_NOTICE_UUID = "00000000-0000-0000-0000-000000000000"
+EXPIRED_NOTICE_LINES = [
+    "🔴 Подписка закончилась",
+    "➡️ Продлите: t.me/yuku_vpn_bot",
+]
+
+
+def _generate_expired_notice(config_format: str) -> str:
+    """Возвращает подписку-уведомление для истёкших (без реальных серверов)."""
+    from urllib.parse import quote
+
+    if config_format == "v2ray-json":
+        conf = V2rayJsonConfig()
+        for remark in EXPIRED_NOTICE_LINES:
+            outbound = {
+                "tag": "proxy",
+                "protocol": "vless",
+                "settings": V2rayJsonConfig.vless_config(
+                    address="127.0.0.1", port=443, id=DUMMY_NOTICE_UUID, flow=""
+                ),
+                "streamSettings": {"network": "tcp", "security": "none"},
+            }
+            conf.add_config(remarks=remark, outbounds=[outbound])
+        return conf.render()
+
+    links = [
+        "vless://{}@127.0.0.1:443?security=none&type=tcp&headerType=none#{}".format(
+            DUMMY_NOTICE_UUID, quote(line)
+        )
+        for line in EXPIRED_NOTICE_LINES
+    ]
+    return "\n".join(links)
+
+
 def generate_subscription(
         user: "UserResponse",
         config_format: Literal["v2ray", "clash-meta", "clash", "sing-box", "outline", "v2ray-json"],
@@ -109,6 +143,13 @@ def generate_subscription(
         "extra_data": user.__dict__,
         "reverse": reverse,
     }
+
+    from app.models.user import UserStatus
+    if getattr(user, "status", None) == UserStatus.expired:
+        config = _generate_expired_notice(config_format)
+        if as_base64:
+            config = base64.b64encode(config.encode()).decode()
+        return config
 
     if config_format == "v2ray":
         config = "\n".join(generate_v2ray_links(**kwargs))
