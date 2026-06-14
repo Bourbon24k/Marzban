@@ -1,4 +1,5 @@
 import re
+import base64
 from distutils.version import LooseVersion
 
 from fastapi import APIRouter, Depends, Header, Path, Request, Response
@@ -6,8 +7,12 @@ from fastapi.responses import HTMLResponse
 
 from app.db import Session, crud, get_db
 from app.dependencies import get_validated_sub, validate_dates
-from app.models.user import SubscriptionUserResponse, UserResponse
-from app.subscription.share import encode_title, generate_subscription
+from app.models.user import SubscriptionUserResponse, UserResponse, UserStatus
+from app.subscription.share import (
+    encode_title,
+    generate_subscription,
+    DEVICE_LIMIT_NOTICE_LINES,
+)
 from app.templates import render_template
 from config import (
     SUB_PROFILE_TITLE,
@@ -21,6 +26,9 @@ from config import (
     USE_CUSTOM_JSON_FOR_V2RAYNG,
     XRAY_SUBSCRIPTION_PATH,
 )
+
+announce_text = "⚠️ Если не работает VPN, нажмите на 🔁 обновите подписку. Чтобы найти самый быстрый сервер используйте пинг"
+encoded_announce = base64.b64encode(announce_text.encode('utf-8')).decode('utf-8')
 
 client_config = {
     "clash-meta": {"config_format": "clash-meta", "media_type": "text/yaml", "as_base64": False, "reverse": False},
@@ -45,6 +53,92 @@ def get_subscription_user_info(user: UserResponse) -> dict:
     }
 
 
+def resolve_format(user_agent: str):
+    """Maps a User-Agent to (config_format, media_type, as_base64, reverse).
+
+    Replicates the per-client dispatch logic 1:1 so a single
+    generate_subscription() call can serve every client.
+    """
+    if re.match(r'^([Cc]lash-verge|[Cc]lash[-\.]?[Mm]eta|[Ff][Ll][Cc]lash|[Mm]ihomo)', user_agent):
+        return "clash-meta", "text/yaml", False, False
+
+    elif re.match(r'^([Cc]lash|[Ss]tash)', user_agent):
+        return "clash", "text/yaml", False, False
+
+    elif re.match(r'^(SFA|SFI|SFM|SFT|[Kk]aring|[Hh]iddify[Nn]ext)', user_agent):
+        return "sing-box", "application/json", False, False
+
+    elif re.match(r'^(SS|SSR|SSD|SSS|Outline|Shadowsocks|SSconf)', user_agent):
+        return "outline", "application/json", False, False
+
+    elif (USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_V2RAYN) and re.match(r'^v2rayN/(\d+\.\d+)', user_agent):
+        version_str = re.match(r'^v2rayN/(\d+\.\d+)', user_agent).group(1)
+        if LooseVersion(version_str) >= LooseVersion("6.40"):
+            return "v2ray-json", "application/json", False, False
+        else:
+            return "v2ray", "text/plain", True, False
+
+    elif (USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_V2RAYNG) and re.match(r'^v2rayNG/(\d+\.\d+\.\d+)', user_agent):
+        version_str = re.match(r'^v2rayNG/(\d+\.\d+\.\d+)', user_agent).group(1)
+        if LooseVersion(version_str) >= LooseVersion("1.8.29"):
+            return "v2ray-json", "application/json", False, False
+        elif LooseVersion(version_str) >= LooseVersion("1.8.18"):
+            return "v2ray-json", "application/json", False, True
+        else:
+            return "v2ray", "text/plain", True, False
+
+    elif re.match(r'^[Ss]treisand', user_agent):
+        if USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_STREISAND:
+            return "v2ray-json", "application/json", False, False
+        else:
+            return "v2ray", "text/plain", True, False
+
+    elif (USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_HAPP) and re.match(r'^Happ/(\d+\.\d+\.\d+)', user_agent):
+        version_str = re.match(r'^Happ/(\d+\.\d+\.\d+)', user_agent).group(1)
+        if LooseVersion(version_str) >= LooseVersion("1.63.1"):
+            return "v2ray-json", "application/json", False, False
+        else:
+            return "v2ray", "text/plain", True, False
+
+    else:
+        return "v2ray", "text/plain", True, False
+
+
+def enforce_device_limit(db: Session, dbuser, request: Request, user_agent: str) -> bool:
+    """Registers/updates the requesting HWID device and enforces device_limit.
+
+    Returns True if the request is OVER the limit (a new device beyond the
+    allowed count) and should be served a notice instead of real servers.
+
+    HWID is only sent by some clients (Happ, v2rayTun). Requests without an
+    x-hwid header are not tracked and always allowed. device_limit of 0/None
+    means unlimited.
+    """
+    hwid = request.headers.get("x-hwid")
+    if not hwid:
+        return False
+
+    # Only enforce for users who would otherwise get real servers.
+    if dbuser.status not in (UserStatus.active, UserStatus.on_hold):
+        return False
+
+    platform = request.headers.get("x-device-os")
+    os_version = request.headers.get("x-ver-os")
+    device_model = request.headers.get("x-device-model")
+
+    device = crud.get_user_device(db, dbuser.id, hwid)
+    if device:
+        crud.touch_user_device(db, device, platform, os_version, device_model, user_agent)
+        return False
+
+    limit = dbuser.device_limit or 0
+    if limit and crud.count_user_devices(db, dbuser.id) >= limit:
+        return True
+
+    crud.create_user_device(db, dbuser.id, hwid, platform, os_version, device_model, user_agent)
+    return False
+
+
 @router.get("/{token}/")
 @router.get("/{token}", include_in_schema=False)
 def user_subscription(
@@ -66,6 +160,9 @@ def user_subscription(
         )
 
     crud.update_user_sub(db, dbuser, user_agent)
+
+    over_device_limit = enforce_device_limit(db, dbuser, request, user_agent)
+
     response_headers = {
         "content-disposition": f'attachment; filename="{user.username}"',
         "profile-web-page-url": str(request.url),
@@ -75,68 +172,21 @@ def user_subscription(
         "subscription-userinfo": "; ".join(
             f"{key}={val}"
             for key, val in get_subscription_user_info(user).items()
-        )
+        ),
+        "hide-settings": "1",
+        "announce": f"base64:{encoded_announce}"
     }
 
-    if re.match(r'^([Cc]lash-verge|[Cc]lash[-\.]?[Mm]eta|[Ff][Ll][Cc]lash|[Mm]ihomo)', user_agent):
-        conf = generate_subscription(user=user, config_format="clash-meta", as_base64=False, reverse=False)
-        return Response(content=conf, media_type="text/yaml", headers=response_headers)
-
-    elif re.match(r'^([Cc]lash|[Ss]tash)', user_agent):
-        conf = generate_subscription(user=user, config_format="clash", as_base64=False, reverse=False)
-        return Response(content=conf, media_type="text/yaml", headers=response_headers)
-
-    elif re.match(r'^(SFA|SFI|SFM|SFT|[Kk]aring|[Hh]iddify[Nn]ext)', user_agent):
-        conf = generate_subscription(user=user, config_format="sing-box", as_base64=False, reverse=False)
-        return Response(content=conf, media_type="application/json", headers=response_headers)
-
-    elif re.match(r'^(SS|SSR|SSD|SSS|Outline|Shadowsocks|SSconf)', user_agent):
-        conf = generate_subscription(user=user, config_format="outline", as_base64=False, reverse=False)
-        return Response(content=conf, media_type="application/json", headers=response_headers)
-
-    elif (USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_V2RAYN) and re.match(r'^v2rayN/(\d+\.\d+)', user_agent):
-        version_str = re.match(r'^v2rayN/(\d+\.\d+)', user_agent).group(1)
-        if LooseVersion(version_str) >= LooseVersion("6.40"):
-            conf = generate_subscription(user=user, config_format="v2ray-json", as_base64=False, reverse=False)
-            return Response(content=conf, media_type="application/json", headers=response_headers)
-        else:
-            conf = generate_subscription(user=user, config_format="v2ray", as_base64=True, reverse=False)
-            return Response(content=conf, media_type="text/plain", headers=response_headers)
-
-    elif (USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_V2RAYNG) and re.match(r'^v2rayNG/(\d+\.\d+\.\d+)', user_agent):
-        version_str = re.match(r'^v2rayNG/(\d+\.\d+\.\d+)', user_agent).group(1)
-        if LooseVersion(version_str) >= LooseVersion("1.8.29"):
-            conf = generate_subscription(user=user, config_format="v2ray-json", as_base64=False, reverse=False)
-            return Response(content=conf, media_type="application/json", headers=response_headers)
-        elif LooseVersion(version_str) >= LooseVersion("1.8.18"):
-            conf = generate_subscription(user=user, config_format="v2ray-json", as_base64=False, reverse=True)
-            return Response(content=conf, media_type="application/json", headers=response_headers)
-        else:
-            conf = generate_subscription(user=user, config_format="v2ray", as_base64=True, reverse=False)
-            return Response(content=conf, media_type="text/plain", headers=response_headers)
-
-    elif re.match(r'^[Ss]treisand', user_agent):
-        if USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_STREISAND:
-            conf = generate_subscription(user=user, config_format="v2ray-json", as_base64=False, reverse=False)
-            return Response(content=conf, media_type="application/json", headers=response_headers)
-        else:
-            conf = generate_subscription(user=user, config_format="v2ray", as_base64=True, reverse=False)
-            return Response(content=conf, media_type="text/plain", headers=response_headers)
-
-    elif (USE_CUSTOM_JSON_DEFAULT or USE_CUSTOM_JSON_FOR_HAPP) and re.match(r'^Happ/(\d+\.\d+\.\d+)', user_agent):
-        version_str = re.match(r'^Happ/(\d+\.\d+\.\d+)', user_agent).group(1)
-        if LooseVersion(version_str) >= LooseVersion("1.63.1"):
-            conf = generate_subscription(user=user, config_format="v2ray-json", as_base64=False, reverse=False)
-            return Response(content=conf, media_type="application/json", headers=response_headers)
-        else:
-            conf = generate_subscription(user=user, config_format="v2ray", as_base64=True, reverse=False)
-            return Response(content=conf, media_type="text/plain", headers=response_headers)
-
-
-
-    else:
-        conf = generate_subscription(user=user, config_format="v2ray", as_base64=True, reverse=False)
-        return Response(content=conf, media_type="text/plain", headers=response_headers)
+    config_format, media_type, as_base64, reverse = resolve_format(user_agent)
+    notice_lines = DEVICE_LIMIT_NOTICE_LINES if over_device_limit else None
+    conf = generate_subscription(
+        user=user,
+        config_format=config_format,
+        as_base64=as_base64,
+        reverse=reverse,
+        notice_lines=notice_lines,
+    )
+    return Response(content=conf, media_type=media_type, headers=response_headers)
 
 
 @router.get("/{token}/info", response_model=SubscriptionUserResponse)

@@ -102,15 +102,19 @@ EXPIRED_NOTICE_LINES = [
     "🔴 Подписка закончилась",
     "➡️ Продлите: t.me/yuku_vpn_bot",
 ]
+DEVICE_LIMIT_NOTICE_LINES = [
+    "🔴 Превышен лимит устройств",
+    "➡️ Поддержка: t.me/yuku_vpn_bot",
+]
 
 
-def _generate_expired_notice(config_format: str) -> str:
-    """Возвращает подписку-уведомление для истёкших (без реальных серверов)."""
+def _generate_notice(config_format: str, lines: list) -> str:
+    """Возвращает подписку-уведомление (фейковые серверы с именами-сообщениями)."""
     from urllib.parse import quote
 
     if config_format == "v2ray-json":
         conf = V2rayJsonConfig()
-        for remark in EXPIRED_NOTICE_LINES:
+        for remark in lines:
             outbound = {
                 "tag": "proxy",
                 "protocol": "vless",
@@ -126,9 +130,14 @@ def _generate_expired_notice(config_format: str) -> str:
         "vless://{}@127.0.0.1:443?security=none&type=tcp&headerType=none#{}".format(
             DUMMY_NOTICE_UUID, quote(line)
         )
-        for line in EXPIRED_NOTICE_LINES
+        for line in lines
     ]
     return "\n".join(links)
+
+
+def _generate_expired_notice(config_format: str) -> str:
+    """Подписка-уведомление для истёкших (без реальных серверов)."""
+    return _generate_notice(config_format, EXPIRED_NOTICE_LINES)
 
 
 def generate_subscription(
@@ -136,6 +145,7 @@ def generate_subscription(
         config_format: Literal["v2ray", "clash-meta", "clash", "sing-box", "outline", "v2ray-json"],
         as_base64: bool,
         reverse: bool,
+        notice_lines: list = None,
 ) -> str:
     kwargs = {
         "proxies": user.proxies,
@@ -145,6 +155,13 @@ def generate_subscription(
     }
 
     from app.models.user import UserStatus
+    # Принудительное уведомление (например, превышен лимит устройств)
+    if notice_lines:
+        config = _generate_notice(config_format, notice_lines)
+        if as_base64:
+            config = base64.b64encode(config.encode()).decode()
+        return config
+
     if getattr(user, "status", None) == UserStatus.expired:
         config = _generate_expired_notice(config_format)
         if as_base64:

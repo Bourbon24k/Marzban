@@ -10,6 +10,8 @@ from app.dependencies import get_expired_users_list, get_validated_user, validat
 from app.models.admin import Admin
 from app.models.user import (
     UserCreate,
+    UserDeviceResponse,
+    UserDevicesResponse,
     UserModify,
     UserResponse,
     UsersResponse,
@@ -266,6 +268,37 @@ def get_user_usage(
     usages = crud.get_user_usages(db, dbuser, start, end)
 
     return {"usages": usages, "username": dbuser.username}
+
+
+@router.get("/user/{username}/devices", response_model=UserDevicesResponse,
+            responses={403: responses._403, 404: responses._404})
+def get_user_devices(
+    dbuser: UserResponse = Depends(get_validated_user),
+    db: Session = Depends(get_db),
+):
+    """List registered HWID devices of a user."""
+    devices = crud.get_user_devices(db, dbuser.id)
+    return {
+        "devices": devices,
+        "total": len(devices),
+        "device_limit": dbuser.device_limit or 0,
+    }
+
+
+@router.delete("/user/{username}/devices/{device_id}",
+               responses={403: responses._403, 404: responses._404})
+def delete_user_device(
+    device_id: int,
+    dbuser: UserResponse = Depends(get_validated_user),
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Remove a registered HWID device from a user."""
+    device = crud.get_user_device_by_id(db, dbuser.id, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    crud.remove_user_device(db, device)
+    return {"detail": "Device removed"}
 
 
 @router.post("/user/{username}/active-next", response_model=UserResponse, responses={403: responses._403, 404: responses._404})

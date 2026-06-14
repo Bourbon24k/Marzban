@@ -95,6 +95,12 @@ class User(Base):
     edit_at = Column(DateTime, nullable=True, default=None)
     last_status_change = Column(DateTime, default=datetime.utcnow, nullable=True)
 
+    # Max number of distinct HWID devices allowed. 0 or NULL = unlimited.
+    device_limit = Column(Integer, nullable=True, default=0)
+    devices = relationship(
+        "UserDevice", back_populates="user", cascade="all, delete-orphan"
+    )
+
     next_plan = relationship(
         "NextPlan",
         uselist=False,
@@ -143,6 +149,24 @@ class User(Base):
                     _[proxy.type].append(inbound["tag"])
 
         return _
+
+
+class UserDevice(Base):
+    __tablename__ = "user_devices"
+    __table_args__ = (
+        UniqueConstraint("user_id", "hwid", name="uq_user_device_hwid"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user = relationship("User", back_populates="devices")
+    hwid = Column(String(255), nullable=False)
+    platform = Column(String(64), nullable=True, default=None)
+    os_version = Column(String(64), nullable=True, default=None)
+    device_model = Column(String(128), nullable=True, default=None)
+    user_agent = Column(String(512), nullable=True, default=None)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_seen = Column(DateTime, default=datetime.utcnow)
 
 
 excluded_inbounds_association = Table(

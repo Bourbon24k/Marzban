@@ -26,6 +26,7 @@ from app.db.models import (
     ProxyTypes,
     System,
     User,
+    UserDevice,
     UserTemplate,
     UserUsageResetLogs,
 )
@@ -383,6 +384,7 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
         proxies=proxies,
         status=user.status,
         data_limit=(user.data_limit or None),
+        device_limit=(user.device_limit or 0),
         expire=(user.expire or None),
         admin=admin,
         data_limit_reset_strategy=user.data_limit_reset_strategy,
@@ -509,6 +511,9 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
     if modify.data_limit_reset_strategy is not None:
         dbuser.data_limit_reset_strategy = modify.data_limit_reset_strategy.value
 
+    if modify.device_limit is not None:
+        dbuser.device_limit = (modify.device_limit or 0)
+
     if modify.on_hold_timeout is not None:
         dbuser.on_hold_timeout = modify.on_hold_timeout
 
@@ -530,6 +535,71 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
     db.commit()
     db.refresh(dbuser)
     return dbuser
+
+
+def get_user_devices(db: Session, user_id: int) -> List[UserDevice]:
+    """Returns all registered HWID devices of a user."""
+    return db.query(UserDevice).filter(UserDevice.user_id == user_id) \
+        .order_by(UserDevice.last_seen.desc()).all()
+
+
+def count_user_devices(db: Session, user_id: int) -> int:
+    """Returns the number of distinct devices registered for a user."""
+    return db.query(UserDevice).filter(UserDevice.user_id == user_id).count()
+
+
+def get_user_device(db: Session, user_id: int, hwid: str) -> Optional[UserDevice]:
+    """Returns a specific device by user_id + hwid, or None."""
+    return db.query(UserDevice).filter(
+        UserDevice.user_id == user_id, UserDevice.hwid == hwid
+    ).first()
+
+
+def create_user_device(db: Session, user_id: int, hwid: str,
+                       platform: str = None, os_version: str = None,
+                       device_model: str = None, user_agent: str = None) -> UserDevice:
+    """Registers a new HWID device for a user."""
+    now = datetime.utcnow()
+    device = UserDevice(
+        user_id=user_id, hwid=hwid, platform=platform, os_version=os_version,
+        device_model=device_model, user_agent=user_agent,
+        created_at=now, last_seen=now,
+    )
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+def touch_user_device(db: Session, device: UserDevice, platform: str = None,
+                      os_version: str = None, device_model: str = None,
+                      user_agent: str = None) -> UserDevice:
+    """Updates last_seen (and metadata if provided) of an existing device."""
+    device.last_seen = datetime.utcnow()
+    if platform:
+        device.platform = platform
+    if os_version:
+        device.os_version = os_version
+    if device_model:
+        device.device_model = device_model
+    if user_agent:
+        device.user_agent = user_agent
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+def remove_user_device(db: Session, device: UserDevice) -> None:
+    """Deletes a registered device."""
+    db.delete(device)
+    db.commit()
+
+
+def get_user_device_by_id(db: Session, user_id: int, device_id: int) -> Optional[UserDevice]:
+    """Returns a device by its id, scoped to a user."""
+    return db.query(UserDevice).filter(
+        UserDevice.id == device_id, UserDevice.user_id == user_id
+    ).first()
 
 
 def reset_user_data_usage(db: Session, dbuser: User) -> User:
