@@ -40,6 +40,8 @@ i18n
                     import.meta.env.BASE_URL,
                     `statics/locales/{{lng}}.json`,
                 ]),
+                // bust browser cache of locale JSONs after key changes
+                queryStringParams: { v: "yuku-devicelimit-1" },
             },
         },
         function (err, t) {
