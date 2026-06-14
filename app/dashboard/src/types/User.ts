@@ -41,6 +41,7 @@ export type User = {
   data_limit: number | null;
   data_limit_reset_strategy: DataLimitResetStrategy;
   device_limit: number | null;
+  device_count: number;
   on_hold_expire_duration: number | null;
   lifetime_used_traffic: number;
   username: string;

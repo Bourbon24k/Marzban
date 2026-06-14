@@ -120,6 +120,18 @@ class User(Base):
             label('reseted_usage')
         )
 
+    @hybrid_property
+    def device_count(self) -> int:
+        return len(self.devices)
+
+    @device_count.expression
+    def device_count(cls):
+        return (
+            select(func.count(UserDevice.id)).
+            where(UserDevice.user_id == cls.id).
+            label('device_count')
+        )
+
     @property
     def lifetime_used_traffic(self) -> int:
         return int(
