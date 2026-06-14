@@ -5,17 +5,24 @@
 1. **Обход блокировок через Yandex Cloud CDN** (XHTTP GET-uplink)
 2. **Стабильность нод** (ноды перестали «падать» из-за таймаутов)
 3. **Уведомление истёкшим подписчикам** в клиенте (как в Remnawave)
+4. **Лимит устройств по HWID** (как в Remnawave) — патч 4
 
-Все изменения — в 4 файлах (163 строки добавлено, 6 изменено). База ветки — тег `v0.8.4`,
-проверено: оригиналы из развёрнутого образа `gozargah/marzban:latest` (2025-01-09) **байт-в-байт**
-совпадают с тегом, дрейфа нет.
+База ветки — тег `v0.8.4` (оригиналы из развёрнутого образа `gozargah/marzban:latest`
+2025-01-09 байт-в-байт совпадают с тегом).
 
-| Файл | ± строк | Назначение |
-|------|---------|-----------|
-| `app/subscription/v2ray.py` | +109 | XHTTP GET-uplink поля в генерации подписки |
-| `app/subscription/share.py` | +41 | уведомление истёкшим юзерам |
-| `app/xray/node.py` | ±13 | фикс таймаутов и `started` (стабильность нод) |
-| `app/xray/config.py` | +6 | чтение XHTTP-полей из `xray_config.json` |
+Готовый образ: `ghcr.io/bourbon24k/marzban:0.8.4-yuku`.
+
+| Файл | Назначение |
+|------|-----------|
+| `app/subscription/v2ray.py` | XHTTP GET-uplink поля в генерации подписки |
+| `app/subscription/share.py` | уведомления (истёк / лимит устройств) |
+| `app/routers/subscription.py` | announce + захват HWID + enforcement лимита |
+| `app/xray/node.py` | фикс таймаутов и `started` (стабильность нод) |
+| `app/xray/config.py` | чтение XHTTP-полей из `xray_config.json` |
+| `app/db/models.py`, `app/db/crud.py`, `app/models/user.py` | device_limit + user_devices |
+| `app/db/migrations/.../yuku0001_device_limit.py` | миграция БД |
+| `app/routers/user.py` | API устройств |
+| `app/dashboard/...` | поле «Лимит устройств» + просмотр/удаление устройств |
 
 ---
 
@@ -116,6 +123,49 @@ Stock Marzban истёкшему юзеру отдаёт подписку с р�
   отдаётся fallback v2ray-ссылка.
 - Срабатывает только для статуса `expired`. Для `limited` (кончился трафик) — при желании добавить
   статус в условие short-circuit.
+
+---
+
+## Патч 4 — лимит устройств по HWID (как в Remnawave)
+
+### Идея
+Marzban/Xray не знают про «устройства»: один UUID работает на неограниченном числе устройств.
+Современные клиенты (**Happ**, v2rayTun) шлют заголовок `x-hwid` (+ `x-device-model`, `x-device-os`,
+`x-ver-os`) при запросе подписки. Панель регистрирует устройства, считает их и ограничивает.
+
+### Что добавлено
+**БД** (`models.py` + миграция `yuku0001device`):
+- `users.device_limit` (Integer, **0/NULL = безлимит**)
+- таблица `user_devices` (user_id, hwid, platform, os_version, device_model, user_agent,
+  created_at, last_seen), UNIQUE(user_id, hwid), каскадное удаление с юзером.
+
+**CRUD** (`crud.py`): get/count/create/touch/remove устройств; device_limit в create/update_user.
+
+**Pydantic** (`user.py`): `device_limit` в User/Create/Modify/Response; `UserDeviceResponse`,
+`UserDevicesResponse`.
+
+**Подписка** (`subscription.py`): функция `enforce_device_limit()` —
+- читает `x-hwid` (+ метаданные);
+- если устройство известно → обновляет `last_seen`, пускает;
+- новое устройство и `count >= device_limit` (limit>0) → отдаётся notice-подписка
+  (`DEVICE_LIMIT_NOTICE_LINES`) вместо реальных серверов;
+- иначе регистрирует устройство и пускает.
+Диспетчеризация UA→формат вынесена в `resolve_format()` ради единственного вызова
+`generate_subscription(..., notice_lines=...)`.
+
+**API** (`user.py`):
+- `GET /api/user/{username}/devices` → `{devices, total, device_limit}`
+- `DELETE /api/user/{username}/devices/{device_id}`
+- лимит выставляется через обычный `PUT /api/user/{username}` (`device_limit`).
+
+**Дашборд** (`UserDialog.tsx`):
+- поле **«Лимит устройств»** (0 = ∞) в форме создания/редактирования;
+- при редактировании — список устройств (модель, платформа/ОС) с кнопкой удаления.
+
+### Ограничения
+- Работает только с клиентами, шлющими `x-hwid` (**Happ** — да). **v2rayNG hwid не шлёт** → в обход.
+- По умолчанию `device_limit=0` — все существующие юзеры без ограничений.
+- Текст уведомления — `DEVICE_LIMIT_NOTICE_LINES` в `app/subscription/share.py`.
 
 ---
 
