@@ -32,6 +32,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { updateThemeColor } from "utils/themeColor";
 import { Language } from "./Language";
+import { YukuSettingsModal } from "./YukuSettingsModal";
 import useGetUser from "hooks/useGetUser";
 
 type HeaderProps = {
@@ -102,6 +103,7 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
   const [showDonationNotif, setShowDonationNotif] = useState(
     shouldShowDonation()
   );
+  const [yukuSettingsOpen, setYukuSettingsOpen] = useState(false);
   const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
 
   const handleOnClose = () => {
@@ -174,6 +176,14 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
                     onClick={onResetAllUsage.bind(null, true)}
                   >
                     {t("resetAllUsage")}
+                  </MenuItem>
+                  <MenuItem
+                    maxW="170px"
+                    fontSize="sm"
+                    icon={<CoreSettingsIcon />}
+                    onClick={() => setYukuSettingsOpen(true)}
+                  >
+                    YUKU настройки
                   </MenuItem>
                 </>
               )}
@@ -249,6 +259,10 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
           </Box>
         </HStack>
       </Box>
+      <YukuSettingsModal
+        isOpen={yukuSettingsOpen}
+        onClose={() => setYukuSettingsOpen(false)}
+      />
     </HStack>
   );
 };

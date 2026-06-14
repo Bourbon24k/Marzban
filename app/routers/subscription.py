@@ -11,7 +11,7 @@ from app.models.user import SubscriptionUserResponse, UserResponse, UserStatus
 from app.subscription.share import (
     encode_title,
     generate_subscription,
-    DEVICE_LIMIT_NOTICE_LINES,
+    device_limit_notice_lines,
 )
 from app.templates import render_template
 from config import (
@@ -178,7 +178,7 @@ def user_subscription(
     }
 
     config_format, media_type, as_base64, reverse = resolve_format(user_agent)
-    notice_lines = DEVICE_LIMIT_NOTICE_LINES if over_device_limit else None
+    notice_lines = device_limit_notice_lines() if over_device_limit else None
     conf = generate_subscription(
         user=user,
         config_format=config_format,

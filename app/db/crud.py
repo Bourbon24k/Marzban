@@ -29,6 +29,7 @@ from app.db.models import (
     UserDevice,
     UserTemplate,
     UserUsageResetLogs,
+    YukuSetting,
 )
 from app.models.admin import AdminCreate, AdminModify, AdminPartialModify
 from app.models.node import NodeCreate, NodeModify, NodeStatus, NodeUsageResponse
@@ -384,7 +385,10 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
         proxies=proxies,
         status=user.status,
         data_limit=(user.data_limit or None),
-        device_limit=(user.device_limit or 0),
+        device_limit=(
+            user.device_limit if user.device_limit is not None
+            else int(get_yuku_setting(db, "default_device_limit", "0") or 0)
+        ),
         expire=(user.expire or None),
         admin=admin,
         data_limit_reset_strategy=user.data_limit_reset_strategy,
@@ -600,6 +604,30 @@ def get_user_device_by_id(db: Session, user_id: int, device_id: int) -> Optional
     return db.query(UserDevice).filter(
         UserDevice.id == device_id, UserDevice.user_id == user_id
     ).first()
+
+
+def get_yuku_settings(db: Session) -> dict:
+    """Returns all YUKU settings as a {key: value} dict."""
+    return {s.key: s.value for s in db.query(YukuSetting).all()}
+
+
+def get_yuku_setting(db: Session, key: str, default: str = None) -> Optional[str]:
+    """Returns a single setting value, or default if missing."""
+    row = db.query(YukuSetting).filter(YukuSetting.key == key).first()
+    return row.value if row is not None else default
+
+
+def set_yuku_settings(db: Session, values: dict) -> dict:
+    """Upserts multiple settings; returns the full settings dict afterwards."""
+    for key, value in values.items():
+        key = str(key)
+        row = db.query(YukuSetting).filter(YukuSetting.key == key).first()
+        if row is None:
+            db.add(YukuSetting(key=key, value=(None if value is None else str(value))))
+        else:
+            row.value = (None if value is None else str(value))
+    db.commit()
+    return get_yuku_settings(db)
 
 
 def reset_user_data_usage(db: Session, dbuser: User) -> User:

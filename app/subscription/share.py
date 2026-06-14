@@ -135,9 +135,41 @@ def _generate_notice(config_format: str, lines: list) -> str:
     return "\n".join(links)
 
 
+import time as _time
+_yuku_settings_cache = {"data": None, "ts": 0.0}
+
+
+def _get_yuku_settings() -> dict:
+    """Loads YUKU settings from DB with a 30s cache (notice texts etc.)."""
+    now = _time.time()
+    if _yuku_settings_cache["data"] is None or (now - _yuku_settings_cache["ts"]) > 30:
+        try:
+            from app.db import GetDB, crud
+            with GetDB() as db:
+                _yuku_settings_cache["data"] = crud.get_yuku_settings(db)
+        except Exception:
+            _yuku_settings_cache["data"] = {}
+        _yuku_settings_cache["ts"] = now
+    return _yuku_settings_cache["data"] or {}
+
+
+def _notice_lines_from(key: str, default_lines: list) -> list:
+    val = _get_yuku_settings().get(key)
+    if val:
+        lines = [ln for ln in val.split("\n") if ln.strip()]
+        if lines:
+            return lines
+    return default_lines
+
+
+def device_limit_notice_lines() -> list:
+    """Notice lines shown when a user exceeds the device limit."""
+    return _notice_lines_from("device_limit_notice", DEVICE_LIMIT_NOTICE_LINES)
+
+
 def _generate_expired_notice(config_format: str) -> str:
     """Подписка-уведомление для истёкших (без реальных серверов)."""
-    return _generate_notice(config_format, EXPIRED_NOTICE_LINES)
+    return _generate_notice(config_format, _notice_lines_from("expired_notice", EXPIRED_NOTICE_LINES))
 
 
 def generate_subscription(

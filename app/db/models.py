@@ -310,6 +310,13 @@ class System(Base):
     downlink = Column(BigInteger, default=0)
 
 
+class YukuSetting(Base):
+    __tablename__ = "yuku_settings"
+
+    key = Column(String(128), primary_key=True)
+    value = Column(String(4096), nullable=True, default=None)
+
+
 class JWT(Base):
     __tablename__ = "jwt"
 

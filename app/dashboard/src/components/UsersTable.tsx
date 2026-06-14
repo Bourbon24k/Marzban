@@ -452,6 +452,27 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                   />
                                 </Box>
                               </VStack>
+                              <VStack
+                                alignItems="flex-start"
+                                w="full"
+                                spacing={-1}
+                              >
+                                <Text
+                                  textTransform="capitalize"
+                                  fontSize="xs"
+                                  fontWeight="bold"
+                                  color="gray.600"
+                                  _dark={{ color: "gray.400" }}
+                                >
+                                  📱 {t("userDialog.devicesList")}
+                                </Text>
+                                <Text fontSize="sm">
+                                  {user.device_count}
+                                  {(user.device_limit ?? 0) > 0
+                                    ? " / " + user.device_limit
+                                    : " (∞)"}
+                                </Text>
+                              </VStack>
                               <HStack w="full" justifyContent="space-between">
                                 <Box width="full">
                                   <StatusBadge
