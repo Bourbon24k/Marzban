@@ -53,6 +53,7 @@ import {
   UserInbounds,
 } from "types/User";
 import { relativeExpiryDate } from "utils/dateFormatter";
+import { fetch } from "service/http";
 import { z } from "zod";
 import { DeleteIcon } from "./DeleteUserModal";
 import { Icon } from "./Icon";
@@ -247,6 +248,30 @@ export const UserDialog: FC<UserDialogProps> = () => {
     setUsageVisible((current) => !current);
   };
 
+  type DeviceItem = {
+    id: number;
+    hwid: string;
+    platform?: string | null;
+    os_version?: string | null;
+    device_model?: string | null;
+    last_seen?: string | null;
+  };
+  const [devices, setDevices] = useState<DeviceItem[]>([]);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const loadDevices = (username: string) => {
+    setDevicesLoading(true);
+    fetch(`/user/${username}/devices`)
+      .then((data: any) => setDevices(data.devices || []))
+      .catch(() => setDevices([]))
+      .finally(() => setDevicesLoading(false));
+  };
+  const deleteDevice = (deviceId: number) => {
+    if (!editingUser) return;
+    fetch(`/user/${editingUser.username}/devices/${deviceId}`, { method: "DELETE" })
+      .then(() => setDevices((prev) => prev.filter((d) => d.id !== deviceId)))
+      .catch(() => {});
+  };
+
   const form = useForm<FormType>({
     defaultValues: getDefaultValues(),
     resolver: zodResolver(schema),
@@ -290,6 +315,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
       fetchUsageWithFilter({
         start: dayjs().utc().subtract(30, "day").format("YYYY-MM-DDTHH:00:00"),
       });
+
+      loadDevices(editingUser.username);
+    } else {
+      setDevices([]);
     }
   }, [editingUser]);
 
@@ -616,6 +645,53 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           }}
                         />
                       </FormControl>
+
+                      {isEditing && (
+                        <FormControl mb={"10px"}>
+                          <FormLabel>
+                            {t("userDialog.devicesList")} ({devices.length})
+                          </FormLabel>
+                          {devicesLoading ? (
+                            <Spinner size="sm" />
+                          ) : devices.length === 0 ? (
+                            <Text fontSize="xs" color="gray.500">
+                              {t("userDialog.noDevices")}
+                            </Text>
+                          ) : (
+                            <VStack align="stretch" spacing="4px">
+                              {devices.map((d) => (
+                                <HStack
+                                  key={d.id}
+                                  justify="space-between"
+                                  borderWidth="1px"
+                                  borderRadius="4px"
+                                  px="8px"
+                                  py="4px"
+                                >
+                                  <Box overflow="hidden">
+                                    <Text fontSize="xs" noOfLines={1}>
+                                      {d.device_model || d.hwid}
+                                    </Text>
+                                    <Text fontSize="10px" color="gray.500" noOfLines={1}>
+                                      {[d.platform, d.os_version]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                    </Text>
+                                  </Box>
+                                  <IconButton
+                                    aria-label="delete device"
+                                    size="xs"
+                                    variant="ghost"
+                                    colorScheme="red"
+                                    icon={<DeleteIcon />}
+                                    onClick={() => deleteDevice(d.id)}
+                                  />
+                                </HStack>
+                              ))}
+                            </VStack>
+                          )}
+                        </FormControl>
+                      )}
 
                       <FormControl mb={"10px"}>
                         <FormLabel>

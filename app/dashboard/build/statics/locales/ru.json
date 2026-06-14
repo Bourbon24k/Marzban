@@ -145,6 +145,8 @@
   "userDialog.dataLimit": "Лимит трафика",
   "userDialog.deviceLimit": "Лимит устройств",
   "userDialog.devices": "устр.",
+  "userDialog.devicesList": "Устройства",
+  "userDialog.noDevices": "Нет зарегистрированных устройств",
   "userDialog.days": "Дни",
   "userDialog.editUser": "Редактировать",
   "userDialog.editUserTitle": "Редактировать пользователя",

@@ -145,6 +145,8 @@
   "userDialog.dataLimit": "Data Limit",
   "userDialog.deviceLimit": "Device Limit",
   "userDialog.devices": "devices",
+  "userDialog.devicesList": "Devices",
+  "userDialog.noDevices": "No devices registered",
   "userDialog.days": "Days",
   "userDialog.editUser": "Edit user",
   "userDialog.editUserTitle": "Edit user",
