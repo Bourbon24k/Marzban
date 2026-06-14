@@ -110,6 +110,7 @@ const getDefaultValues = (): FormType => {
   return {
     selected_proxies: Object.keys(defaultInbounds) as ProxyKeys,
     data_limit: null,
+    device_limit: null,
     expire: null,
     username: "",
     data_limit_reset_strategy: "no_reset",
@@ -175,6 +176,14 @@ const baseSchema = {
     }),
   expire: z.number().nullable(),
   data_limit_reset_strategy: z.string(),
+  device_limit: z
+    .string()
+    .or(z.number())
+    .nullable()
+    .transform((v) => {
+      if (v) return parseInt(String(v));
+      return 0;
+    }),
   inbounds: z.record(z.string(), z.array(z.string())).transform((ins) => {
     Object.keys(ins).forEach((protocol) => {
       if (Array.isArray(ins[protocol]) && !ins[protocol]?.length)
@@ -582,6 +591,31 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           />
                         </FormControl>
                       </Collapse>
+
+                      <FormControl mb={"10px"}>
+                        <FormLabel>{t("userDialog.deviceLimit")}</FormLabel>
+                        <Controller
+                          control={form.control}
+                          name="device_limit"
+                          render={({ field }) => {
+                            return (
+                              <Input
+                                endAdornment={t("userDialog.devices")}
+                                type="number"
+                                size="sm"
+                                borderRadius="6px"
+                                placeholder="0 = ∞"
+                                onChange={field.onChange}
+                                disabled={disabled}
+                                error={
+                                  form.formState.errors.device_limit?.message
+                                }
+                                value={field.value ? String(field.value) : ""}
+                              />
+                            );
+                          }}
+                        />
+                      </FormControl>
 
                       <FormControl mb={"10px"}>
                         <FormLabel>
