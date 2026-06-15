@@ -1,4 +1,3 @@
-import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -7,7 +6,6 @@ from typing import Union
 
 from pymysql.err import OperationalError
 from sqlalchemy import and_, bindparam, insert, select, update
-from sqlalchemy.exc import OperationalError as SAOperationalError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Insert
 
@@ -23,44 +21,31 @@ from xray_api import XRay as XRayAPI
 from xray_api import exc as xray_exc
 
 
-_MAX_DB_RETRIES = 5
-
-
-def _is_retryable_db_error(err) -> bool:
-    """Transient write contention that's safe to retry:
-    - SQLite: "database is locked" / "database is busy" (our prod runs SQLite,
-      where the usage job races subscription/API writes and would otherwise
-      drop a whole tick of traffic stats).
-    - MySQL: 1213 deadlock, 1205 lock wait timeout.
-    """
-    orig = getattr(err, "orig", err)
-    msg = str(orig).lower()
-    if "database is locked" in msg or "database is busy" in msg:
-        return True
-    code = None
-    args = getattr(orig, "args", None)
-    if args:
-        code = args[0]
-    return code in (1213, 1205)
-
-
 def safe_execute(db: Session, stmt, params=None):
-    if db.bind.name == 'mysql' and isinstance(stmt, Insert):
-        stmt = stmt.prefix_with('IGNORE')
+    # SQLite contention is handled at the engine level (WAL + busy_timeout in
+    # app/db/base.py), so no app-side retry loop here — that only worsened
+    # writer contention. MySQL keeps its deadlock retry.
+    if db.bind.name == 'mysql':
+        if isinstance(stmt, Insert):
+            stmt = stmt.prefix_with('IGNORE')
 
-    tries = 0
-    while True:
-        try:
-            db.connection().execute(stmt, params)
-            db.commit()
-            return
-        except (SAOperationalError, OperationalError) as err:
-            if _is_retryable_db_error(err) and tries < _MAX_DB_RETRIES:
-                db.rollback()
-                tries += 1
-                time.sleep(0.2 * tries)  # small linear backoff
-                continue
-            raise
+        tries = 0
+        done = False
+        while not done:
+            try:
+                db.connection().execute(stmt, params)
+                db.commit()
+                done = True
+            except OperationalError as err:
+                if err.args[0] in (1213, 1205) and tries < 3:  # deadlock / lock wait
+                    db.rollback()
+                    tries += 1
+                    continue
+                raise err
+
+    else:
+        db.connection().execute(stmt, params)
+        db.commit()
 
 
 def record_user_stats(params: list, node_id: Union[int, None],
