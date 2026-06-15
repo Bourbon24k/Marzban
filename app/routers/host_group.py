@@ -37,6 +37,19 @@ def _group_response(g) -> HostGroupResponse:
     )
 
 
+@router.get("/host-candidates")
+def host_candidates(
+    db: Session = Depends(get_db), admin: Admin = Depends(Admin.get_current)
+):
+    """Flat list of hosts (with ids) for the group editor's host picker."""
+    from app.db.models import ProxyHost
+    return [
+        {"id": h.id, "remark": h.remark, "inbound_tag": h.inbound_tag,
+         "address": h.address}
+        for h in db.query(ProxyHost).order_by(ProxyHost.inbound_tag, ProxyHost.id).all()
+    ]
+
+
 @router.get("/host-groups", response_model=List[HostGroupResponse])
 def list_host_groups(
     db: Session = Depends(get_db), admin: Admin = Depends(Admin.get_current)

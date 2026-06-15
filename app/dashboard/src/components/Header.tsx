@@ -33,6 +33,7 @@ import { Link } from "react-router-dom";
 import { updateThemeColor } from "utils/themeColor";
 import { Language } from "./Language";
 import { YukuSettingsModal } from "./YukuSettingsModal";
+import { HostGroupsModal } from "./HostGroupsModal";
 import useGetUser from "hooks/useGetUser";
 
 type HeaderProps = {
@@ -104,6 +105,7 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
     shouldShowDonation()
   );
   const [yukuSettingsOpen, setYukuSettingsOpen] = useState(false);
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
 
   const handleOnClose = () => {
@@ -185,6 +187,14 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
                   >
                     YUKU настройки
                   </MenuItem>
+                  <MenuItem
+                    maxW="170px"
+                    fontSize="sm"
+                    icon={<NodesUsageIcon />}
+                    onClick={() => setGroupsOpen(true)}
+                  >
+                    Лимиты по группам
+                  </MenuItem>
                 </>
               )}
               <Link to={DONATION_URL} target="_blank">
@@ -263,6 +273,7 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
         isOpen={yukuSettingsOpen}
         onClose={() => setYukuSettingsOpen(false)}
       />
+      <HostGroupsModal isOpen={groupsOpen} onClose={() => setGroupsOpen(false)} />
     </HStack>
   );
 };
