@@ -1904,8 +1904,6 @@ def set_user_group(db: Session, user_id: int, group_id: int,
         row.member = bool(member)
     if set_limit:
         row.traffic_limit = traffic_limit if traffic_limit else None
-        if traffic_limit:  # giving someone a limit implies they're in the group
-            row.member = True
     db.commit()
     db.refresh(row)
     return row

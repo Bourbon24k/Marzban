@@ -433,6 +433,8 @@ def process_inbounds_and_tags(
     inbounds = sorted(
         _inbounds, key=lambda x: index_dict.get(x[1][0], float('inf')))
 
+    _noticed_groups: set = set()  # groups whose over-limit notice was already added
+
     for protocol, tags in inbounds:
         settings = proxies.get(protocol)
         if not settings:
@@ -520,8 +522,11 @@ def process_inbounds_and_tags(
                 )
 
                 if group_over:
-                    # deny + label: keep the slot but point it at a dead address
-                    # so the user sees why this server stopped working.
+                    gid_over = group_ctx["host_group_map"].get(host.get("id"))
+                    if gid_over in _noticed_groups:
+                        # already added one notice for this group — skip all other hosts
+                        continue
+                    _noticed_groups.add(gid_over)
                     conf.add(
                         remark=group_notice.format_map(format_variables),
                         address="127.0.0.1",
