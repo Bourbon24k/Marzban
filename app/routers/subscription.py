@@ -12,6 +12,7 @@ from app.subscription.share import (
     encode_title,
     generate_subscription,
     device_limit_notice_lines,
+    get_announce_text,
 )
 from app.templates import render_template
 from config import (
@@ -26,9 +27,6 @@ from config import (
     USE_CUSTOM_JSON_FOR_V2RAYNG,
     XRAY_SUBSCRIPTION_PATH,
 )
-
-announce_text = "⚠️ Если не работает VPN, нажмите на 🔁 обновите подписку. Чтобы найти самый быстрый сервер используйте пинг"
-encoded_announce = base64.b64encode(announce_text.encode('utf-8')).decode('utf-8')
 
 client_config = {
     "clash-meta": {"config_format": "clash-meta", "media_type": "text/yaml", "as_base64": False, "reverse": False},
@@ -174,7 +172,7 @@ def user_subscription(
             for key, val in get_subscription_user_info(user).items()
         ),
         "hide-settings": "1",
-        "announce": f"base64:{encoded_announce}"
+        "announce": f"base64:{base64.b64encode(get_announce_text().encode('utf-8')).decode('utf-8')}"
     }
 
     config_format, media_type, as_base64, reverse = resolve_format(user_agent)

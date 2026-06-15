@@ -11,6 +11,7 @@ DEFAULT_SETTINGS = {
     "expired_notice": "🔴 Подписка закончилась\n➡️ Продлите: t.me/yuku_vpn_bot",
     "device_limit_notice": "🔴 Превышен лимит устройств\n➡️ Поддержка: t.me/yuku_vpn_bot",
     "default_device_limit": "0",
+    "announce": "⚠️ Если не работает VPN, нажмите на 🔁 обновите подписку. Чтобы найти самый быстрый сервер используйте пинг",
 }
 
 

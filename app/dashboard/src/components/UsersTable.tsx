@@ -355,23 +355,23 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                       >
                         <div className="flex-status">
                           <OnlineBadge lastOnline={user.online_at} />
-                          <Text isTruncated>{user.username}</Text>
-                          {(user.device_count > 0 ||
-                            (user.device_limit ?? 0) > 0) && (
-                            <Text
-                              as="span"
-                              fontSize="xs"
-                              color="gray.500"
-                              whiteSpace="nowrap"
-                              title="devices"
-                            >
-                              📱
-                              {user.device_count}
-                              {(user.device_limit ?? 0) > 0
-                                ? "/" + user.device_limit
-                                : ""}
-                            </Text>
-                          )}
+                          <Text isTruncated flexShrink={1} minW={0}>
+                            {user.username}
+                          </Text>
+                          <Text
+                            as="span"
+                            fontSize="xs"
+                            color="gray.500"
+                            whiteSpace="nowrap"
+                            flexShrink={0}
+                            title="devices"
+                          >
+                            📱
+                            {user.device_count ?? 0}
+                            {(user.device_limit ?? 0) > 0
+                              ? "/" + user.device_limit
+                              : ""}
+                          </Text>
                         </div>
                       </Td>
                       <Td borderBottom={0} minW="50px" pl={0} pr={0}>

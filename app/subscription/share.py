@@ -167,6 +167,17 @@ def device_limit_notice_lines() -> list:
     return _notice_lines_from("device_limit_notice", DEVICE_LIMIT_NOTICE_LINES)
 
 
+DEFAULT_ANNOUNCE = "⚠️ Если не работает VPN, нажмите на 🔁 обновите подписку. Чтобы найти самый быстрый сервер используйте пинг"
+
+
+def get_announce_text() -> str:
+    """Subscription announce header text (editable via YUKU settings)."""
+    val = _get_yuku_settings().get("announce")
+    if val and val.strip():
+        return val
+    return DEFAULT_ANNOUNCE
+
+
 def _generate_expired_notice(config_format: str) -> str:
     """Подписка-уведомление для истёкших (без реальных серверов)."""
     return _generate_notice(config_format, _notice_lines_from("expired_notice", EXPIRED_NOTICE_LINES))

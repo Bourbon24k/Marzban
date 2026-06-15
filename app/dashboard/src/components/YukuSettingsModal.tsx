@@ -28,12 +28,14 @@ type Settings = {
   expired_notice: string;
   device_limit_notice: string;
   default_device_limit: string;
+  announce: string;
 };
 
 const EMPTY: Settings = {
   expired_notice: "",
   device_limit_notice: "",
   default_device_limit: "0",
+  announce: "",
 };
 
 export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
@@ -91,6 +93,20 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
             <Spinner />
           ) : (
             <VStack spacing={4} align="stretch">
+              <FormControl>
+                <FormLabel>Announce (объявление в шапке подписки)</FormLabel>
+                <Textarea
+                  rows={3}
+                  value={data.announce}
+                  onChange={(e) =>
+                    setData({ ...data, announce: e.target.value })
+                  }
+                />
+                <Text fontSize="xs" color="gray.500">
+                  Текст-уведомление, которое клиент показывает над списком серверов.
+                </Text>
+              </FormControl>
+
               <FormControl>
                 <FormLabel>Сообщение при истёкшей подписке</FormLabel>
                 <Textarea
