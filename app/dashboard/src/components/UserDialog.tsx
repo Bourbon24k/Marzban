@@ -852,10 +852,15 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                           : "0 = безлимит"
                                       }
                                       value={groupInputs[g.group_id] ?? ""}
-                                      onChange={(e) =>
+                                      onChange={(e: any) =>
                                         setGroupInputs((prev) => ({
                                           ...prev,
-                                          [g.group_id]: e.target.value,
+                                          // custom Input passes a string for
+                                          // type=number, an event otherwise
+                                          [g.group_id]:
+                                            typeof e === "string"
+                                              ? e
+                                              : e?.target?.value ?? "",
                                         }))
                                       }
                                     />
