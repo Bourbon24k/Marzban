@@ -39,6 +39,7 @@ type Group = {
   traffic_limit: number | null;
   reset_strategy: string;
   notice_text: string | null;
+  include_master: boolean;
   host_ids: number[];
   node_ids: number[];
 };
@@ -49,6 +50,7 @@ type Draft = {
   limitGB: string;
   reset_strategy: string;
   notice_text: string;
+  include_master: boolean;
   host_ids: number[];
   node_ids: number[];
 };
@@ -58,6 +60,7 @@ const EMPTY_DRAFT: Draft = {
   limitGB: "",
   reset_strategy: "no_reset",
   notice_text: "",
+  include_master: false,
   host_ids: [],
   node_ids: [],
 };
@@ -125,6 +128,7 @@ export const HostGroupsModal: FC<HostGroupsModalProps> = ({ isOpen, onClose }) =
       limitGB: g.traffic_limit ? String(Math.round((g.traffic_limit / GB) * 100) / 100) : "",
       reset_strategy: g.reset_strategy || "no_reset",
       notice_text: g.notice_text || "",
+      include_master: !!g.include_master,
       host_ids: [...g.host_ids],
       node_ids: [...g.node_ids],
     });
@@ -147,6 +151,7 @@ export const HostGroupsModal: FC<HostGroupsModalProps> = ({ isOpen, onClose }) =
       traffic_limit: draft.limitGB && !isNaN(gb) ? Math.round(gb * GB) : 0,
       reset_strategy: draft.reset_strategy,
       notice_text: draft.notice_text || null,
+      include_master: draft.include_master,
       host_ids: draft.host_ids,
       node_ids: draft.node_ids,
     };
@@ -237,6 +242,15 @@ export const HostGroupsModal: FC<HostGroupsModalProps> = ({ isOpen, onClose }) =
 
               <FormControl>
                 <FormLabel>Ноды для учёта трафика</FormLabel>
+                <Checkbox
+                  mb={2}
+                  isChecked={draft.include_master}
+                  onChange={() =>
+                    setDraft({ ...draft, include_master: !draft.include_master })
+                  }
+                >
+                  <Text fontSize="sm">Мастер-нода (сама панель)</Text>
+                </Checkbox>
                 <VStack align="stretch" spacing={1} maxH="160px" overflowY="auto"
                         borderWidth="1px" borderRadius="md" p={2}>
                   {nodes.map((n) => {

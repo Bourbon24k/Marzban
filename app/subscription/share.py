@@ -202,7 +202,7 @@ def build_group_context(user) -> Union[dict, None]:
         from app.db.models import UserGroupUsage
         with GetDB() as db:
             usage_rows = {
-                r.group_id: (r.used_traffic or 0, r.traffic_limit)
+                r.group_id: (r.used_traffic or 0, r.traffic_limit, bool(r.member))
                 for r in db.query(UserGroupUsage).filter(
                     UserGroupUsage.user_id == uid
                 ).all()
@@ -212,7 +212,10 @@ def build_group_context(user) -> Union[dict, None]:
 
     group_state = {}
     for gid, m in group_meta.items():
-        used, override = usage_rows.get(gid, (0, None))
+        used, override, member = usage_rows.get(gid, (0, None, False))
+        # only users explicitly added to the group are limited/shown the cap
+        if not member:
+            continue
         # per-user override takes precedence over the group default
         limit = (override if override else m.get("traffic_limit")) or 0
         group_state[gid] = {
@@ -223,6 +226,8 @@ def build_group_context(user) -> Union[dict, None]:
             "over": bool(limit) and used >= limit,
             "notice_text": m.get("notice_text") or DEFAULT_GROUP_NOTICE,
         }
+    if not group_state:
+        return None  # user is in no group -> stay inert
     return {"host_group_map": host_group_map, "group_state": group_state}
 
 
@@ -450,21 +455,21 @@ def process_inbounds_and_tags(
                     gid = group_ctx["host_group_map"].get(host.get("id"))
                     gs = group_ctx["group_state"].get(gid) if gid is not None else None
                     if gs:
+                        _gb = 1024 ** 3
+                        _fmt_gb = lambda b: "{:.1f} ГБ".format((b or 0) / _gb)
                         format_variables.update({
-                            "GROUP_USED": readable_size(gs["used"]) if gs["used"] else "0",
-                            "GROUP_LIMIT": readable_size(gs["limit"]) if gs["limit"] else "∞",
-                            "GROUP_REMAINING": readable_size(gs["remaining"])
+                            "GROUP_USED": _fmt_gb(gs["used"]),
+                            "GROUP_LIMIT": _fmt_gb(gs["limit"]) if gs["limit"] else "∞",
+                            "GROUP_REMAINING": _fmt_gb(gs["remaining"])
                             if gs["remaining"] is not None else "∞",
                         })
                         group_over = gs["over"]
                         group_notice = gs["notice_text"]
-                        # show the limit to the user automatically (only when the
-                        # group has a limit and the remark doesn't already use a
-                        # {GROUP_*} variable explicitly)
+                        # auto-show the cap to the user (members with a limit only),
+                        # in GB; skipped if the remark already uses a {GROUP_*} var
                         if gs["limit"] and "{GROUP_" not in host["remark"]:
-                            group_label = " ({}/{})".format(
-                                readable_size(gs["used"]),
-                                readable_size(gs["limit"]),
+                            group_label = " ({:.1f}/{:.1f} ГБ)".format(
+                                gs["used"] / _gb, gs["limit"] / _gb
                             )
 
                 sni = ""

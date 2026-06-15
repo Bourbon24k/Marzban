@@ -1823,6 +1823,7 @@ def create_host_group(db: Session, group: HostGroupCreate) -> HostGroup:
         traffic_limit=group.traffic_limit or None,
         reset_strategy=group.reset_strategy or "no_reset",
         notice_text=group.notice_text,
+        include_master=bool(group.include_master),
     )
     db.add(dbgroup)
     db.flush()
@@ -1842,6 +1843,8 @@ def update_host_group(db: Session, dbgroup: HostGroup,
         dbgroup.reset_strategy = modify.reset_strategy
     if modify.notice_text is not None:
         dbgroup.notice_text = modify.notice_text
+    if modify.include_master is not None:
+        dbgroup.include_master = bool(modify.include_master)
     _apply_group_members(db, dbgroup, modify.host_ids, modify.node_ids)
     db.commit()
     db.refresh(dbgroup)
@@ -1855,9 +1858,13 @@ def remove_host_group(db: Session, dbgroup: HostGroup) -> None:
 
 def get_node_group_map(db: Session) -> dict:
     """node_id -> group_id, for attributing node usage to a group. Empty when no
-    groups exist (the accounting step then becomes a no-op)."""
+    groups exist (the accounting step then becomes a no-op). The master xray is
+    keyed by None for groups that opt in via include_master."""
     rows = db.query(HostGroup.id, Node.id).join(HostGroup.nodes).all()
-    return {node_id: group_id for group_id, node_id in rows}
+    m = {node_id: group_id for group_id, node_id in rows}
+    for g in db.query(HostGroup.id).filter(HostGroup.include_master.is_(True)).all():
+        m[None] = g.id  # only one group should include master (router-enforced)
+    return m
 
 
 def get_user_group_usage(db: Session, user_id: int,
@@ -1882,15 +1889,23 @@ def reset_user_group_usage(db: Session, user_id: int, group_id: int) -> None:
         db.commit()
 
 
-def set_user_group_limit(db: Session, user_id: int, group_id: int,
-                         traffic_limit: Optional[int]) -> UserGroupUsage:
-    """Set (or clear, with None) a user's per-group limit override. Creates the
-    usage row if it doesn't exist yet."""
+def set_user_group(db: Session, user_id: int, group_id: int,
+                   member: Optional[bool] = None,
+                   traffic_limit: Optional[int] = None,
+                   set_limit: bool = False) -> UserGroupUsage:
+    """Set a user's group membership and/or per-group limit override. Creates the
+    usage row if needed. ``set_limit`` distinguishes "clear the override" (None)
+    from "don't touch it"."""
     row = get_user_group_usage(db, user_id, group_id)
     if not row:
         row = UserGroupUsage(user_id=user_id, group_id=group_id, used_traffic=0)
         db.add(row)
-    row.traffic_limit = traffic_limit if traffic_limit else None
+    if member is not None:
+        row.member = bool(member)
+    if set_limit:
+        row.traffic_limit = traffic_limit if traffic_limit else None
+        if traffic_limit:  # giving someone a limit implies they're in the group
+            row.member = True
     db.commit()
     db.refresh(row)
     return row

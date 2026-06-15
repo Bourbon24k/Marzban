@@ -416,6 +416,8 @@ class HostGroup(Base):
     reset_strategy = Column(String(16), nullable=False, default="no_reset",
                             server_default="no_reset")
     notice_text = Column(String(512), nullable=True)
+    # also meter the panel's own xray (node_id NULL) for this group
+    include_master = Column(Boolean, nullable=False, default=False, server_default=text("0"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
     hosts = relationship("ProxyHost", secondary=host_group_hosts, lazy="selectin")
@@ -438,6 +440,8 @@ class UserGroupUsage(Base):
     used_traffic = Column(BigInteger, nullable=False, default=0, server_default="0")
     # per-user override of the group's limit; NULL = use group default
     traffic_limit = Column(BigInteger, nullable=True)
+    # only members see the limit / get enforced; non-members are untouched
+    member = Column(Boolean, nullable=False, default=False, server_default=text("0"))
     reset_at = Column(DateTime, nullable=True)
 
     group = relationship("HostGroup", back_populates="user_usages")

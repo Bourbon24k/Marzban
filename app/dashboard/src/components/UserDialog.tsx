@@ -4,6 +4,7 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Collapse,
   Flex,
   FormControl,
@@ -290,6 +291,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
   type GroupUsage = {
     group_id: number;
     group_name: string;
+    member: boolean;
     used_traffic: number;
     traffic_limit: number | null;
     group_default_limit: number | null;
@@ -320,7 +322,16 @@ export const UserDialog: FC<UserDialogProps> = () => {
     const traffic_limit = raw && !isNaN(gb) ? Math.round(gb * GB) : 0;
     fetch(`/user/${editingUser.username}/group/${groupId}`, {
       method: "PUT",
-      body: { traffic_limit },
+      body: { traffic_limit, set_limit: true },
+    })
+      .then(() => loadGroupUsages(editingUser.username))
+      .catch(() => {});
+  };
+  const toggleGroupMember = (groupId: number, member: boolean) => {
+    if (!editingUser) return;
+    fetch(`/user/${editingUser.username}/group/${groupId}`, {
+      method: "PUT",
+      body: { member },
     })
       .then(() => loadGroupUsages(editingUser.username))
       .catch(() => {});
@@ -830,9 +841,16 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   py="8px"
                                 >
                                   <HStack justify="space-between" mb="4px">
-                                    <Text fontSize="sm" fontWeight="600">
-                                      {g.group_name}
-                                    </Text>
+                                    <Checkbox
+                                      isChecked={g.member}
+                                      onChange={(e) =>
+                                        toggleGroupMember(g.group_id, e.target.checked)
+                                      }
+                                    >
+                                      <Text fontSize="sm" fontWeight="600">
+                                        {g.group_name}
+                                      </Text>
+                                    </Checkbox>
                                     <Text fontSize="11px" color="gray.500">
                                       {usedGb} / {limitGb ?? "∞"} ГБ
                                       {g.limit_source === "user" && (

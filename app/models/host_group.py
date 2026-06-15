@@ -10,6 +10,7 @@ class HostGroupBase(BaseModel):
     traffic_limit: Optional[int] = Field(default=None, ge=0)
     reset_strategy: str = "no_reset"
     notice_text: Optional[str] = Field(default=None, max_length=512)
+    include_master: bool = False
 
 
 class HostGroupCreate(HostGroupBase):
@@ -22,6 +23,7 @@ class HostGroupModify(BaseModel):
     traffic_limit: Optional[int] = Field(default=None, ge=0)
     reset_strategy: Optional[str] = None
     notice_text: Optional[str] = Field(default=None, max_length=512)
+    include_master: Optional[bool] = None
     host_ids: Optional[List[int]] = None
     node_ids: Optional[List[int]] = None
 
@@ -37,6 +39,7 @@ class HostGroupResponse(HostGroupBase):
 class UserGroupUsageResponse(BaseModel):
     group_id: int
     group_name: str
+    member: bool = False                     # is the user added to this group
     used_traffic: int
     traffic_limit: Optional[int] = None      # effective limit (override or group)
     group_default_limit: Optional[int] = None  # the group's own default
@@ -49,5 +52,9 @@ class UserGroupUsageResponse(BaseModel):
 
 
 class UserGroupLimitSet(BaseModel):
-    # bytes; 0/None clears the override (fall back to the group default)
+    # add/remove the user from the group
+    member: Optional[bool] = None
+    # bytes; 0/None clears the override (fall back to the group default).
+    # Only applied when set_limit is true (lets you toggle membership alone).
     traffic_limit: Optional[int] = Field(default=None, ge=0)
+    set_limit: bool = False

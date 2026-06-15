@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.db import Session, crud, get_db
+from app.db.models import HostGroup
 from app.dependencies import get_validated_user
 from app.models.admin import Admin
 from app.models.host_group import (
@@ -47,10 +48,25 @@ def _group_response(g) -> HostGroupResponse:
         traffic_limit=g.traffic_limit,
         reset_strategy=g.reset_strategy,
         notice_text=g.notice_text,
+        include_master=bool(g.include_master),
         created_at=g.created_at,
         host_ids=[h.id for h in g.hosts],
         node_ids=[n.id for n in g.nodes],
     )
+
+
+def _check_master_conflict(db: Session, include_master: bool, exclude_group_id=None):
+    """Only one group may meter the master node."""
+    if not include_master:
+        return
+    other = db.query(HostGroup.id, HostGroup.name).filter(
+        HostGroup.include_master.is_(True), HostGroup.id != exclude_group_id
+    ).first()
+    if other:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Master node already metered by group '{other[1]}'",
+        )
 
 
 @router.get("/host-candidates")
@@ -90,6 +106,7 @@ def add_host_group(
     if crud.get_host_group_by_name(db, body.name):
         raise HTTPException(status_code=409, detail="Group already exists")
     _check_node_conflicts(db, body.node_ids)
+    _check_master_conflict(db, body.include_master)
     return _group_response(crud.create_host_group(db, body))
 
 
@@ -121,6 +138,8 @@ def modify_host_group(
     if body.name and body.name != g.name and crud.get_host_group_by_name(db, body.name):
         raise HTTPException(status_code=409, detail="Group name already exists")
     _check_node_conflicts(db, body.node_ids, exclude_group_id=group_id)
+    if body.include_master is not None:
+        _check_master_conflict(db, body.include_master, exclude_group_id=group_id)
     return _group_response(crud.update_host_group(db, g, body))
 
 
@@ -150,26 +169,28 @@ def get_user_group_usage(
     """Per-group traffic usage of a user (for the bot's profile screen)."""
     groups = crud.get_host_groups(db)
     usages = {u.group_id: u for u in crud.get_user_group_usages(db, dbuser.id)}
-    out = []
-    for g in groups:
-        u = usages.get(g.id)
-        used = (u.used_traffic if u else 0) or 0
-        override = u.traffic_limit if u else None
-        default = g.traffic_limit or None
-        limit = (override if override else default) or 0
-        out.append(UserGroupUsageResponse(
-            group_id=g.id,
-            group_name=g.name,
-            used_traffic=used,
-            traffic_limit=limit or None,
-            group_default_limit=default,
-            limit_override=override,
-            limit_source="user" if override else ("group" if default else "unlimited"),
-            remaining=max(limit - used, 0) if limit else None,
-            over_limit=bool(limit) and used >= limit,
-            reset_at=u.reset_at if u else None,
-        ))
-    return out
+    return [_usage_response(g, usages.get(g.id)) for g in groups]
+
+
+def _usage_response(g, u) -> UserGroupUsageResponse:
+    used = (u.used_traffic if u else 0) or 0
+    member = bool(u.member) if u else False
+    override = u.traffic_limit if u else None
+    default = g.traffic_limit or None
+    limit = (override if override else default) or 0
+    return UserGroupUsageResponse(
+        group_id=g.id,
+        group_name=g.name,
+        member=member,
+        used_traffic=used,
+        traffic_limit=limit or None,
+        group_default_limit=default,
+        limit_override=override,
+        limit_source="user" if override else ("group" if default else "unlimited"),
+        remaining=max(limit - used, 0) if limit else None,
+        over_limit=bool(limit) and used >= limit,
+        reset_at=u.reset_at if u else None,
+    )
 
 
 @router.put("/user/{username}/group/{group_id}",
@@ -182,29 +203,21 @@ def set_user_group_limit(
     db: Session = Depends(get_db),
     admin: Admin = Depends(Admin.get_current),
 ):
-    """Set/clear a user's per-group traffic limit override (bytes; 0/None =
-    fall back to the group default)."""
+    """Add/remove the user from a group and/or set their per-group limit
+    override. `member` toggles membership; `traffic_limit` (with set_limit=true)
+    sets the override in bytes (0/None clears it). Setting a limit also adds the
+    user to the group."""
     _require_sudo(admin)
     g = crud.get_host_group(db, group_id)
     if not g:
         raise HTTPException(status_code=404, detail="Group not found")
-    row = crud.set_user_group_limit(db, dbuser.id, group_id, body.traffic_limit)
-    used = row.used_traffic or 0
-    override = row.traffic_limit
-    default = g.traffic_limit or None
-    limit = (override if override else default) or 0
-    return UserGroupUsageResponse(
-        group_id=g.id,
-        group_name=g.name,
-        used_traffic=used,
-        traffic_limit=limit or None,
-        group_default_limit=default,
-        limit_override=override,
-        limit_source="user" if override else ("group" if default else "unlimited"),
-        remaining=max(limit - used, 0) if limit else None,
-        over_limit=bool(limit) and used >= limit,
-        reset_at=row.reset_at,
+    row = crud.set_user_group(
+        db, dbuser.id, group_id,
+        member=body.member,
+        traffic_limit=body.traffic_limit,
+        set_limit=body.set_limit,
     )
+    return _usage_response(g, row)
 
 
 @router.post("/user/{username}/group/{group_id}/reset",
