@@ -550,7 +550,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
               onClick={handleSort.bind(null, "device_count")}
             >
               <HStack>
-                <span>📱 Устройства</span>
+                <span>Устройства</span>
                 <Sort sort={filters.sort} column="device_count" />
               </HStack>
             </Th>
