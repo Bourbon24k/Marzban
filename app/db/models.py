@@ -436,6 +436,8 @@ class UserGroupUsage(Base):
     group_id = Column(Integer, ForeignKey("host_groups.id", ondelete="CASCADE"),
                       nullable=False, index=True)
     used_traffic = Column(BigInteger, nullable=False, default=0, server_default="0")
+    # per-user override of the group's limit; NULL = use group default
+    traffic_limit = Column(BigInteger, nullable=True)
     reset_at = Column(DateTime, nullable=True)
 
     group = relationship("HostGroup", back_populates="user_usages")

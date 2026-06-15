@@ -38,8 +38,16 @@ class UserGroupUsageResponse(BaseModel):
     group_id: int
     group_name: str
     used_traffic: int
-    traffic_limit: Optional[int] = None
+    traffic_limit: Optional[int] = None      # effective limit (override or group)
+    group_default_limit: Optional[int] = None  # the group's own default
+    limit_override: Optional[int] = None     # per-user override, None if unset
+    limit_source: str = "group"              # "user" | "group" | "unlimited"
     remaining: Optional[int] = None
     over_limit: bool = False
     reset_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserGroupLimitSet(BaseModel):
+    # bytes; 0/None clears the override (fall back to the group default)
+    traffic_limit: Optional[int] = Field(default=None, ge=0)

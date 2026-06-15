@@ -202,7 +202,7 @@ def build_group_context(user) -> Union[dict, None]:
         from app.db.models import UserGroupUsage
         with GetDB() as db:
             usage_rows = {
-                r.group_id: r.used_traffic
+                r.group_id: (r.used_traffic or 0, r.traffic_limit)
                 for r in db.query(UserGroupUsage).filter(
                     UserGroupUsage.user_id == uid
                 ).all()
@@ -212,8 +212,9 @@ def build_group_context(user) -> Union[dict, None]:
 
     group_state = {}
     for gid, m in group_meta.items():
-        used = usage_rows.get(gid, 0) or 0
-        limit = m.get("traffic_limit") or 0
+        used, override = usage_rows.get(gid, (0, None))
+        # per-user override takes precedence over the group default
+        limit = (override if override else m.get("traffic_limit")) or 0
         group_state[gid] = {
             "name": m.get("name"),
             "used": used,

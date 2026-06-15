@@ -1880,3 +1880,17 @@ def reset_user_group_usage(db: Session, user_id: int, group_id: int) -> None:
         row.used_traffic = 0
         row.reset_at = datetime.utcnow()
         db.commit()
+
+
+def set_user_group_limit(db: Session, user_id: int, group_id: int,
+                         traffic_limit: Optional[int]) -> UserGroupUsage:
+    """Set (or clear, with None) a user's per-group limit override. Creates the
+    usage row if it doesn't exist yet."""
+    row = get_user_group_usage(db, user_id, group_id)
+    if not row:
+        row = UserGroupUsage(user_id=user_id, group_id=group_id, used_traffic=0)
+        db.add(row)
+    row.traffic_limit = traffic_limit if traffic_limit else None
+    db.commit()
+    db.refresh(row)
+    return row

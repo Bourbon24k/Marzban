@@ -9,6 +9,7 @@ from app.models.host_group import (
     HostGroupCreate,
     HostGroupModify,
     HostGroupResponse,
+    UserGroupLimitSet,
     UserGroupUsageResponse,
 )
 from app.utils import responses
@@ -22,6 +23,21 @@ router = APIRouter(
 def _require_sudo(admin: Admin):
     if not admin.is_sudo:
         raise HTTPException(status_code=403, detail="You're not allowed")
+
+
+def _check_node_conflicts(db: Session, node_ids, exclude_group_id=None):
+    """A node may meter into only one group (DB-unique). Reject early with 409
+    instead of letting the unique constraint surface as a 500."""
+    if not node_ids:
+        return
+    owners = crud.get_node_group_map(db)  # node_id -> group_id
+    conflict = [nid for nid in node_ids
+                if owners.get(nid) not in (None, exclude_group_id)]
+    if conflict:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Nodes already metered by another group: {conflict}",
+        )
 
 
 def _group_response(g) -> HostGroupResponse:
@@ -41,12 +57,17 @@ def _group_response(g) -> HostGroupResponse:
 def host_candidates(
     db: Session = Depends(get_db), admin: Admin = Depends(Admin.get_current)
 ):
-    """Flat list of hosts (with ids) for the group editor's host picker."""
+    """Flat list of hosts (with ids) for the group editor's host picker.
+    Only hosts whose inbound still exists in the live xray config are returned,
+    so hosts orphaned by a deleted inbound don't linger in the picker."""
+    from app import xray
     from app.db.models import ProxyHost
+    active_tags = set(xray.config.inbounds_by_tag.keys())
     return [
         {"id": h.id, "remark": h.remark, "inbound_tag": h.inbound_tag,
          "address": h.address}
         for h in db.query(ProxyHost).order_by(ProxyHost.inbound_tag, ProxyHost.id).all()
+        if h.inbound_tag in active_tags
     ]
 
 
@@ -68,6 +89,7 @@ def add_host_group(
     _require_sudo(admin)
     if crud.get_host_group_by_name(db, body.name):
         raise HTTPException(status_code=409, detail="Group already exists")
+    _check_node_conflicts(db, body.node_ids)
     return _group_response(crud.create_host_group(db, body))
 
 
@@ -96,6 +118,9 @@ def modify_host_group(
     g = crud.get_host_group(db, group_id)
     if not g:
         raise HTTPException(status_code=404, detail="Group not found")
+    if body.name and body.name != g.name and crud.get_host_group_by_name(db, body.name):
+        raise HTTPException(status_code=409, detail="Group name already exists")
+    _check_node_conflicts(db, body.node_ids, exclude_group_id=group_id)
     return _group_response(crud.update_host_group(db, g, body))
 
 
@@ -129,17 +154,57 @@ def get_user_group_usage(
     for g in groups:
         u = usages.get(g.id)
         used = (u.used_traffic if u else 0) or 0
-        limit = g.traffic_limit or 0
+        override = u.traffic_limit if u else None
+        default = g.traffic_limit or None
+        limit = (override if override else default) or 0
         out.append(UserGroupUsageResponse(
             group_id=g.id,
             group_name=g.name,
             used_traffic=used,
             traffic_limit=limit or None,
+            group_default_limit=default,
+            limit_override=override,
+            limit_source="user" if override else ("group" if default else "unlimited"),
             remaining=max(limit - used, 0) if limit else None,
             over_limit=bool(limit) and used >= limit,
             reset_at=u.reset_at if u else None,
         ))
     return out
+
+
+@router.put("/user/{username}/group/{group_id}",
+            response_model=UserGroupUsageResponse,
+            responses={403: responses._403, 404: responses._404})
+def set_user_group_limit(
+    group_id: int,
+    body: UserGroupLimitSet,
+    dbuser=Depends(get_validated_user),
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Set/clear a user's per-group traffic limit override (bytes; 0/None =
+    fall back to the group default)."""
+    _require_sudo(admin)
+    g = crud.get_host_group(db, group_id)
+    if not g:
+        raise HTTPException(status_code=404, detail="Group not found")
+    row = crud.set_user_group_limit(db, dbuser.id, group_id, body.traffic_limit)
+    used = row.used_traffic or 0
+    override = row.traffic_limit
+    default = g.traffic_limit or None
+    limit = (override if override else default) or 0
+    return UserGroupUsageResponse(
+        group_id=g.id,
+        group_name=g.name,
+        used_traffic=used,
+        traffic_limit=limit or None,
+        group_default_limit=default,
+        limit_override=override,
+        limit_source="user" if override else ("group" if default else "unlimited"),
+        remaining=max(limit - used, 0) if limit else None,
+        over_limit=bool(limit) and used >= limit,
+        reset_at=row.reset_at,
+    )
 
 
 @router.post("/user/{username}/group/{group_id}/reset",

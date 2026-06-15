@@ -286,6 +286,46 @@ export const UserDialog: FC<UserDialogProps> = () => {
       .catch(() => {});
   };
 
+  const GB = 1024 ** 3;
+  type GroupUsage = {
+    group_id: number;
+    group_name: string;
+    used_traffic: number;
+    traffic_limit: number | null;
+    group_default_limit: number | null;
+    limit_override: number | null;
+    limit_source: string;
+  };
+  const [groupUsages, setGroupUsages] = useState<GroupUsage[]>([]);
+  const [groupInputs, setGroupInputs] = useState<Record<number, string>>({});
+  const loadGroupUsages = (username: string) => {
+    fetch(`/user/${username}/group-usage`)
+      .then((data: any) => {
+        const list: GroupUsage[] = data || [];
+        setGroupUsages(list);
+        const inputs: Record<number, string> = {};
+        list.forEach((g) => {
+          inputs[g.group_id] = g.limit_override
+            ? String(Math.round((g.limit_override / GB) * 100) / 100)
+            : "";
+        });
+        setGroupInputs(inputs);
+      })
+      .catch(() => setGroupUsages([]));
+  };
+  const saveGroupLimit = (groupId: number) => {
+    if (!editingUser) return;
+    const raw = groupInputs[groupId];
+    const gb = parseFloat(raw);
+    const traffic_limit = raw && !isNaN(gb) ? Math.round(gb * GB) : 0;
+    fetch(`/user/${editingUser.username}/group/${groupId}`, {
+      method: "PUT",
+      body: { traffic_limit },
+    })
+      .then(() => loadGroupUsages(editingUser.username))
+      .catch(() => {});
+  };
+
   const form = useForm<FormType>({
     defaultValues: getDefaultValues(),
     resolver: zodResolver(schema),
@@ -331,8 +371,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
       });
 
       loadDevices(editingUser.username);
+      loadGroupUsages(editingUser.username);
     } else {
       setDevices([]);
+      setGroupUsages([]);
     }
   }, [editingUser]);
 
@@ -766,6 +808,71 @@ export const UserDialog: FC<UserDialogProps> = () => {
                               })}
                             </VStack>
                           )}
+                        </FormControl>
+                      )}
+
+                      {isEditing && groupUsages.length > 0 && (
+                        <FormControl mb={"10px"}>
+                          <FormLabel>{t("userDialog.groupLimits")}</FormLabel>
+                          <VStack align="stretch" spacing="6px">
+                            {groupUsages.map((g) => {
+                              const usedGb =
+                                Math.round((g.used_traffic / (1024 ** 3)) * 100) / 100;
+                              const limitGb = g.traffic_limit
+                                ? Math.round((g.traffic_limit / (1024 ** 3)) * 100) / 100
+                                : null;
+                              return (
+                                <Box
+                                  key={g.group_id}
+                                  borderWidth="1px"
+                                  borderRadius="6px"
+                                  px="10px"
+                                  py="8px"
+                                >
+                                  <HStack justify="space-between" mb="4px">
+                                    <Text fontSize="sm" fontWeight="600">
+                                      {g.group_name}
+                                    </Text>
+                                    <Text fontSize="11px" color="gray.500">
+                                      {usedGb} / {limitGb ?? "∞"} ГБ
+                                      {g.limit_source === "user" && (
+                                        <Badge ml="6px" colorScheme="purple" fontSize="9px">
+                                          {t("userDialog.groupOverride")}
+                                        </Badge>
+                                      )}
+                                    </Text>
+                                  </HStack>
+                                  <HStack>
+                                    <Input
+                                      size="xs"
+                                      type="number"
+                                      placeholder={
+                                        g.group_default_limit
+                                          ? `${Math.round((g.group_default_limit / (1024 ** 3)) * 100) / 100} (по умолч.)`
+                                          : "0 = безлимит"
+                                      }
+                                      value={groupInputs[g.group_id] ?? ""}
+                                      onChange={(e) =>
+                                        setGroupInputs((prev) => ({
+                                          ...prev,
+                                          [g.group_id]: e.target.value,
+                                        }))
+                                      }
+                                    />
+                                    <Button
+                                      size="xs"
+                                      onClick={() => saveGroupLimit(g.group_id)}
+                                    >
+                                      {t("userDialog.groupSetLimit")}
+                                    </Button>
+                                  </HStack>
+                                </Box>
+                              );
+                            })}
+                          </VStack>
+                          <Text fontSize="10px" color="gray.500" mt="4px">
+                            {t("userDialog.groupLimitsHint")}
+                          </Text>
                         </FormControl>
                       )}
 
