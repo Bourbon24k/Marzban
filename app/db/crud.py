@@ -558,6 +558,52 @@ def get_user_devices(db: Session, user_id: int) -> List[UserDevice]:
         .order_by(UserDevice.last_seen.desc()).all()
 
 
+def get_device_stats(db: Session) -> dict:
+    """Aggregate device metrics for the dashboard."""
+    not_revoked = or_(UserDevice.status.is_(None), UserDevice.status != "revoked")
+
+    total = db.query(func.count(UserDevice.id)).scalar() or 0
+    active = db.query(func.count(UserDevice.id)).filter(not_revoked).scalar() or 0
+
+    by_platform = (
+        db.query(func.coalesce(UserDevice.platform, "unknown"), func.count(UserDevice.id))
+        .filter(not_revoked)
+        .group_by(UserDevice.platform)
+        .all()
+    )
+
+    users_with_limit = db.query(func.count(User.id)).filter(
+        User.device_limit.isnot(None), User.device_limit > 0
+    ).scalar() or 0
+
+    # users whose active device count exceeds their limit
+    counts = (
+        db.query(UserDevice.user_id.label("uid"), func.count(UserDevice.id).label("cnt"))
+        .filter(not_revoked)
+        .group_by(UserDevice.user_id)
+        .subquery()
+    )
+    users_over_limit = db.query(func.count(User.id)).join(
+        counts, counts.c.uid == User.id
+    ).filter(
+        User.device_limit.isnot(None),
+        User.device_limit > 0,
+        counts.c.cnt > User.device_limit,
+    ).scalar() or 0
+
+    return {
+        "total_devices": total,
+        "active_devices": active,
+        "revoked_devices": max(total - active, 0),
+        "users_with_limit": users_with_limit,
+        "users_over_limit": users_over_limit,
+        "by_platform": [
+            {"platform": p or "unknown", "count": c}
+            for p, c in sorted(by_platform, key=lambda x: -x[1])
+        ],
+    }
+
+
 # Pseudo-HWID used to track clients that don't send an x-hwid header
 # (e.g. v2rayNG). They are fingerprinted by user-agent instead, so a single
 # UA-less device still occupies one slot rather than bypassing the limit.

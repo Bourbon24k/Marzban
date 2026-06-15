@@ -1,6 +1,7 @@
 import { Box, VStack } from "@chakra-ui/react";
 import { CoreSettingsModal } from "components/CoreSettingsModal";
 import { DeleteUserModal } from "components/DeleteUserModal";
+import { DeviceStats } from "components/DeviceStats";
 import { Filters } from "components/Filters";
 import { Footer } from "components/Footer";
 import { Header } from "components/Header";
@@ -27,6 +28,7 @@ export const Dashboard: FC = () => {
       <Box w="full">
         <Header />
         <Statistics mt="4" />
+        <DeviceStats mt="4" />
         <Filters />
         <UsersTable />
         <UserDialog />

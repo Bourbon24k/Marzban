@@ -6,7 +6,7 @@ from app import __version__, xray
 from app.db import Session, crud, get_db
 from app.models.admin import Admin
 from app.models.proxy import ProxyHost, ProxyInbound, ProxyTypes
-from app.models.system import SystemStats
+from app.models.system import DeviceStats, SystemStats
 from app.models.user import UserStatus
 from app.utils import responses
 from app.utils.system import cpu_usage, memory_usage, realtime_bandwidth
@@ -61,6 +61,14 @@ def get_system_stats(
         incoming_bandwidth_speed=realtime_bandwidth_stats.incoming_bytes,
         outgoing_bandwidth_speed=realtime_bandwidth_stats.outgoing_bytes,
     )
+
+
+@router.get("/system/devices", response_model=DeviceStats)
+def get_device_stats(
+    db: Session = Depends(get_db), admin: Admin = Depends(Admin.get_current)
+):
+    """Aggregate HWID device metrics for the dashboard."""
+    return crud.get_device_stats(db)
 
 
 @router.get("/inbounds", response_model=Dict[ProxyTypes, List[ProxyInbound]])

@@ -22,7 +22,7 @@ import { FC, Suspense, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon";
-import { UsageFilter, createUsageConfig } from "./UsageFilter";
+import { UsageFilter, createBarUsageConfig } from "./UsageFilter";
 
 const UsageIcon = chakra(ChartPieIcon, {
   baseStyle: {
@@ -41,7 +41,7 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
   const { colorMode } = useColorMode();
 
   const usageTitle = t("userDialog.total");
-  const [usage, setUsage] = useState(createUsageConfig(colorMode, usageTitle));
+  const [usage, setUsage] = useState(createBarUsageConfig(colorMode, usageTitle));
   const [usageFilter, setUsageFilter] = useState("1m");
   const fetchUsageWithFilter = (query: FilterUsageType) => {
     fetchNodesUsage(query).then((data: any) => {
@@ -52,7 +52,7 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
         series.push(entry.uplink + entry.downlink);
         labels.push(entry.node_name);
       }
-      setUsage(createUsageConfig(colorMode, usageTitle, series, labels));
+      setUsage(createBarUsageConfig(colorMode, usageTitle, series, labels));
     });
   };
 
@@ -95,13 +95,13 @@ export const NodesUsage: FC<NodesUsageProps> = () => {
                 fetchUsageWithFilter(query);
               }}
             />
-            <Box justifySelf="center" w="full" maxW="300px" mt="4">
+            <Box justifySelf="center" w="full" mt="4">
               <Suspense fallback={<CircularProgress isIndeterminate />}>
                 <ReactApexChart
                   options={usage.options}
                   series={usage.series}
-                  type="donut"
-                  height="500px"
+                  type="bar"
+                  height="450px"
                 />
               </Suspense>
             </Box>

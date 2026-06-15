@@ -1,7 +1,10 @@
-import { Box, BoxProps, Card, chakra, HStack, Text } from "@chakra-ui/react";
+import { Box, BoxProps, Card, chakra, HStack, SimpleGrid, Text } from "@chakra-ui/react";
 import {
+  BoltIcon,
   ChartBarIcon,
   ChartPieIcon,
+  CpuChipIcon,
+  SignalIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import { useDashboard } from "contexts/DashboardContext";
@@ -36,6 +39,18 @@ const MemoryIcon = chakra(ChartPieIcon, {
     position: "relative",
     zIndex: "2",
   },
+});
+
+const OnlineIcon = chakra(SignalIcon, {
+  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
+});
+
+const CpuIcon = chakra(CpuChipIcon, {
+  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
+});
+
+const SpeedIcon = chakra(BoltIcon, {
+  baseStyle: { w: 5, h: 5, position: "relative", zIndex: "2" },
 });
 
 type StatisticCardProps = {
@@ -130,13 +145,9 @@ export const Statistics: FC<BoxProps> = (props) => {
   });
   const { t } = useTranslation();
   return (
-    <HStack
-      justifyContent="space-between"
-      gap={0}
-      columnGap={{ lg: 4, md: 0 }}
-      rowGap={{ lg: 0, base: 4 }}
-      display="flex"
-      flexDirection={{ lg: "row", base: "column" }}
+    <SimpleGrid
+      columns={{ base: 1, sm: 2, lg: 3 }}
+      gap={4}
       {...props}
     >
       <StatisticCard
@@ -160,6 +171,11 @@ export const Statistics: FC<BoxProps> = (props) => {
         icon={<TotalUsersIcon />}
       />
       <StatisticCard
+        title={t("onlineUsers")}
+        content={systemData && numberWithCommas(systemData.online_users)}
+        icon={<OnlineIcon />}
+      />
+      <StatisticCard
         title={t("dataUsage")}
         content={
           systemData &&
@@ -168,6 +184,46 @@ export const Statistics: FC<BoxProps> = (props) => {
           )
         }
         icon={<NetworkIcon />}
+      />
+      <StatisticCard
+        title={t("liveSpeed")}
+        content={
+          systemData && (
+            <HStack alignItems="flex-end" fontSize="xl">
+              <Text>↓ {formatBytes(systemData.incoming_bandwidth_speed, 1)}/s</Text>
+              <Text
+                fontWeight="normal"
+                fontSize="md"
+                as="span"
+                pb="2px"
+                color="gray.500"
+              >
+                ↑ {formatBytes(systemData.outgoing_bandwidth_speed, 1)}/s
+              </Text>
+            </HStack>
+          )
+        }
+        icon={<SpeedIcon />}
+      />
+      <StatisticCard
+        title={t("cpuUsage")}
+        content={
+          systemData && (
+            <HStack alignItems="flex-end">
+              <Text>{Math.round(systemData.cpu_usage)}%</Text>
+              <Text
+                fontWeight="normal"
+                fontSize="lg"
+                as="span"
+                display="inline-block"
+                pb="5px"
+              >
+                / {systemData.cpu_cores} {t("cores")}
+              </Text>
+            </HStack>
+          )
+        }
+        icon={<CpuIcon />}
       />
       <StatisticCard
         title={t("memoryUsage")}
@@ -190,6 +246,6 @@ export const Statistics: FC<BoxProps> = (props) => {
         }
         icon={<MemoryIcon />}
       />
-    </HStack>
+    </SimpleGrid>
   );
 };
