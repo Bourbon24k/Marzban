@@ -388,6 +388,59 @@ class NodeUsage(Base):
     downlink = Column(BigInteger, default=0)
 
 
+# --- YUKU host traffic groups (per-user limit on a group of hosts/nodes) -----
+
+host_group_hosts = Table(
+    "host_group_hosts",
+    Base.metadata,
+    Column("group_id", ForeignKey("host_groups.id", ondelete="CASCADE"), primary_key=True),
+    Column("host_id", ForeignKey("hosts.id", ondelete="CASCADE"), primary_key=True),
+)
+
+host_group_nodes = Table(
+    "host_group_nodes",
+    Base.metadata,
+    Column("group_id", ForeignKey("host_groups.id", ondelete="CASCADE"), primary_key=True),
+    # unique: a node meters into at most one group
+    Column("node_id", ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True, unique=True),
+)
+
+
+class HostGroup(Base):
+    __tablename__ = "host_groups"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), unique=True, nullable=False)
+    # per-user limit in bytes; 0/NULL = unlimited (still tracked & shown)
+    traffic_limit = Column(BigInteger, nullable=True)
+    reset_strategy = Column(String(16), nullable=False, default="no_reset",
+                            server_default="no_reset")
+    notice_text = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    hosts = relationship("ProxyHost", secondary=host_group_hosts, lazy="selectin")
+    nodes = relationship("Node", secondary=host_group_nodes, lazy="selectin")
+    user_usages = relationship("UserGroupUsage", back_populates="group",
+                               cascade="all, delete-orphan")
+
+
+class UserGroupUsage(Base):
+    __tablename__ = "user_group_usage"
+    __table_args__ = (
+        UniqueConstraint("user_id", "group_id", name="uq_user_group_usage"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"),
+                     nullable=False, index=True)
+    group_id = Column(Integer, ForeignKey("host_groups.id", ondelete="CASCADE"),
+                      nullable=False, index=True)
+    used_traffic = Column(BigInteger, nullable=False, default=0, server_default="0")
+    reset_at = Column(DateTime, nullable=True)
+
+    group = relationship("HostGroup", back_populates="user_usages")
+
+
 class NotificationReminder(Base):
     __tablename__ = "notification_reminders"
 

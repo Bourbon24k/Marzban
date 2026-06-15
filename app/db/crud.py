@@ -16,6 +16,7 @@ from app.db.models import (
     TLS,
     Admin,
     AdminUsageLogs,
+    HostGroup,
     NextPlan,
     Node,
     NodeUsage,
@@ -28,11 +29,13 @@ from app.db.models import (
     System,
     User,
     UserDevice,
+    UserGroupUsage,
     UserTemplate,
     UserUsageResetLogs,
     YukuSetting,
 )
 from app.models.admin import AdminCreate, AdminModify, AdminPartialModify
+from app.models.host_group import HostGroupCreate, HostGroupModify
 from app.models.node import NodeCreate, NodeModify, NodeStatus, NodeUsageResponse
 from app.models.proxy import ProxyHost as ProxyHostModify
 from app.models.user import (
@@ -1737,3 +1740,97 @@ def count_online_users(db: Session, hours: int = 24):
     query = db.query(func.count(User.id)).filter(User.online_at.isnot(
         None), User.online_at >= twenty_four_hours_ago)
     return query.scalar()
+
+
+# --- YUKU host traffic groups -------------------------------------------------
+
+def get_host_groups(db: Session) -> List[HostGroup]:
+    return db.query(HostGroup).order_by(HostGroup.name).all()
+
+
+def get_host_group(db: Session, group_id: int) -> Optional[HostGroup]:
+    return db.query(HostGroup).filter(HostGroup.id == group_id).first()
+
+
+def get_host_group_by_name(db: Session, name: str) -> Optional[HostGroup]:
+    return db.query(HostGroup).filter(HostGroup.name == name).first()
+
+
+def _apply_group_members(db: Session, group: HostGroup,
+                         host_ids: Optional[List[int]],
+                         node_ids: Optional[List[int]]) -> None:
+    if host_ids is not None:
+        group.hosts = (
+            db.query(ProxyHost).filter(ProxyHost.id.in_(host_ids)).all()
+            if host_ids else []
+        )
+    if node_ids is not None:
+        group.nodes = (
+            db.query(Node).filter(Node.id.in_(node_ids)).all()
+            if node_ids else []
+        )
+
+
+def create_host_group(db: Session, group: HostGroupCreate) -> HostGroup:
+    dbgroup = HostGroup(
+        name=group.name,
+        traffic_limit=group.traffic_limit or None,
+        reset_strategy=group.reset_strategy or "no_reset",
+        notice_text=group.notice_text,
+    )
+    db.add(dbgroup)
+    db.flush()
+    _apply_group_members(db, dbgroup, group.host_ids, group.node_ids)
+    db.commit()
+    db.refresh(dbgroup)
+    return dbgroup
+
+
+def update_host_group(db: Session, dbgroup: HostGroup,
+                      modify: HostGroupModify) -> HostGroup:
+    if modify.name is not None:
+        dbgroup.name = modify.name
+    if modify.traffic_limit is not None:
+        dbgroup.traffic_limit = modify.traffic_limit or None
+    if modify.reset_strategy is not None:
+        dbgroup.reset_strategy = modify.reset_strategy
+    if modify.notice_text is not None:
+        dbgroup.notice_text = modify.notice_text
+    _apply_group_members(db, dbgroup, modify.host_ids, modify.node_ids)
+    db.commit()
+    db.refresh(dbgroup)
+    return dbgroup
+
+
+def remove_host_group(db: Session, dbgroup: HostGroup) -> None:
+    db.delete(dbgroup)
+    db.commit()
+
+
+def get_node_group_map(db: Session) -> dict:
+    """node_id -> group_id, for attributing node usage to a group. Empty when no
+    groups exist (the accounting step then becomes a no-op)."""
+    rows = db.query(HostGroup.id, Node.id).join(HostGroup.nodes).all()
+    return {node_id: group_id for group_id, node_id in rows}
+
+
+def get_user_group_usage(db: Session, user_id: int,
+                         group_id: int) -> Optional[UserGroupUsage]:
+    return db.query(UserGroupUsage).filter(
+        UserGroupUsage.user_id == user_id,
+        UserGroupUsage.group_id == group_id,
+    ).first()
+
+
+def get_user_group_usages(db: Session, user_id: int) -> List[UserGroupUsage]:
+    return db.query(UserGroupUsage).filter(
+        UserGroupUsage.user_id == user_id
+    ).all()
+
+
+def reset_user_group_usage(db: Session, user_id: int, group_id: int) -> None:
+    row = get_user_group_usage(db, user_id, group_id)
+    if row:
+        row.used_traffic = 0
+        row.reset_at = datetime.utcnow()
+        db.commit()
