@@ -5,15 +5,17 @@ from operator import attrgetter
 from typing import Union
 
 from pymysql.err import OperationalError
-from sqlalchemy import and_, bindparam, insert, select, update
+from sqlalchemy import and_, bindparam, insert, or_, select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Insert
 
-from app import scheduler, xray
+from app import logger, scheduler, xray
 from app.db import GetDB, crud
-from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User, UserGroupUsage
+from app.db.models import (Admin, HostGroup, NodeUsage, NodeUserUsage, System,
+                           User, UserGroupUsage)
 from config import (
     DISABLE_RECORDING_NODE_USAGE,
+    GROUP_LIMIT_HARD_ENFORCE,
     JOB_RECORD_NODE_USAGES_INTERVAL,
     JOB_RECORD_USER_USAGES_INTERVAL,
 )
@@ -183,6 +185,14 @@ def record_user_usages():
     # Inert (early return) until at least one group maps a node.
     record_group_usages(api_params, usage_coefficient)
 
+    # hard-enforce group limits (cut off over-limit members). Best-effort: never
+    # let an enforcement hiccup break usage recording / billing.
+    if GROUP_LIMIT_HARD_ENFORCE:
+        try:
+            enforce_group_limits()
+        except Exception as e:
+            logger.warning(f"group limit enforcement skipped: {e}")
+
     if DISABLE_RECORDING_NODE_USAGE:
         return
 
@@ -247,6 +257,74 @@ def record_group_usages(api_params: dict, usage_coefficient: dict):
             UserGroupUsage.group_id == bindparam('g'),
         ))
         safe_execute(db, upd, upd_params)
+
+
+def enforce_group_limits():
+    """Cut off / re-add members based on their host-group traffic limit.
+
+    Runs every recording cycle. A member over their effective limit is removed
+    from the group's inbounds (re-applied each cycle, so a node restart that
+    silently re-adds them is self-healed within one cycle). When they drop back
+    under the limit (reset / limit raised / membership removed) they're re-added.
+    Enforcement is scoped per inbound-tag per group node (+ master if metered),
+    so other countries stay working. Note: enforcement granularity is the
+    inbound tag — hosts that share a tag on the same node are cut together.
+    """
+    with GetDB() as db:
+        groups = {}
+        for g in db.query(HostGroup).all():
+            groups[g.id] = {
+                "limit": g.traffic_limit or 0,
+                "include_master": bool(g.include_master),
+                "tags": {h.inbound_tag for h in g.hosts},
+                "node_ids": [n.id for n in g.nodes],
+            }
+        if not groups:
+            return
+
+        # only rows that could need action: current members or anyone still
+        # marked enforced (so we always know to lift a stale block)
+        rows = db.query(UserGroupUsage).filter(
+            or_(UserGroupUsage.member.is_(True),
+                UserGroupUsage.enforced.is_(True))
+        ).all()
+
+        actions = []  # (row, "block"|"unblock", group_meta)
+        for r in rows:
+            g = groups.get(r.group_id)
+            if not g:
+                continue
+            limit = (r.traffic_limit if r.traffic_limit else g["limit"]) or 0
+            used = r.used_traffic or 0
+            over = bool(limit) and r.member and used >= limit
+            if over:
+                actions.append((r, "block", g))
+            elif r.enforced:
+                actions.append((r, "unblock", g))
+        if not actions:
+            return
+
+        uids = {r.user_id for r, _, _ in actions}
+        users = {u.id: u for u in db.query(User).filter(User.id.in_(uids)).all()}
+
+        changed = False
+        for r, action, g in actions:
+            u = users.get(r.user_id)
+            if not u:
+                continue
+            if action == "block":
+                xray.operations.block_user_group(
+                    u, g["tags"], g["node_ids"], g["include_master"])
+                if not r.enforced:
+                    r.enforced = True
+                    changed = True
+            else:
+                xray.operations.unblock_user_group(
+                    u, g["tags"], g["node_ids"], g["include_master"])
+                r.enforced = False
+                changed = True
+        if changed:
+            db.commit()
 
 
 def record_node_usages():

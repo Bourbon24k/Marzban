@@ -141,6 +141,13 @@ XRAY_THREAD_POOL_SIZE = config("XRAY_THREAD_POOL_SIZE", cast=int, default=20)
 # so tracking every user — incl. unlimited — doesn't hammer SQLite's writer.
 DEVICE_TOUCH_DEBOUNCE_SECONDS = config("DEVICE_TOUCH_DEBOUNCE_SECONDS", cast=int, default=600)
 
+# YUKU host-group limits: when True, a member who exceeds a group's traffic
+# limit is actively cut off from that group's inbounds (xray remove_inbound_user
+# on the group's nodes / master), like the normal traffic limit — instant, can't
+# be bypassed by not refreshing the subscription. The soft notice still shows.
+# Set to False to fall back to notice-only (soft) enforcement.
+GROUP_LIMIT_HARD_ENFORCE = config("GROUP_LIMIT_HARD_ENFORCE", cast=bool, default=True)
+
 # headers: profile-update-interval, support-url, profile-title
 SUB_UPDATE_INTERVAL = config("SUB_UPDATE_INTERVAL", default="12")
 SUB_SUPPORT_URL = config("SUB_SUPPORT_URL", default="https://t.me/")

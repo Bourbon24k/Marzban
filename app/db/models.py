@@ -442,6 +442,9 @@ class UserGroupUsage(Base):
     traffic_limit = Column(BigInteger, nullable=True)
     # only members see the limit / get enforced; non-members are untouched
     member = Column(Boolean, nullable=False, default=False, server_default=text("0"))
+    # True while the user is actively cut off from the group's inbounds for
+    # exceeding the group limit (so we know when to re-add them)
+    enforced = Column(Boolean, nullable=False, default=False, server_default=text("0"))
     reset_at = Column(DateTime, nullable=True)
 
     group = relationship("HostGroup", back_populates="user_usages")
