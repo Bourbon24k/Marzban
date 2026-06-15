@@ -18,9 +18,23 @@ export const theme = extendTheme({
       800: "#284ea0",
       900: "#224389",
     },
+    // YUKU: near-black dark theme. Light/mid grays (300-500, used for text) are
+    // left as Chakra defaults; only the elevated/background/border shades are
+    // pushed toward black.
     gray: {
-      750: "#222C3B",
+      600: "#2a2a2e", // borders in dark mode
+      700: "#161618", // modals, menus, popovers
+      750: "#121214", // cards, table headers, elevated panels
+      800: "#0b0b0d", // body background
+      900: "#050506", // deepest
     },
+  },
+  styles: {
+    global: (props: { colorMode: string }) => ({
+      body: {
+        bg: props.colorMode === "dark" ? "#0b0b0d" : undefined,
+      },
+    }),
   },
   components: {
     Alert: {
