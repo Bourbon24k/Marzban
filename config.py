@@ -147,6 +147,11 @@ DEVICE_TOUCH_DEBOUNCE_SECONDS = config("DEVICE_TOUCH_DEBOUNCE_SECONDS", cast=int
 # be bypassed by not refreshing the subscription. The soft notice still shows.
 # Set to False to fall back to notice-only (soft) enforcement.
 GROUP_LIMIT_HARD_ENFORCE = config("GROUP_LIMIT_HARD_ENFORCE", cast=bool, default=True)
+# how often the hard enforcement pass runs (its own job, not the 10s usage loop).
+# Hourly keeps xray churn low; the trade-off is up to this many seconds before a
+# fresh over-limit cut / a node-restart re-add gets (re)applied.
+JOB_ENFORCE_GROUP_LIMITS_INTERVAL = config(
+    "JOB_ENFORCE_GROUP_LIMITS_INTERVAL", cast=int, default=3600)
 
 # headers: profile-update-interval, support-url, profile-title
 SUB_UPDATE_INTERVAL = config("SUB_UPDATE_INTERVAL", default="12")

@@ -16,6 +16,7 @@ from app.db.models import (Admin, HostGroup, NodeUsage, NodeUserUsage, System,
 from config import (
     DISABLE_RECORDING_NODE_USAGE,
     GROUP_LIMIT_HARD_ENFORCE,
+    JOB_ENFORCE_GROUP_LIMITS_INTERVAL,
     JOB_RECORD_NODE_USAGES_INTERVAL,
     JOB_RECORD_USER_USAGES_INTERVAL,
 )
@@ -185,14 +186,6 @@ def record_user_usages():
     # Inert (early return) until at least one group maps a node.
     record_group_usages(api_params, usage_coefficient)
 
-    # hard-enforce group limits (cut off over-limit members). Best-effort: never
-    # let an enforcement hiccup break usage recording / billing.
-    if GROUP_LIMIT_HARD_ENFORCE:
-        try:
-            enforce_group_limits()
-        except Exception as e:
-            logger.warning(f"group limit enforcement skipped: {e}")
-
     if DISABLE_RECORDING_NODE_USAGE:
         return
 
@@ -327,6 +320,16 @@ def enforce_group_limits():
             db.commit()
 
 
+def enforce_group_limits_job():
+    """Scheduled wrapper: best-effort, never let an enforcement hiccup escape."""
+    if not GROUP_LIMIT_HARD_ENFORCE:
+        return
+    try:
+        enforce_group_limits()
+    except Exception as e:
+        logger.warning(f"group limit enforcement skipped: {e}")
+
+
 def record_node_usages():
     api_instances = {None: xray.api}
     for node_id, node in list(xray.nodes.items()):
@@ -366,4 +369,7 @@ scheduler.add_job(record_user_usages, 'interval',
                   coalesce=True, max_instances=1)
 scheduler.add_job(record_node_usages, 'interval',
                   seconds=JOB_RECORD_NODE_USAGES_INTERVAL,
+                  coalesce=True, max_instances=1)
+scheduler.add_job(enforce_group_limits_job, 'interval',
+                  seconds=JOB_ENFORCE_GROUP_LIMITS_INTERVAL,
                   coalesce=True, max_instances=1)
