@@ -631,6 +631,20 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                     <div className="flex-status">
                       <OnlineBadge lastOnline={user.online_at} />
                       {user.username}
+                      <Text
+                        as="span"
+                        fontSize="xs"
+                        color="gray.500"
+                        whiteSpace="nowrap"
+                        flexShrink={0}
+                        title="devices"
+                      >
+                        📱
+                        {user.device_count ?? 0}
+                        {(user.device_limit ?? 0) > 0
+                          ? "/" + user.device_limit
+                          : ""}
+                      </Text>
                       <OnlineStatus lastOnline={user.online_at} />
                     </div>
                   </Td>
