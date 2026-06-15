@@ -131,6 +131,11 @@ NOTIFY_DAYS_LEFT = config(
 
 DISABLE_RECORDING_NODE_USAGE = config("DISABLE_RECORDING_NODE_USAGE", cast=bool, default=False)
 
+# YUKU perf: bounded global thread pool for xray ops (add/remove/update user,
+# node mgmt) instead of spawning an unbounded Thread per call. Keeps RAM/threads
+# sane on small VPS. Must comfortably exceed (nodes + concurrent user ops).
+XRAY_THREAD_POOL_SIZE = config("XRAY_THREAD_POOL_SIZE", cast=int, default=20)
+
 # headers: profile-update-interval, support-url, profile-title
 SUB_UPDATE_INTERVAL = config("SUB_UPDATE_INTERVAL", default="12")
 SUB_SUPPORT_URL = config("SUB_SUPPORT_URL", default="https://t.me/")
