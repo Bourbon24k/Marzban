@@ -136,6 +136,11 @@ DISABLE_RECORDING_NODE_USAGE = config("DISABLE_RECORDING_NODE_USAGE", cast=bool,
 # sane on small VPS. Must comfortably exceed (nodes + concurrent user ops).
 XRAY_THREAD_POOL_SIZE = config("XRAY_THREAD_POOL_SIZE", cast=int, default=20)
 
+# YUKU device-limit: debounce last_seen writes on the /sub hot path. A known
+# device that refreshes more often than this is served read-only (no DB write),
+# so tracking every user — incl. unlimited — doesn't hammer SQLite's writer.
+DEVICE_TOUCH_DEBOUNCE_SECONDS = config("DEVICE_TOUCH_DEBOUNCE_SECONDS", cast=int, default=600)
+
 # headers: profile-update-interval, support-url, profile-title
 SUB_UPDATE_INTERVAL = config("SUB_UPDATE_INTERVAL", default="12")
 SUB_SUPPORT_URL = config("SUB_SUPPORT_URL", default="https://t.me/")

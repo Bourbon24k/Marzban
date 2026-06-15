@@ -46,7 +46,12 @@ from app.models.user import (
 )
 from app.models.user_template import UserTemplateCreate, UserTemplateModify
 from app.utils.helpers import calculate_expiration_days, calculate_usage_percent
-from config import NOTIFY_DAYS_LEFT, NOTIFY_REACHED_USAGE_PERCENT, USERS_AUTODELETE_DAYS
+from config import (
+    DEVICE_TOUCH_DEBOUNCE_SECONDS,
+    NOTIFY_DAYS_LEFT,
+    NOTIFY_REACHED_USAGE_PERCENT,
+    USERS_AUTODELETE_DAYS,
+)
 
 
 def add_default_host(db: Session, inbound: ProxyInbound):
@@ -640,10 +645,11 @@ def register_user_device(db: Session, dbuser, hwid: Optional[str],
         device = get_user_device(db, dbuser.id, UNKNOWN_HWID)
         if device:
             if _unknown_user_agents_match(device.user_agent, user_agent):
-                _touch_device_metadata(device, platform, os_version, device_model, user_agent)
-                if device.status == "revoked":
+                reactivated = device.status == "revoked"
+                if reactivated:
                     device.status = "active"
-                db.commit()
+                _touch_device_if_stale(db, device, platform, os_version,
+                                       device_model, user_agent, force=reactivated)
                 return True, False
             # a different UA-less client — can't fingerprint it, leave untracked
             return False, True
@@ -655,14 +661,18 @@ def register_user_device(db: Session, dbuser, hwid: Optional[str],
     # --- normal HWID clients ---
     device = get_user_device(db, dbuser.id, hwid)
     if device:
-        _touch_device_metadata(device, platform, os_version, device_model, user_agent)
         if device.status == "revoked":
             # re-activating a revoked device must respect the limit
             if limit and count_user_devices(db, dbuser.id) >= limit:
-                db.commit()  # keep the metadata refresh, stay revoked
+                _touch_device_if_stale(db, device, platform, os_version,
+                                       device_model, user_agent)  # stay revoked
                 return False, False
             device.status = "active"
-        db.commit()
+            _touch_device_if_stale(db, device, platform, os_version,
+                                   device_model, user_agent, force=True)
+            return True, False
+        _touch_device_if_stale(db, device, platform, os_version,
+                               device_model, user_agent)
         return True, False
 
     if limit and count_user_devices(db, dbuser.id) >= limit:
@@ -670,6 +680,29 @@ def register_user_device(db: Session, dbuser, hwid: Optional[str],
 
     return _insert_device(db, dbuser.id, hwid, platform,
                           os_version, device_model, user_agent), False
+
+
+def _touch_device_if_stale(db: Session, device: UserDevice, platform: str = None,
+                           os_version: str = None, device_model: str = None,
+                           user_agent: str = None, force: bool = False) -> None:
+    """Refresh last_seen/metadata, but skip the write entirely if the device was
+    seen recently and nothing new was learned. Keeps the /sub hot path read-only
+    on repeat refreshes (debounced by DEVICE_TOUCH_DEBOUNCE_SECONDS)."""
+    now = datetime.utcnow()
+    stale = (
+        device.last_seen is None
+        or (now - device.last_seen) >= timedelta(seconds=DEVICE_TOUCH_DEBOUNCE_SECONDS)
+    )
+    new_meta = (
+        (platform and platform != device.platform)
+        or (os_version and os_version != device.os_version)
+        or (device_model and device_model != device.device_model)
+        or (user_agent and user_agent != device.user_agent)
+    )
+    if not (force or stale or new_meta):
+        return  # fast path: no DB write on this refresh
+    _touch_device_metadata(device, platform, os_version, device_model, user_agent)
+    db.commit()
 
 
 def _insert_device(db: Session, user_id: int, hwid: str, platform: str = None,

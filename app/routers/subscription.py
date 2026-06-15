@@ -114,17 +114,13 @@ def enforce_device_limit(db: Session, dbuser, request: Request, user_agent: str)
     distinct UA-less clients can't be told apart and are let through.
     device_limit of 0/None means unlimited.
     """
-    # Only enforce for users who would otherwise get real servers.
+    # Only track/enforce for users who would otherwise get real servers.
     if dbuser.status not in (UserStatus.active, UserStatus.on_hold):
         return False
 
-    # Unlimited users (device_limit 0/None — the default) are NOT tracked. This
-    # keeps the high-traffic /sub hot path read-only for the vast majority of
-    # users; without it every subscription refresh wrote a device row and
-    # hammered SQLite's single writer ("database is locked").
-    if not (dbuser.device_limit or 0):
-        return False
-
+    # All users are tracked (incl. unlimited, for visibility in panel/bots), but
+    # last_seen writes are debounced in crud.register_user_device so repeat /sub
+    # refreshes stay read-only — that, plus WAL, keeps SQLite's writer calm.
     hwid = request.headers.get("x-hwid")
     platform = request.headers.get("x-device-os")
     os_version = request.headers.get("x-ver-os")
