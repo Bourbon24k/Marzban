@@ -524,15 +524,20 @@ def process_inbounds_and_tags(
                 if group_over:
                     gid_over = group_ctx["host_group_map"].get(host.get("id"))
                     if gid_over in _noticed_groups:
-                        # already added one notice for this group — skip all other hosts
+                        # already added the notice for this group — skip all other hosts
                         continue
                     _noticed_groups.add(gid_over)
-                    conf.add(
-                        remark=group_notice.format_map(format_variables),
-                        address="127.0.0.1",
-                        inbound=host_inbound,
-                        settings=settings.model_dump()
-                    )
+                    # multi-line notice -> one fake server per line (the client shows
+                    # only the first line of a single entry's name otherwise)
+                    notice_lines = [ln for ln in group_notice.split("\n") if ln.strip()] \
+                        or [group_notice]
+                    for line in notice_lines:
+                        conf.add(
+                            remark=line.format_map(format_variables),
+                            address="127.0.0.1",
+                            inbound=host_inbound,
+                            settings=settings.model_dump()
+                        )
                 else:
                     conf.add(
                         remark=host["remark"].format_map(format_variables) + group_label,
