@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Insert
 
 from app import scheduler, xray
-from app.db import GetDB
-from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User
+from app.db import GetDB, crud
+from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User, UserGroupUsage
 from config import (
     DISABLE_RECORDING_NODE_USAGE,
     JOB_RECORD_NODE_USAGES_INTERVAL,
@@ -179,11 +179,74 @@ def record_user_usages():
                 values(users_usage=Admin.users_usage + bindparam('value'))
             safe_execute(db, admin_update_stmt, admin_data)
 
+    # host traffic groups: attribute per-node usage to the user's group counter.
+    # Inert (early return) until at least one group maps a node.
+    record_group_usages(api_params, usage_coefficient)
+
     if DISABLE_RECORDING_NODE_USAGE:
         return
 
     for node_id, params in api_params.items():
         record_user_stats(params, node_id, usage_coefficient[node_id])
+
+
+def record_group_usages(api_params: dict, usage_coefficient: dict):
+    """Add each user's per-node traffic to user_group_usage for the group that
+    owns the node. No groups -> no-op (node->group map is empty)."""
+    with GetDB() as db:
+        node_group_map = crud.get_node_group_map(db)  # node_id -> group_id
+    if not node_group_map:
+        return
+
+    group_user_usage = defaultdict(int)  # (group_id, user_id) -> bytes
+    for node_id, params in api_params.items():
+        group_id = node_group_map.get(node_id)
+        if group_id is None:
+            continue
+        coefficient = usage_coefficient.get(node_id, 1)
+        for param in params:
+            group_user_usage[(group_id, int(param['uid']))] += int(param['value'] * coefficient)
+
+    if not group_user_usage:
+        return
+
+    pairs = list(group_user_usage.keys())
+    group_ids = {g for g, _ in pairs}
+    user_ids = {u for _, u in pairs}
+
+    with GetDB() as db:
+        existing = {
+            (g, u) for g, u in db.query(
+                UserGroupUsage.group_id, UserGroupUsage.user_id
+            ).filter(
+                UserGroupUsage.group_id.in_(group_ids),
+                UserGroupUsage.user_id.in_(user_ids),
+            ).all()
+        }
+
+        to_insert = [
+            {"user_id": u, "group_id": g}
+            for (g, u) in pairs if (g, u) not in existing
+        ]
+        if to_insert:
+            ins = insert(UserGroupUsage).values(
+                user_id=bindparam('user_id'),
+                group_id=bindparam('group_id'),
+                used_traffic=0,
+            )
+            safe_execute(db, ins, to_insert)
+
+        upd_params = [
+            {"u": u, "g": g, "v": v}
+            for (g, u), v in group_user_usage.items()
+        ]
+        upd = update(UserGroupUsage).values(
+            used_traffic=UserGroupUsage.used_traffic + bindparam('v')
+        ).where(and_(
+            UserGroupUsage.user_id == bindparam('u'),
+            UserGroupUsage.group_id == bindparam('g'),
+        ))
+        safe_execute(db, upd, upd_params)
 
 
 def record_node_usages():
