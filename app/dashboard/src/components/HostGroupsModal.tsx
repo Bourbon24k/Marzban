@@ -76,17 +76,19 @@ export const HostGroupsModal: FC<HostGroupsModalProps> = ({ isOpen, onClose }) =
 
   const loadAll = () => {
     setLoading(true);
-    Promise.all([
+    // each request is independent so one failing endpoint can't blank the
+    // others (e.g. host list staying empty because /nodes hiccuped)
+    Promise.allSettled([
       fetch("/host-groups"),
       fetch("/host-candidates"),
-      fetch("/nodes").catch(() => []),
+      fetch("/nodes"),
     ])
       .then(([g, c, n]: any) => {
-        setGroups(g || []);
-        setCandidates(c || []);
-        setNodes((n || []).map((x: any) => ({ id: x.id, name: x.name })));
+        if (g.status === "fulfilled") setGroups(g.value || []);
+        if (c.status === "fulfilled") setCandidates(c.value || []);
+        if (n.status === "fulfilled")
+          setNodes((n.value || []).map((x: any) => ({ id: x.id, name: x.name })));
       })
-      .catch(() => {})
       .finally(() => setLoading(false));
   };
 

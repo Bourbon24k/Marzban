@@ -445,6 +445,7 @@ def process_inbounds_and_tags(
                 # host traffic group: inject per-group remark vars + enforce limit
                 group_over = False
                 group_notice = None
+                group_label = ""  # auto-appended usage shown to the user
                 if group_ctx:
                     gid = group_ctx["host_group_map"].get(host.get("id"))
                     gs = group_ctx["group_state"].get(gid) if gid is not None else None
@@ -457,6 +458,14 @@ def process_inbounds_and_tags(
                         })
                         group_over = gs["over"]
                         group_notice = gs["notice_text"]
+                        # show the limit to the user automatically (only when the
+                        # group has a limit and the remark doesn't already use a
+                        # {GROUP_*} variable explicitly)
+                        if gs["limit"] and "{GROUP_" not in host["remark"]:
+                            group_label = " ({}/{})".format(
+                                readable_size(gs["used"]),
+                                readable_size(gs["limit"]),
+                            )
 
                 sni = ""
                 sni_list = host["sni"] or inbound["sni"]
@@ -516,7 +525,7 @@ def process_inbounds_and_tags(
                     )
                 else:
                     conf.add(
-                        remark=host["remark"].format_map(format_variables),
+                        remark=host["remark"].format_map(format_variables) + group_label,
                         address=address.format_map(format_variables),
                         inbound=host_inbound,
                         settings=settings.model_dump()
