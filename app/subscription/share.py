@@ -44,14 +44,17 @@ STATUS_TEXTS = {
 }
 
 
-def generate_v2ray_links(proxies: dict, inbounds: dict, extra_data: dict, reverse: bool) -> list:
+def generate_v2ray_links(proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
+                         group_ctx: dict = None) -> list:
     format_variables = setup_format_variables(extra_data)
     conf = V2rayShareLink()
-    return process_inbounds_and_tags(inbounds, proxies, format_variables, conf=conf, reverse=reverse)
+    return process_inbounds_and_tags(inbounds, proxies, format_variables, conf=conf,
+                                     reverse=reverse, group_ctx=group_ctx)
 
 
 def generate_clash_subscription(
-        proxies: dict, inbounds: dict, extra_data: dict, reverse: bool, is_meta: bool = False
+        proxies: dict, inbounds: dict, extra_data: dict, reverse: bool, is_meta: bool = False,
+        group_ctx: dict = None
 ) -> str:
     if is_meta is True:
         conf = ClashMetaConfiguration()
@@ -60,40 +63,43 @@ def generate_clash_subscription(
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
 
 
 def generate_singbox_subscription(
-        proxies: dict, inbounds: dict, extra_data: dict, reverse: bool
+        proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
+        group_ctx: dict = None
 ) -> str:
     conf = SingBoxConfiguration()
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
 
 
 def generate_outline_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
+        group_ctx: dict = None
 ) -> str:
     conf = OutlineConfiguration()
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
 
 
 def generate_v2ray_json_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
+        group_ctx: dict = None
 ) -> str:
     conf = V2rayJsonConfig()
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
 
 
@@ -153,6 +159,72 @@ def _get_yuku_settings() -> dict:
     return _yuku_settings_cache["data"] or {}
 
 
+# --- host traffic groups: cached host->group map + per-user enforcement ctx ----
+_host_group_cache = {"map": None, "meta": None, "ts": 0.0}
+DEFAULT_GROUP_NOTICE = "🔴 Лимит трафика группы исчерпан"
+
+
+def _get_host_group_map():
+    """Returns (host_id->group_id, group_id->meta). Cached 30s. Empty (=> the
+    whole feature is inert) when there are no groups or the table is absent."""
+    now = _time.time()
+    if _host_group_cache["map"] is None or (now - _host_group_cache["ts"]) > 30:
+        hmap, meta = {}, {}
+        try:
+            from app.db import GetDB
+            from app.db.models import HostGroup
+            with GetDB() as db:
+                for g in db.query(HostGroup).all():
+                    meta[g.id] = {
+                        "name": g.name,
+                        "traffic_limit": g.traffic_limit,
+                        "notice_text": g.notice_text,
+                    }
+                    for h in g.hosts:
+                        hmap[h.id] = g.id
+        except Exception:
+            hmap, meta = {}, {}
+        _host_group_cache.update({"map": hmap, "meta": meta, "ts": now})
+    return _host_group_cache["map"] or {}, _host_group_cache["meta"] or {}
+
+
+def build_group_context(user) -> Union[dict, None]:
+    """Per-user group state: host->group map + each group's used/limit/over.
+    Returns None when there are no groups (callers then skip all group logic)."""
+    host_group_map, group_meta = _get_host_group_map()
+    if not host_group_map:
+        return None
+    uid = getattr(user, "id", None)
+    if uid is None:
+        return None
+    try:
+        from app.db import GetDB
+        from app.db.models import UserGroupUsage
+        with GetDB() as db:
+            usage_rows = {
+                r.group_id: r.used_traffic
+                for r in db.query(UserGroupUsage).filter(
+                    UserGroupUsage.user_id == uid
+                ).all()
+            }
+    except Exception:
+        return None
+
+    group_state = {}
+    for gid, m in group_meta.items():
+        used = usage_rows.get(gid, 0) or 0
+        limit = m.get("traffic_limit") or 0
+        group_state[gid] = {
+            "name": m.get("name"),
+            "used": used,
+            "limit": limit,
+            "remaining": max(limit - used, 0) if limit else None,
+            "over": bool(limit) and used >= limit,
+            "notice_text": m.get("notice_text") or DEFAULT_GROUP_NOTICE,
+        }
+    return {"host_group_map": host_group_map, "group_state": group_state}
+
+
 def _notice_lines_from(key: str, default_lines: list) -> list:
     val = _get_yuku_settings().get(key)
     if val:
@@ -195,6 +267,7 @@ def generate_subscription(
         "inbounds": user.inbounds,
         "extra_data": user.__dict__,
         "reverse": reverse,
+        "group_ctx": build_group_context(user),
     }
 
     from app.models.user import UserStatus
@@ -343,6 +416,7 @@ def process_inbounds_and_tags(
             OutlineConfiguration
         ],
         reverse=False,
+        group_ctx: dict = None,
 ) -> Union[List, str]:
     _inbounds = []
     for protocol, tags in inbounds.items():
@@ -367,6 +441,22 @@ def process_inbounds_and_tags(
             format_variables.update({"TRANSPORT": inbound["network"]})
             host_inbound = inbound.copy()
             for host in xray.hosts.get(tag, []):
+                # host traffic group: inject per-group remark vars + enforce limit
+                group_over = False
+                group_notice = None
+                if group_ctx:
+                    gid = group_ctx["host_group_map"].get(host.get("id"))
+                    gs = group_ctx["group_state"].get(gid) if gid is not None else None
+                    if gs:
+                        format_variables.update({
+                            "GROUP_USED": readable_size(gs["used"]) if gs["used"] else "0",
+                            "GROUP_LIMIT": readable_size(gs["limit"]) if gs["limit"] else "∞",
+                            "GROUP_REMAINING": readable_size(gs["remaining"])
+                            if gs["remaining"] is not None else "∞",
+                        })
+                        group_over = gs["over"]
+                        group_notice = gs["notice_text"]
+
                 sni = ""
                 sni_list = host["sni"] or inbound["sni"]
                 if sni_list:
@@ -414,12 +504,22 @@ def process_inbounds_and_tags(
                     }
                 )
 
-                conf.add(
-                    remark=host["remark"].format_map(format_variables),
-                    address=address.format_map(format_variables),
-                    inbound=host_inbound,
-                    settings=settings.model_dump()
-                )
+                if group_over:
+                    # deny + label: keep the slot but point it at a dead address
+                    # so the user sees why this server stopped working.
+                    conf.add(
+                        remark=group_notice.format_map(format_variables),
+                        address="127.0.0.1",
+                        inbound=host_inbound,
+                        settings=settings.model_dump()
+                    )
+                else:
+                    conf.add(
+                        remark=host["remark"].format_map(format_variables),
+                        address=address.format_map(format_variables),
+                        inbound=host_inbound,
+                        settings=settings.model_dump()
+                    )
 
     return conf.render(reverse=reverse)
 
