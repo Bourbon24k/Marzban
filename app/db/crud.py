@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 
 from sqlalchemy import and_, delete, func, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query, Session, joinedload
 from sqlalchemy.sql.functions import coalesce
 
@@ -549,13 +550,22 @@ def get_user_devices(db: Session, user_id: int) -> List[UserDevice]:
         .order_by(UserDevice.last_seen.desc()).all()
 
 
+# Pseudo-HWID used to track clients that don't send an x-hwid header
+# (e.g. v2rayNG). They are fingerprinted by user-agent instead, so a single
+# UA-less device still occupies one slot rather than bypassing the limit.
+UNKNOWN_HWID = "unknown-device"
+
+
 def count_user_devices(db: Session, user_id: int) -> int:
-    """Returns the number of distinct devices registered for a user."""
-    return db.query(UserDevice).filter(UserDevice.user_id == user_id).count()
+    """Number of devices that count toward the limit (revoked excluded)."""
+    return db.query(UserDevice).filter(
+        UserDevice.user_id == user_id,
+        or_(UserDevice.status.is_(None), UserDevice.status != "revoked"),
+    ).count()
 
 
 def get_user_device(db: Session, user_id: int, hwid: str) -> Optional[UserDevice]:
-    """Returns a specific device by user_id + hwid, or None."""
+    """Returns a specific device by user_id + hwid, or None (any status)."""
     return db.query(UserDevice).filter(
         UserDevice.user_id == user_id, UserDevice.hwid == hwid
     ).first()
@@ -568,7 +578,7 @@ def create_user_device(db: Session, user_id: int, hwid: str,
     now = datetime.utcnow()
     device = UserDevice(
         user_id=user_id, hwid=hwid, platform=platform, os_version=os_version,
-        device_model=device_model, user_agent=user_agent,
+        device_model=device_model, user_agent=user_agent, status="active",
         created_at=now, last_seen=now,
     )
     db.add(device)
@@ -577,10 +587,10 @@ def create_user_device(db: Session, user_id: int, hwid: str,
     return device
 
 
-def touch_user_device(db: Session, device: UserDevice, platform: str = None,
-                      os_version: str = None, device_model: str = None,
-                      user_agent: str = None) -> UserDevice:
-    """Updates last_seen (and metadata if provided) of an existing device."""
+def _touch_device_metadata(device: UserDevice, platform: str = None,
+                           os_version: str = None, device_model: str = None,
+                           user_agent: str = None) -> None:
+    """Refreshes last_seen + metadata in-place (caller commits)."""
     device.last_seen = datetime.utcnow()
     if platform:
         device.platform = platform
@@ -590,13 +600,109 @@ def touch_user_device(db: Session, device: UserDevice, platform: str = None,
         device.device_model = device_model
     if user_agent:
         device.user_agent = user_agent
+
+
+def touch_user_device(db: Session, device: UserDevice, platform: str = None,
+                      os_version: str = None, device_model: str = None,
+                      user_agent: str = None) -> UserDevice:
+    """Updates last_seen (and metadata if provided) of an existing device."""
+    _touch_device_metadata(device, platform, os_version, device_model, user_agent)
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+def _unknown_user_agents_match(stored: Optional[str], incoming: Optional[str]) -> bool:
+    """Two UA-less requests are the 'same device' only if their UAs match."""
+    def norm(v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip()
+        return s or None
+    return norm(stored) == norm(incoming)
+
+
+def register_user_device(db: Session, dbuser, hwid: Optional[str],
+                         platform: str = None, os_version: str = None,
+                         device_model: str = None,
+                         user_agent: str = None) -> tuple[bool, bool]:
+    """Register/refresh the requesting device and apply the device limit.
+
+    Returns ``(registered, unsupported)``:
+      * ``(True, False)``  – device is known/created and is allowed.
+      * ``(False, False)`` – a genuine new device beyond the limit (block it).
+      * ``(False, True)``  – an untrackable UA-less client (let it through).
+    """
+    limit = dbuser.device_limit or 0
+
+    # --- clients without x-hwid: track one pseudo-device per matching UA ---
+    if not hwid:
+        device = get_user_device(db, dbuser.id, UNKNOWN_HWID)
+        if device:
+            if _unknown_user_agents_match(device.user_agent, user_agent):
+                _touch_device_metadata(device, platform, os_version, device_model, user_agent)
+                if device.status == "revoked":
+                    device.status = "active"
+                db.commit()
+                return True, False
+            # a different UA-less client — can't fingerprint it, leave untracked
+            return False, True
+        if limit and count_user_devices(db, dbuser.id) >= limit:
+            return False, False
+        return _insert_device(db, dbuser.id, UNKNOWN_HWID, platform,
+                              os_version, device_model, user_agent), False
+
+    # --- normal HWID clients ---
+    device = get_user_device(db, dbuser.id, hwid)
+    if device:
+        _touch_device_metadata(device, platform, os_version, device_model, user_agent)
+        if device.status == "revoked":
+            # re-activating a revoked device must respect the limit
+            if limit and count_user_devices(db, dbuser.id) >= limit:
+                db.commit()  # keep the metadata refresh, stay revoked
+                return False, False
+            device.status = "active"
+        db.commit()
+        return True, False
+
+    if limit and count_user_devices(db, dbuser.id) >= limit:
+        return False, False
+
+    return _insert_device(db, dbuser.id, hwid, platform,
+                          os_version, device_model, user_agent), False
+
+
+def _insert_device(db: Session, user_id: int, hwid: str, platform: str = None,
+                   os_version: str = None, device_model: str = None,
+                   user_agent: str = None) -> bool:
+    """Insert a new active device, tolerating concurrent duplicate inserts."""
+    now = datetime.utcnow()
+    device = UserDevice(
+        user_id=user_id, hwid=hwid, platform=platform, os_version=os_version,
+        device_model=device_model, user_agent=user_agent, status="active",
+        created_at=now, last_seen=now,
+    )
+    db.add(device)
+    try:
+        db.commit()
+    except IntegrityError:
+        # a concurrent subscription request already created this (user_id, hwid)
+        db.rollback()
+        return True
+    return True
+
+
+def revoke_user_device(db: Session, device: UserDevice) -> UserDevice:
+    """Soft-bans a device (keeps the row, frees its slot)."""
+    device.status = "revoked"
+    device.last_seen = datetime.utcnow()
     db.commit()
     db.refresh(device)
     return device
 
 
 def remove_user_device(db: Session, device: UserDevice) -> None:
-    """Deletes a registered device."""
+    """Hard-deletes a registered device."""
     db.delete(device)
     db.commit()
 

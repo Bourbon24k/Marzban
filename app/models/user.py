@@ -353,6 +353,7 @@ class UserDeviceResponse(BaseModel):
     os_version: Optional[str] = None
     device_model: Optional[str] = None
     user_agent: Optional[str] = None
+    status: str = "active"
     created_at: datetime
     last_seen: datetime
     model_config = ConfigDict(from_attributes=True)

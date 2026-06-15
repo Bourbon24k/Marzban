@@ -1,6 +1,7 @@
 import {
   Alert,
   AlertIcon,
+  Badge,
   Box,
   Button,
   Collapse,
@@ -254,6 +255,9 @@ export const UserDialog: FC<UserDialogProps> = () => {
     platform?: string | null;
     os_version?: string | null;
     device_model?: string | null;
+    user_agent?: string | null;
+    status?: string | null;
+    created_at?: string | null;
     last_seen?: string | null;
   };
   const [devices, setDevices] = useState<DeviceItem[]>([]);
@@ -269,6 +273,16 @@ export const UserDialog: FC<UserDialogProps> = () => {
     if (!editingUser) return;
     fetch(`/user/${editingUser.username}/devices/${deviceId}`, { method: "DELETE" })
       .then(() => setDevices((prev) => prev.filter((d) => d.id !== deviceId)))
+      .catch(() => {});
+  };
+  const revokeDevice = (deviceId: number) => {
+    if (!editingUser) return;
+    fetch(`/user/${editingUser.username}/devices/${deviceId}/revoke`, { method: "POST" })
+      .then(() =>
+        setDevices((prev) =>
+          prev.map((d) => (d.id === deviceId ? { ...d, status: "revoked" } : d))
+        )
+      )
       .catch(() => {});
   };
 
@@ -649,7 +663,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       {isEditing && (
                         <FormControl mb={"10px"}>
                           <FormLabel>
-                            {t("userDialog.devicesList")} ({devices.length})
+                            {t("userDialog.devicesList")} (
+                            {devices.filter((d) => d.status !== "revoked").length})
                           </FormLabel>
                           {devicesLoading ? (
                             <Spinner size="sm" />
@@ -659,35 +674,96 @@ export const UserDialog: FC<UserDialogProps> = () => {
                             </Text>
                           ) : (
                             <VStack align="stretch" spacing="4px">
-                              {devices.map((d) => (
-                                <HStack
-                                  key={d.id}
-                                  justify="space-between"
-                                  borderWidth="1px"
-                                  borderRadius="4px"
-                                  px="8px"
-                                  py="4px"
-                                >
-                                  <Box overflow="hidden">
-                                    <Text fontSize="xs" noOfLines={1}>
-                                      {d.device_model || d.hwid}
-                                    </Text>
-                                    <Text fontSize="10px" color="gray.500" noOfLines={1}>
-                                      {[d.platform, d.os_version]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                    </Text>
+                              {devices.map((d) => {
+                                const revoked = d.status === "revoked";
+                                const fmt = (s?: string | null) => {
+                                  if (!s) return "—";
+                                  const dt = new Date(s);
+                                  return isNaN(dt.getTime())
+                                    ? s
+                                    : dt.toLocaleString();
+                                };
+                                const rows: [string, string][] = [
+                                  [t("userDialog.deviceHwid"), d.hwid || "—"],
+                                  [t("userDialog.deviceModel"), d.device_model || "—"],
+                                  [t("userDialog.deviceOs"), d.platform || "—"],
+                                  [t("userDialog.deviceOsVer"), d.os_version || "—"],
+                                  [t("userDialog.deviceUserAgent"), d.user_agent || "—"],
+                                  [t("userDialog.deviceFirstSeen"), fmt(d.created_at)],
+                                  [t("userDialog.deviceLastSeen"), fmt(d.last_seen)],
+                                ];
+                                return (
+                                  <Box
+                                    key={d.id}
+                                    borderWidth="1px"
+                                    borderRadius="6px"
+                                    px="10px"
+                                    py="8px"
+                                    opacity={revoked ? 0.55 : 1}
+                                  >
+                                    <HStack justify="space-between" align="start" mb="6px">
+                                      <HStack spacing="6px" overflow="hidden">
+                                        <Text fontSize="sm" fontWeight="600" noOfLines={1}>
+                                          {d.device_model || d.hwid}
+                                        </Text>
+                                        {revoked && (
+                                          <Badge colorScheme="red" fontSize="9px">
+                                            {t("userDialog.deviceRevoked")}
+                                          </Badge>
+                                        )}
+                                      </HStack>
+                                      <HStack spacing="4px" flexShrink={0}>
+                                        {!revoked && (
+                                          <Tooltip
+                                            label={t("userDialog.revokeDevice")}
+                                            placement="top"
+                                          >
+                                            <IconButton
+                                              aria-label="revoke device"
+                                              size="sm"
+                                              variant="outline"
+                                              colorScheme="orange"
+                                              icon={<Text fontSize="18px" lineHeight="1">⊘</Text>}
+                                              onClick={() => revokeDevice(d.id)}
+                                            />
+                                          </Tooltip>
+                                        )}
+                                        <Tooltip label={t("delete")} placement="top">
+                                          <IconButton
+                                            aria-label="delete device"
+                                            size="sm"
+                                            variant="outline"
+                                            colorScheme="red"
+                                            icon={<DeleteIcon />}
+                                            onClick={() => deleteDevice(d.id)}
+                                          />
+                                        </Tooltip>
+                                      </HStack>
+                                    </HStack>
+                                    <VStack align="stretch" spacing="1px">
+                                      {rows.map(([label, value]) => (
+                                        <HStack
+                                          key={label}
+                                          align="start"
+                                          spacing="6px"
+                                          fontSize="11px"
+                                        >
+                                          <Text color="gray.500" flexShrink={0} minW="84px">
+                                            {label}
+                                          </Text>
+                                          <Text
+                                            wordBreak="break-all"
+                                            color="gray.700"
+                                            _dark={{ color: "gray.300" }}
+                                          >
+                                            {value}
+                                          </Text>
+                                        </HStack>
+                                      ))}
+                                    </VStack>
                                   </Box>
-                                  <IconButton
-                                    aria-label="delete device"
-                                    size="xs"
-                                    variant="ghost"
-                                    colorScheme="red"
-                                    icon={<DeleteIcon />}
-                                    onClick={() => deleteDevice(d.id)}
-                                  />
-                                </HStack>
-                              ))}
+                                );
+                              })}
                             </VStack>
                           )}
                         </FormControl>

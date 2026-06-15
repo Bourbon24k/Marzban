@@ -41,7 +41,7 @@ i18n
                     `statics/locales/{{lng}}.json`,
                 ]),
                 // bust browser cache of locale JSONs after key changes
-                queryStringParams: { v: "yuku-devicelimit-1" },
+                queryStringParams: { v: "yuku-deviceinfo-1" },
             },
         },
         function (err, t) {

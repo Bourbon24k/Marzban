@@ -301,6 +301,23 @@ def delete_user_device(
     return {"detail": "Device removed"}
 
 
+@router.post("/user/{username}/devices/{device_id}/revoke",
+             responses={403: responses._403, 404: responses._404})
+def revoke_user_device(
+    device_id: int,
+    dbuser: UserResponse = Depends(get_validated_user),
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Soft-ban a device: keep its history but free its slot. The device stays
+    blocked until it (re-)requests the subscription and the limit allows it."""
+    device = crud.get_user_device_by_id(db, dbuser.id, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    crud.revoke_user_device(db, device)
+    return {"detail": "Device revoked"}
+
+
 @router.post("/user/{username}/active-next", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
 def active_next_plan(
     bg: BackgroundTasks,

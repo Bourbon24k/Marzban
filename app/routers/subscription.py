@@ -108,33 +108,26 @@ def enforce_device_limit(db: Session, dbuser, request: Request, user_agent: str)
     Returns True if the request is OVER the limit (a new device beyond the
     allowed count) and should be served a notice instead of real servers.
 
-    HWID is only sent by some clients (Happ, v2rayTun). Requests without an
-    x-hwid header are not tracked and always allowed. device_limit of 0/None
-    means unlimited.
+    HWID-capable clients (Happ, v2rayTun) are tracked by x-hwid. Clients that
+    don't send x-hwid (e.g. v2rayNG) are fingerprinted by user-agent so a
+    single one still occupies a slot instead of bypassing the limit; multiple
+    distinct UA-less clients can't be told apart and are let through.
+    device_limit of 0/None means unlimited.
     """
-    hwid = request.headers.get("x-hwid")
-    if not hwid:
-        return False
-
     # Only enforce for users who would otherwise get real servers.
     if dbuser.status not in (UserStatus.active, UserStatus.on_hold):
         return False
 
+    hwid = request.headers.get("x-hwid")
     platform = request.headers.get("x-device-os")
     os_version = request.headers.get("x-ver-os")
     device_model = request.headers.get("x-device-model")
 
-    device = crud.get_user_device(db, dbuser.id, hwid)
-    if device:
-        crud.touch_user_device(db, device, platform, os_version, device_model, user_agent)
-        return False
-
-    limit = dbuser.device_limit or 0
-    if limit and crud.count_user_devices(db, dbuser.id) >= limit:
-        return True
-
-    crud.create_user_device(db, dbuser.id, hwid, platform, os_version, device_model, user_agent)
-    return False
+    registered, unsupported = crud.register_user_device(
+        db, dbuser, hwid, platform, os_version, device_model, user_agent
+    )
+    # Over the limit only when a real device couldn't be registered.
+    return not registered and not unsupported
 
 
 @router.get("/{token}/")

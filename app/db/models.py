@@ -15,6 +15,7 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     func,
+    or_,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
@@ -122,13 +123,15 @@ class User(Base):
 
     @hybrid_property
     def device_count(self) -> int:
-        return len(self.devices)
+        # mirror the limit: revoked devices don't count
+        return sum(1 for d in self.devices if d.status != "revoked")
 
     @device_count.expression
     def device_count(cls):
         return (
             select(func.count(UserDevice.id)).
             where(UserDevice.user_id == cls.id).
+            where(or_(UserDevice.status.is_(None), UserDevice.status != "revoked")).
             label('device_count')
         )
 
@@ -177,6 +180,8 @@ class UserDevice(Base):
     os_version = Column(String(64), nullable=True, default=None)
     device_model = Column(String(128), nullable=True, default=None)
     user_agent = Column(String(512), nullable=True, default=None)
+    # "active" counts toward device_limit; "revoked" = soft-banned, kept for history
+    status = Column(String(16), nullable=False, default="active", server_default="active")
     created_at = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
 
