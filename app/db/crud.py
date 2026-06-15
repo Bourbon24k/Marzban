@@ -215,11 +215,13 @@ UsersSortingOptions = Enum('UsersSortingOptions', {
     'data_limit': User.data_limit.asc(),
     'expire': User.expire.asc(),
     'created_at': User.created_at.asc(),
+    'device_count': User.device_count.asc(),
     '-username': User.username.desc(),
     '-used_traffic': User.used_traffic.desc(),
     '-data_limit': User.data_limit.desc(),
     '-expire': User.expire.desc(),
     '-created_at': User.created_at.desc(),
+    '-device_count': User.device_count.desc(),
 })
 
 

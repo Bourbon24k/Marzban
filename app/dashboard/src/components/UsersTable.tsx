@@ -544,6 +544,19 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
             <Th
               position="sticky"
               top={{ base: "unset", md: top }}
+              width="130px"
+              minW="110px"
+              cursor={"pointer"}
+              onClick={handleSort.bind(null, "device_count")}
+            >
+              <HStack>
+                <span>📱 Устройства</span>
+                <Sort sort={filters.sort} column="device_count" />
+              </HStack>
+            </Th>
+            <Th
+              position="sticky"
+              top={{ base: "unset", md: top }}
               width="400px"
               minW="150px"
               cursor={"pointer"}
@@ -631,22 +644,16 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                     <div className="flex-status">
                       <OnlineBadge lastOnline={user.online_at} />
                       {user.username}
-                      <Text
-                        as="span"
-                        fontSize="xs"
-                        color="gray.500"
-                        whiteSpace="nowrap"
-                        flexShrink={0}
-                        title="devices"
-                      >
-                        📱
-                        {user.device_count ?? 0}
-                        {(user.device_limit ?? 0) > 0
-                          ? "/" + user.device_limit
-                          : ""}
-                      </Text>
                       <OnlineStatus lastOnline={user.online_at} />
                     </div>
+                  </Td>
+                  <Td width="130px" minW="110px">
+                    <Text fontSize="sm" whiteSpace="nowrap" color="gray.500">
+                      {user.device_count ?? 0}
+                      {(user.device_limit ?? 0) > 0
+                        ? " / " + user.device_limit
+                        : ""}
+                    </Text>
                   </Td>
                   <Td width="400px" minW="150px">
                     <StatusBadge
@@ -671,7 +678,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
             })}
           {users.length == 0 && (
             <Tr>
-              <Td colSpan={4}>
+              <Td colSpan={5}>
                 <EmptySection isFiltered={isFiltered} />
               </Td>
             </Tr>
