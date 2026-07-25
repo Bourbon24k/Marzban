@@ -2,7 +2,12 @@ from fastapi import APIRouter, Body, Depends
 
 from app.db import Session, crud, get_db
 from app.models.admin import Admin
-from app.utils import responses
+from app.subscription.share import (
+    ANNOUNCE_VARIABLES,
+    DEFAULT_ANNOUNCE,
+    invalidate_yuku_settings_cache,
+)
+from app.utils import audit, responses
 
 router = APIRouter(tags=["YUKU"], prefix="/api/yuku", responses={401: responses._401})
 
@@ -11,7 +16,7 @@ DEFAULT_SETTINGS = {
     "expired_notice": "🔴 Подписка закончилась\n➡️ Продлите: t.me/yuku_vpn_bot",
     "device_limit_notice": "🔴 Превышен лимит устройств\n➡️ Поддержка: t.me/yuku_vpn_bot",
     "default_device_limit": "0",
-    "announce": "⚠️ Если не работает VPN, нажмите на 🔁 обновите подписку. Чтобы найти самый быстрый сервер используйте пинг",
+    "announce": DEFAULT_ANNOUNCE,
 }
 
 
@@ -43,5 +48,20 @@ def update_settings(
     """Update YUKU settings. Only known keys are accepted."""
     allowed = {k: v for k, v in values.items() if k in DEFAULT_SETTINGS}
     if allowed:
+        current = get_merged_settings(db)
+        audit.detail(
+            target_name=",".join(sorted(allowed)),
+            before={k: current.get(k) for k in allowed},
+            after=dict(allowed),
+        )
         crud.set_yuku_settings(db, allowed)
+        # subscription reads settings through a 30s cache; drop it so the new
+        # announce/notice text applies to the very next /sub request
+        invalidate_yuku_settings_cache()
     return get_merged_settings(db)
+
+
+@router.get("/announce-variables")
+def announce_variables(admin: Admin = Depends(Admin.get_current)):
+    """Template variables available in the announce text."""
+    return {"variables": list(ANNOUNCE_VARIABLES)}

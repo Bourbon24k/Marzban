@@ -159,6 +159,16 @@ def _get_yuku_settings() -> dict:
     return _yuku_settings_cache["data"] or {}
 
 
+def invalidate_yuku_settings_cache() -> None:
+    """Drops the settings cache so panel edits apply on the next request.
+
+    Without this, changing announce/notice texts in the dashboard takes up to
+    30s to show up (see _get_yuku_settings).
+    """
+    _yuku_settings_cache["data"] = None
+    _yuku_settings_cache["ts"] = 0.0
+
+
 # --- host traffic groups: cached host->group map + per-user enforcement ctx ----
 _host_group_cache = {"map": None, "meta": None, "ts": 0.0}
 DEFAULT_GROUP_NOTICE = "🔴 Лимит трафика группы исчерпан"
@@ -247,13 +257,42 @@ def device_limit_notice_lines() -> list:
 
 DEFAULT_ANNOUNCE = "⚠️ Если не работает VPN, нажмите на 🔁 обновите подписку. Чтобы найти самый быстрый сервер используйте пинг"
 
+# Variables the announce template may reference; surfaced in the dashboard.
+ANNOUNCE_VARIABLES = (
+    "USERNAME", "DAYS_LEFT", "TIME_LEFT", "EXPIRE_DATE",
+    "DATA_USAGE", "DATA_LIMIT", "DATA_LEFT",
+    "DEVICE_COUNT", "DEVICE_LIMIT", "DEVICE_LEFT",
+    "STATUS_EMOJI", "STATUS_TEXT", "SERVER_IP",
+)
 
-def get_announce_text() -> str:
-    """Subscription announce header text (editable via YUKU settings)."""
+
+def render_announce(template: str, user=None) -> str:
+    """Substitutes per-user variables into an announce template.
+
+    Uses the same defaultdict + format_map machinery as host remarks, so
+    {DAYS_LEFT}/{DEVICE_LIMIT}/... work identically in both places. A template
+    with stray braces would raise, so any failure falls back to the raw text —
+    a malformed announce must never break the subscription response.
+    """
+    if user is None or not template:
+        return template
+    try:
+        extra_data = user if isinstance(user, dict) else user.__dict__
+        return template.format_map(setup_format_variables(extra_data))
+    except Exception:
+        return template
+
+
+def get_announce_text(user=None) -> str:
+    """Subscription announce header text (editable via YUKU settings).
+
+    When a user is passed, the stored text is treated as a template and
+    rendered with that user's data.
+    """
     val = _get_yuku_settings().get("announce")
-    if val and val.strip():
-        return val
-    return DEFAULT_ANNOUNCE
+    if not (val and val.strip()):
+        val = DEFAULT_ANNOUNCE
+    return render_announce(val, user)
 
 
 def _generate_expired_notice(config_format: str) -> str:
@@ -388,6 +427,16 @@ def setup_format_variables(extra_data: dict) -> dict:
     status_emoji = STATUS_EMOJIS.get(extra_data.get("status")) or ""
     status_text = STATUS_TEXTS.get(extra_data.get("status")) or ""
 
+    # device_limit of 0/None means unlimited (mirrors enforce_device_limit)
+    raw_device_limit = extra_data.get("device_limit") or 0
+    device_count = extra_data.get("device_count") or 0
+    if raw_device_limit:
+        device_limit = str(raw_device_limit)
+        device_left = str(max(raw_device_limit - device_count, 0))
+    else:
+        device_limit = "∞"
+        device_left = "∞"
+
     format_variables = defaultdict(
         lambda: "<missing>",
         {
@@ -403,6 +452,9 @@ def setup_format_variables(extra_data: dict) -> dict:
             "TIME_LEFT": time_left,
             "STATUS_EMOJI": status_emoji,
             "STATUS_TEXT": status_text,
+            "DEVICE_COUNT": str(device_count),
+            "DEVICE_LIMIT": device_limit,
+            "DEVICE_LEFT": device_left,
         },
     )
 

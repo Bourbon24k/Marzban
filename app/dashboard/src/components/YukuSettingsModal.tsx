@@ -1,7 +1,9 @@
 import {
+  Box,
   Button,
   FormControl,
   FormLabel,
+  HStack,
   Input,
   Modal,
   ModalBody,
@@ -11,18 +13,44 @@ import {
   ModalHeader,
   ModalOverlay,
   Spinner,
+  Tag,
+  TagLabel,
   Text,
   Textarea,
   VStack,
   useToast,
 } from "@chakra-ui/react";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { fetch } from "service/http";
 
 type YukuSettingsModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+
+// Announce template variables with the sample values used for the live preview.
+// Kept in sync with ANNOUNCE_VARIABLES / setup_format_variables on the backend.
+const ANNOUNCE_VARS: Array<[string, string]> = [
+  ["USERNAME", "ivan_2026"],
+  ["DAYS_LEFT", "12"],
+  ["TIME_LEFT", "12d 4h"],
+  ["EXPIRE_DATE", "2026-08-06"],
+  ["DATA_USAGE", "3.2 GB"],
+  ["DATA_LIMIT", "50.0 GB"],
+  ["DATA_LEFT", "46.8 GB"],
+  ["DEVICE_COUNT", "2"],
+  ["DEVICE_LIMIT", "5"],
+  ["DEVICE_LEFT", "3"],
+  ["STATUS_EMOJI", "✅"],
+  ["STATUS_TEXT", "Active"],
+  ["SERVER_IP", "51.250.38.20"],
+];
+
+const renderPreview = (template: string): string =>
+  ANNOUNCE_VARS.reduce(
+    (text, [name, sample]) => text.split(`{${name}}`).join(sample),
+    template
+  );
 
 type Settings = {
   expired_notice: string;
@@ -45,7 +73,28 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
   const [data, setData] = useState<Settings>(EMPTY);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const announceRef = useRef<HTMLTextAreaElement | null>(null);
   const toast = useToast();
+
+  const preview = useMemo(() => renderPreview(data.announce), [data.announce]);
+
+  // insert {VAR} where the caret is, so building a template stays one click
+  const insertVariable = (name: string) => {
+    const el = announceRef.current;
+    const token = `{${name}}`;
+    if (!el) {
+      setData((d) => ({ ...d, announce: d.announce + token }));
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? start;
+    const next = el.value.slice(0, start) + token + el.value.slice(end);
+    setData((d) => ({ ...d, announce: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + token.length, start + token.length);
+    });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -96,15 +145,54 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
               <FormControl>
                 <FormLabel>Announce (объявление в шапке подписки)</FormLabel>
                 <Textarea
-                  rows={3}
+                  ref={announceRef}
+                  rows={6}
+                  fontFamily="mono"
+                  fontSize="sm"
                   value={data.announce}
                   onChange={(e) =>
                     setData({ ...data, announce: e.target.value })
                   }
                 />
-                <Text fontSize="xs" color="gray.500">
-                  Текст-уведомление, которое клиент показывает над списком серверов.
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Текст над списком серверов в клиенте. Подставляются данные
+                  пользователя — нажми на переменную, чтобы вставить её.
                 </Text>
+
+                <HStack spacing={1} wrap="wrap" mt={2}>
+                  {ANNOUNCE_VARS.map(([name]) => (
+                    <Tag
+                      key={name}
+                      size="sm"
+                      cursor="pointer"
+                      variant="subtle"
+                      colorScheme="primary"
+                      onClick={() => insertVariable(name)}
+                      _hover={{ opacity: 0.75 }}
+                    >
+                      <TagLabel>{`{${name}}`}</TagLabel>
+                    </Tag>
+                  ))}
+                </HStack>
+
+                <Text fontSize="xs" color="gray.500" mt={3} mb={1}>
+                  Превью (с примерными значениями):
+                </Text>
+                <Box
+                  borderWidth="1px"
+                  borderColor="light-border"
+                  borderRadius="md"
+                  p={3}
+                  fontSize="sm"
+                  whiteSpace="pre-wrap"
+                  minH="60px"
+                >
+                  {preview || (
+                    <Text as="span" color="gray.500">
+                      — пусто, будет показан текст по умолчанию —
+                    </Text>
+                  )}
+                </Box>
               </FormControl>
 
               <FormControl>

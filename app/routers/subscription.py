@@ -168,7 +168,7 @@ def user_subscription(
             for key, val in get_subscription_user_info(user).items()
         ),
         "hide-settings": "1",
-        "announce": f"base64:{base64.b64encode(get_announce_text().encode('utf-8')).decode('utf-8')}"
+        "announce": f"base64:{base64.b64encode(get_announce_text(user).encode('utf-8')).decode('utf-8')}"
     }
 
     config_format, media_type, as_base64, reverse = resolve_format(user_agent)
