@@ -34,6 +34,7 @@ from app.db.models import (
     UserTemplate,
     UserUsageResetLogs,
     YukuSetting,
+    host_group_hosts,
 )
 from app.models.admin import AdminCreate, AdminModify, AdminPartialModify
 from app.models.host_group import HostGroupCreate, HostGroupModify
@@ -227,6 +228,12 @@ def update_hosts(db: Session, inbound_tag: str, modified_hosts: List[ProxyHostMo
 
     for row in existing:
         if id(row) not in reused:
+            # SQLite runs with PRAGMA foreign_keys off, so ON DELETE CASCADE on
+            # host_group_hosts never fires: drop the group links explicitly or
+            # they dangle and can later re-attach to a host that reuses the id
+            db.execute(
+                host_group_hosts.delete().where(host_group_hosts.c.host_id == row.id)
+            )
             db.delete(row)
 
     db.commit()
