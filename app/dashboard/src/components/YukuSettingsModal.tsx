@@ -39,6 +39,11 @@ const ANNOUNCE_VARS: Array<[string, string]> = [
   ["DATA_USAGE", "3.2 GB"],
   ["DATA_LIMIT", "50.0 GB"],
   ["DATA_LEFT", "46.8 GB"],
+  ["GROUP_NAME", "LTE"],
+  ["GROUP_USED", "12.3 GB"],
+  ["GROUP_LIMIT", "100.0 GB"],
+  ["GROUP_LEFT", "87.7 GB"],
+  ["GROUPS", "LTE: 12.3 GB / 100.0 GB"],
   ["DEVICE_COUNT", "2"],
   ["DEVICE_LIMIT", "5"],
   ["DEVICE_LEFT", "3"],
@@ -87,10 +92,16 @@ const displayWidth = (line: string): number => {
   return width;
 };
 
+// Keep in sync with ANNOUNCE_CENTER_WIDTH in app/subscription/share.py.
+const ANNOUNCE_CENTER_WIDTH = 32;
+
 const alignAnnounce = (text: string, align: string): string => {
   if (align !== "center" || !text) return text;
   const lines = text.split("\n").map((l) => l.trim());
-  const width = Math.max(...lines.map(displayWidth), 0);
+  const width = Math.min(
+    Math.max(...lines.map(displayWidth), 0),
+    ANNOUNCE_CENTER_WIDTH
+  );
   return lines
     .map((l) =>
       l ? " ".repeat(Math.max(Math.floor((width - displayWidth(l)) / 2), 0)) + l : l
@@ -194,6 +205,11 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                   пользователя — нажми на переменную, чтобы вставить её.
                 </Text>
 
+                <Text fontSize="xs" color="gray.500" mt={2}>
+                  DATA_* — общий трафик юзера и его лимит; GROUP_* — трафик в
+                  группе хостов и её лимит ({"{GROUPS}"} — список всех групп
+                  юзера, по строке на группу).
+                </Text>
                 <HStack spacing={1} wrap="wrap" mt={2}>
                   {ANNOUNCE_VARS.map(([name]) => (
                     <Tag

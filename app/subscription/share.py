@@ -262,8 +262,51 @@ ANNOUNCE_VARIABLES = (
     "USERNAME", "DAYS_LEFT", "TIME_LEFT", "EXPIRE_DATE",
     "DATA_USAGE", "DATA_LIMIT", "DATA_LEFT",
     "DEVICE_COUNT", "DEVICE_LIMIT", "DEVICE_LEFT",
+    "GROUP_NAME", "GROUP_USED", "GROUP_LIMIT", "GROUP_LEFT", "GROUPS",
     "STATUS_EMOJI", "STATUS_TEXT", "SERVER_IP",
 )
+
+
+def _group_announce_variables(user) -> dict:
+    """{GROUP_*} values for the announce: the user's host-group traffic and cap.
+
+    The singular variables describe the user's first group (by id); {GROUPS}
+    lists every group they belong to, one per line. Users in no group get
+    neutral placeholders rather than "<missing>".
+    """
+    empty = {
+        "GROUP_NAME": "—",
+        "GROUP_USED": readable_size(0),
+        "GROUP_LIMIT": "∞",
+        "GROUP_LEFT": "∞",
+        "GROUPS": "",
+    }
+    try:
+        ctx = build_group_context(user)
+    except Exception:
+        ctx = None
+    if not ctx:
+        return empty
+
+    states = [ctx["group_state"][gid] for gid in sorted(ctx["group_state"])]
+    if not states:
+        return empty
+
+    def limit_of(state):
+        return readable_size(state["limit"]) if state["limit"] else "∞"
+
+    first = states[0]
+    return {
+        "GROUP_NAME": first.get("name") or "—",
+        "GROUP_USED": readable_size(first["used"]),
+        "GROUP_LIMIT": limit_of(first),
+        "GROUP_LEFT": readable_size(first["remaining"])
+        if first["remaining"] is not None else "∞",
+        "GROUPS": "\n".join(
+            "{}: {} / {}".format(s.get("name") or "—", readable_size(s["used"]), limit_of(s))
+            for s in states
+        ),
+    }
 
 
 def _display_width(text: str) -> int:
@@ -293,12 +336,25 @@ def _display_width(text: str) -> int:
     return width
 
 
+# Widest line the announce block is centred against. A long paragraph in the
+# template must not drag short lines far to the right: past roughly this many
+# cells the client wraps anyway, and the padded lines would wrap with it.
+ANNOUNCE_CENTER_WIDTH = 32
+
+
 def align_announce(text: str, align: str = "left") -> str:
-    """Pads lines with spaces so the block reads as centred in the client."""
+    """Pads lines with spaces so the block reads as centred in the client.
+
+    Centring is relative to the widest line, capped at ANNOUNCE_CENTER_WIDTH.
+    Lines wider than the cap are left alone — they already fill the width.
+    """
     if align != "center" or not text:
         return text
     lines = [line.strip() for line in text.split("\n")]
-    width = max((_display_width(line) for line in lines), default=0)
+    width = min(
+        max((_display_width(line) for line in lines), default=0),
+        ANNOUNCE_CENTER_WIDTH,
+    )
     out = []
     for line in lines:
         if not line:
@@ -321,7 +377,11 @@ def render_announce(template: str, user=None) -> str:
         return template
     try:
         extra_data = user if isinstance(user, dict) else user.__dict__
-        return template.format_map(setup_format_variables(extra_data))
+        variables = setup_format_variables(extra_data)
+        # group state costs a query, so only pay for it when it's referenced
+        if "{GROUP" in template:
+            variables.update(_group_announce_variables(user))
+        return template.format_map(variables)
     except Exception:
         return template
 
