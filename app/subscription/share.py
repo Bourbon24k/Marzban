@@ -266,6 +266,49 @@ ANNOUNCE_VARIABLES = (
 )
 
 
+def _display_width(text: str) -> int:
+    """Rough rendered width of a line in character cells.
+
+    Emoji and CJK take two cells; variation selectors, ZWJ and combining marks
+    take none. Clients render the announce in a proportional font, so this can
+    only ever approximate — it is good enough to centre a short block.
+    """
+    import unicodedata
+
+    width = 0
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        i += 1
+        if ch in ("️", "︎", "‍") or unicodedata.combining(ch):
+            continue
+        if nxt == "️":  # emoji presentation of an otherwise narrow char
+            width += 2
+            continue
+        if unicodedata.east_asian_width(ch) in ("W", "F") or ord(ch) >= 0x1F300:
+            width += 2
+        else:
+            width += 1
+    return width
+
+
+def align_announce(text: str, align: str = "left") -> str:
+    """Pads lines with spaces so the block reads as centred in the client."""
+    if align != "center" or not text:
+        return text
+    lines = [line.strip() for line in text.split("\n")]
+    width = max((_display_width(line) for line in lines), default=0)
+    out = []
+    for line in lines:
+        if not line:
+            out.append(line)
+            continue
+        pad = max((width - _display_width(line)) // 2, 0)
+        out.append(" " * pad + line)
+    return "\n".join(out)
+
+
 def render_announce(template: str, user=None) -> str:
     """Substitutes per-user variables into an announce template.
 
@@ -287,12 +330,14 @@ def get_announce_text(user=None) -> str:
     """Subscription announce header text (editable via YUKU settings).
 
     When a user is passed, the stored text is treated as a template and
-    rendered with that user's data.
+    rendered with that user's data. Alignment is applied after rendering, so
+    padding accounts for the substituted values, not the placeholders.
     """
-    val = _get_yuku_settings().get("announce")
+    settings = _get_yuku_settings()
+    val = settings.get("announce")
     if not (val and val.strip()):
         val = DEFAULT_ANNOUNCE
-    return render_announce(val, user)
+    return align_announce(render_announce(val, user), settings.get("announce_align") or "left")
 
 
 def _generate_expired_notice(config_format: str) -> str:

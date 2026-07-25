@@ -12,6 +12,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Select,
   Spinner,
   Tag,
   TagLabel,
@@ -57,6 +58,7 @@ type Settings = {
   device_limit_notice: string;
   default_device_limit: string;
   announce: string;
+  announce_align: string;
 };
 
 const EMPTY: Settings = {
@@ -64,6 +66,36 @@ const EMPTY: Settings = {
   device_limit_notice: "",
   default_device_limit: "0",
   announce: "",
+  announce_align: "left",
+};
+
+// Mirrors align_announce() in app/subscription/share.py: emoji/CJK count as two
+// cells, variation selectors and ZWJ as none.
+const displayWidth = (line: string): number => {
+  let width = 0;
+  const chars = Array.from(line);
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    const next = chars[i + 1] ?? "";
+    if (ch === "\uFE0F" || ch === "\uFE0E" || ch === "\u200D") continue;
+    if (next === "\uFE0F") {
+      width += 2;
+      continue;
+    }
+    width += (ch.codePointAt(0) ?? 0) >= 0x1f300 ? 2 : 1;
+  }
+  return width;
+};
+
+const alignAnnounce = (text: string, align: string): string => {
+  if (align !== "center" || !text) return text;
+  const lines = text.split("\n").map((l) => l.trim());
+  const width = Math.max(...lines.map(displayWidth), 0);
+  return lines
+    .map((l) =>
+      l ? " ".repeat(Math.max(Math.floor((width - displayWidth(l)) / 2), 0)) + l : l
+    )
+    .join("\n");
 };
 
 export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
@@ -76,7 +108,10 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
   const announceRef = useRef<HTMLTextAreaElement | null>(null);
   const toast = useToast();
 
-  const preview = useMemo(() => renderPreview(data.announce), [data.announce]);
+  const preview = useMemo(
+    () => alignAnnounce(renderPreview(data.announce), data.announce_align),
+    [data.announce, data.announce_align]
+  );
 
   // insert {VAR} where the caret is, so building a template stays one click
   const insertVariable = (name: string) => {
@@ -175,6 +210,27 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                   ))}
                 </HStack>
 
+                <HStack mt={3} spacing={2}>
+                  <Text fontSize="xs" color="gray.500">
+                    Выравнивание:
+                  </Text>
+                  <Select
+                    size="xs"
+                    maxW="150px"
+                    value={data.announce_align}
+                    onChange={(e) =>
+                      setData({ ...data, announce_align: e.target.value })
+                    }
+                  >
+                    <option value="left">по левому краю</option>
+                    <option value="center">по центру</option>
+                  </Select>
+                </HStack>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  По центру — строки дополняются пробелами. В клиенте шрифт
+                  пропорциональный, поэтому центрирование приблизительное.
+                </Text>
+
                 <Text fontSize="xs" color="gray.500" mt={3} mb={1}>
                   Превью (с примерными значениями):
                 </Text>
@@ -184,6 +240,7 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                   borderRadius="md"
                   p={3}
                   fontSize="sm"
+                  fontFamily={data.announce_align === "center" ? "mono" : undefined}
                   whiteSpace="pre-wrap"
                   minH="60px"
                 >

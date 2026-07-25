@@ -17,6 +17,8 @@ DEFAULT_SETTINGS = {
     "device_limit_notice": "🔴 Превышен лимит устройств\n➡️ Поддержка: t.me/yuku_vpn_bot",
     "default_device_limit": "0",
     "announce": DEFAULT_ANNOUNCE,
+    # "left" (as authored) or "center" (lines space-padded before sending)
+    "announce_align": "left",
 }
 
 
