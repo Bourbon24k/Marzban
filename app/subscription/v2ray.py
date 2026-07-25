@@ -619,8 +619,13 @@ class V2rayJsonConfig(str):
             self.base["routing"] = profile["routing"]
 
         # rules pointing at "direct" need that outbound to exist; it goes last so
-        # the proxy outbound stays first and remains Xray's default
-        self.profile_outbounds = profile.get("outbounds") or []
+        # the proxy outbound stays first and remains Xray's default. Skip tags the
+        # template already defines — a duplicate tag makes Xray reject the config.
+        existing_tags = {o.get("tag") for o in self.base_outbounds}
+        self.profile_outbounds = [
+            o for o in (profile.get("outbounds") or [])
+            if o.get("tag") not in existing_tags
+        ]
 
         dest_override = profile.get("sniffing_dest_override")
         if dest_override:
