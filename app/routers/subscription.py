@@ -98,6 +98,9 @@ def resolve_format(user_agent: str):
         else:
             return "v2ray", "text/plain", True, False
 
+    elif re.match(r'^INCY/', user_agent, re.IGNORECASE):
+        return "v2ray-json", "application/json", False, False
+
     else:
         return "v2ray", "text/plain", True, False
 
