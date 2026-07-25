@@ -139,9 +139,70 @@ def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> List[Proxy
     return inbound.hosts
 
 
+_HOST_EDITABLE_FIELDS = (
+    "remark", "address", "port", "path", "sni", "host", "security", "alpn",
+    "fingerprint", "allowinsecure", "is_disabled", "mux_enable",
+    "fragment_setting", "noise_setting", "random_user_agent", "use_sni_as_host",
+)
+
+# fields that identify "the same host" well enough to re-pair it after an edit
+_HOST_IDENTITY_FIELDS = ("remark", "address", "port", "path", "sni", "host")
+
+
+def _host_identity(host) -> tuple:
+    return tuple(getattr(host, f, None) for f in _HOST_IDENTITY_FIELDS)
+
+
+def _host_column_value(field: str, value):
+    """Value to write for a host column, applying the column default for a NULL
+    on a NOT NULL column — an INSERT would do this for us, an UPDATE would not.
+    """
+    column = ProxyHost.__table__.columns.get(field)
+    if value is not None or column is None or column.nullable:
+        return value
+    default = column.default
+    if default is None:
+        return value
+    return default.arg(None) if callable(default.arg) else default.arg
+
+
+def _pair_hosts(existing: List[ProxyHost], modified_hosts: list) -> dict:
+    """Maps index in modified_hosts -> the existing row it should update.
+
+    Exact-identity matches are taken first (so an untouched host always keeps
+    its own row even if the list was reordered), then whatever is left is paired
+    positionally — which is what a plain field edit on one host looks like.
+    """
+    pairs = {}
+    unmatched = list(existing)
+
+    for i, incoming in enumerate(modified_hosts):
+        for row in unmatched:
+            if _host_identity(row) == _host_identity(incoming):
+                pairs[i] = row
+                unmatched.remove(row)
+                break
+
+    leftovers = iter(unmatched)
+    for i in range(len(modified_hosts)):
+        if i in pairs:
+            continue
+        row = next(leftovers, None)
+        if row is None:
+            break
+        pairs[i] = row
+
+    return pairs
+
+
 def update_hosts(db: Session, inbound_tag: str, modified_hosts: List[ProxyHostModify]) -> List[ProxyHost]:
     """
     Updates hosts for a given inbound tag.
+
+    Rows are updated in place instead of being recreated. A host's id is
+    referenced by host_group_hosts with ON DELETE CASCADE, so rebuilding the
+    list (the previous behaviour) silently dropped every host out of its
+    traffic group on each save of the hosts dialog.
 
     Args:
         db (Session): Database session.
@@ -152,27 +213,22 @@ def update_hosts(db: Session, inbound_tag: str, modified_hosts: List[ProxyHostMo
         List[ProxyHost]: Updated list of hosts for the inbound.
     """
     inbound = get_or_create_inbound(db, inbound_tag)
-    inbound.hosts = [
-        ProxyHost(
-            remark=host.remark,
-            address=host.address,
-            port=host.port,
-            path=host.path,
-            sni=host.sni,
-            host=host.host,
-            inbound=inbound,
-            security=host.security,
-            alpn=host.alpn,
-            fingerprint=host.fingerprint,
-            allowinsecure=host.allowinsecure,
-            is_disabled=host.is_disabled,
-            mux_enable=host.mux_enable,
-            fragment_setting=host.fragment_setting,
-            noise_setting=host.noise_setting,
-            random_user_agent=host.random_user_agent,
-            use_sni_as_host=host.use_sni_as_host,
-        ) for host in modified_hosts
-    ]
+    existing = list(inbound.hosts)
+    pairs = _pair_hosts(existing, modified_hosts)
+    reused = {id(row) for row in pairs.values()}
+
+    for i, incoming in enumerate(modified_hosts):
+        row = pairs.get(i)
+        if row is None:
+            row = ProxyHost(inbound=inbound)
+            db.add(row)
+        for field in _HOST_EDITABLE_FIELDS:
+            setattr(row, field, _host_column_value(field, getattr(incoming, field)))
+
+    for row in existing:
+        if id(row) not in reused:
+            db.delete(row)
+
     db.commit()
     db.refresh(inbound)
     return inbound.hosts
