@@ -92,16 +92,10 @@ const displayWidth = (line: string): number => {
   return width;
 };
 
-// Keep in sync with ANNOUNCE_CENTER_WIDTH in app/subscription/share.py.
-const ANNOUNCE_CENTER_WIDTH = 32;
-
 const alignAnnounce = (text: string, align: string): string => {
   if (align !== "center" || !text) return text;
   const lines = text.split("\n").map((l) => l.trim());
-  const width = Math.min(
-    Math.max(...lines.map(displayWidth), 0),
-    ANNOUNCE_CENTER_WIDTH
-  );
+  const width = Math.max(...lines.map(displayWidth), 0);
   return lines
     .map((l) =>
       l ? " ".repeat(Math.max(Math.floor((width - displayWidth(l)) / 2), 0)) + l : l

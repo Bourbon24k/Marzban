@@ -336,25 +336,17 @@ def _display_width(text: str) -> int:
     return width
 
 
-# Widest line the announce block is centred against. A long paragraph in the
-# template must not drag short lines far to the right: past roughly this many
-# cells the client wraps anyway, and the padded lines would wrap with it.
-ANNOUNCE_CENTER_WIDTH = 32
-
-
 def align_announce(text: str, align: str = "left") -> str:
     """Pads lines with spaces so the block reads as centred in the client.
 
-    Centring is relative to the widest line, capped at ANNOUNCE_CENTER_WIDTH.
-    Lines wider than the cap are left alone — they already fill the width.
+    Centring is relative to the widest line in the block. A long paragraph in
+    the template therefore pushes the short lines well to the right — that is
+    the intended look; keep the lines similar in length to avoid it.
     """
     if align != "center" or not text:
         return text
     lines = [line.strip() for line in text.split("\n")]
-    width = min(
-        max((_display_width(line) for line in lines), default=0),
-        ANNOUNCE_CENTER_WIDTH,
-    )
+    width = max((_display_width(line) for line in lines), default=0)
     out = []
     for line in lines:
         if not line:
