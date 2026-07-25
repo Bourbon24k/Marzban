@@ -141,7 +141,7 @@
   "revokeUserSub.prompt": "Вы уверены, что хотите отозвать подписку для пользователя <b>{{username}}</b>?",
   "revokeUserSub.success": "Подписка пользователя {{username}} успешно отозвана.",
   "revokeUserSub.title": "Отозвать подписку пользователя",
-  "search": "Поиск",
+  "search": "Поиск: имя, заметка, HWID",
   "status.active": "Active",
   "status.disabled": "Disabled",
   "status.expired": "Expired",

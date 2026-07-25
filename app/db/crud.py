@@ -253,7 +253,7 @@ def get_users(db: Session,
         offset (Optional[int]): Number of records to skip.
         limit (Optional[int]): Number of records to retrieve.
         usernames (Optional[List[str]]): List of usernames to filter by.
-        search (Optional[str]): Search term to filter by username or note.
+        search (Optional[str]): Search term to filter by username, note or device HWID/model.
         status (Optional[Union[UserStatus, list]]): User status or list of statuses to filter by.
         sort (Optional[List[UsersSortingOptions]]): Sorting options.
         admin (Optional[Admin]): Admin to filter users by.
@@ -267,7 +267,16 @@ def get_users(db: Session,
     query = get_user_queryset(db)
 
     if search:
-        query = query.filter(or_(User.username.ilike(f"%{search}%"), User.note.ilike(f"%{search}%")))
+        # HWID/device-model matching uses .any() (EXISTS) rather than a join so
+        # rows aren't multiplied — return_with_count below counts this query.
+        query = query.filter(or_(
+            User.username.ilike(f"%{search}%"),
+            User.note.ilike(f"%{search}%"),
+            User.devices.any(or_(
+                UserDevice.hwid.ilike(f"%{search}%"),
+                UserDevice.device_model.ilike(f"%{search}%"),
+            )),
+        ))
 
     if usernames:
         query = query.filter(User.username.in_(usernames))

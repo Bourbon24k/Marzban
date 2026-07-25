@@ -175,7 +175,9 @@ class UserDevice(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     user = relationship("User", back_populates="devices")
-    hwid = Column(String(255), nullable=False)
+    # indexed for panel search by HWID: the (user_id, hwid) unique constraint
+    # can't serve a lookup by hwid alone
+    hwid = Column(String(255), nullable=False, index=True)
     platform = Column(String(64), nullable=True, default=None)
     os_version = Column(String(64), nullable=True, default=None)
     device_model = Column(String(128), nullable=True, default=None)
