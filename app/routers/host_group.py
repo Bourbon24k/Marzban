@@ -13,7 +13,7 @@ from app.models.host_group import (
     UserGroupLimitSet,
     UserGroupUsageResponse,
 )
-from app.utils import responses
+from app.utils import audit, responses
 
 router = APIRouter(
     tags=["HostGroup"], prefix="/api",
@@ -107,7 +107,9 @@ def add_host_group(
         raise HTTPException(status_code=409, detail="Group already exists")
     _check_node_conflicts(db, body.node_ids)
     _check_master_conflict(db, body.include_master)
-    return _group_response(crud.create_host_group(db, body))
+    group = crud.create_host_group(db, body)
+    audit.detail(target_name=group.name, after=audit.snapshot(_group_response(group)))
+    return _group_response(group)
 
 
 @router.get("/host-group/{group_id}", response_model=HostGroupResponse,
@@ -140,7 +142,11 @@ def modify_host_group(
     _check_node_conflicts(db, body.node_ids, exclude_group_id=group_id)
     if body.include_master is not None:
         _check_master_conflict(db, body.include_master, exclude_group_id=group_id)
-    return _group_response(crud.update_host_group(db, g, body))
+    before = audit.snapshot(_group_response(g))
+    updated = crud.update_host_group(db, g, body)
+    after = _group_response(updated)
+    audit.detail(target_name=updated.name, before=before, after=audit.snapshot(after))
+    return after
 
 
 @router.delete("/host-group/{group_id}", responses={404: responses._404})
@@ -153,6 +159,7 @@ def delete_host_group(
     g = crud.get_host_group(db, group_id)
     if not g:
         raise HTTPException(status_code=404, detail="Group not found")
+    audit.detail(target_name=g.name, before=audit.snapshot(_group_response(g)))
     crud.remove_host_group(db, g)
     return {"detail": "Group removed"}
 
@@ -211,13 +218,18 @@ def set_user_group_limit(
     g = crud.get_host_group(db, group_id)
     if not g:
         raise HTTPException(status_code=404, detail="Group not found")
+    before = audit.snapshot(_usage_response(
+        g, crud.get_user_group_usage(db, dbuser.id, group_id)))
     row = crud.set_user_group(
         db, dbuser.id, group_id,
         member=body.member,
         traffic_limit=body.traffic_limit,
         set_limit=body.set_limit,
     )
-    return _usage_response(g, row)
+    after = _usage_response(g, row)
+    audit.detail(target_name=dbuser.username, before=before,
+                 after=audit.snapshot(after), details={"group": g.name})
+    return after
 
 
 @router.post("/user/{username}/group/{group_id}/reset",
@@ -232,5 +244,9 @@ def reset_user_group(
     _require_sudo(admin)
     if not crud.get_host_group(db, group_id):
         raise HTTPException(status_code=404, detail="Group not found")
+    row = crud.get_user_group_usage(db, dbuser.id, group_id)
+    audit.detail(target_name=dbuser.username, details={
+        "group_id": group_id, "used_traffic_before": (row.used_traffic if row else 0),
+    })
     crud.reset_user_group_usage(db, dbuser.id, group_id)
     return {"detail": "Usage reset"}

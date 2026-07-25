@@ -153,6 +153,10 @@ GROUP_LIMIT_HARD_ENFORCE = config("GROUP_LIMIT_HARD_ENFORCE", cast=bool, default
 JOB_ENFORCE_GROUP_LIMITS_INTERVAL = config(
     "JOB_ENFORCE_GROUP_LIMITS_INTERVAL", cast=int, default=3600)
 
+# YUKU admin action history: how long rows in admin_audit_logs are kept.
+# 0 keeps them forever (the table grows unbounded — fine for a small panel).
+AUDIT_LOG_RETENTION_DAYS = config("AUDIT_LOG_RETENTION_DAYS", cast=int, default=90)
+
 # headers: profile-update-interval, support-url, profile-title
 SUB_UPDATE_INTERVAL = config("SUB_UPDATE_INTERVAL", default="12")
 SUB_SUPPORT_URL = config("SUB_SUPPORT_URL", default="https://t.me/")

@@ -15,6 +15,7 @@ from app.db.models import (
     JWT,
     TLS,
     Admin,
+    AdminAuditLog,
     AdminUsageLogs,
     HostGroup,
     NextPlan,
@@ -1916,3 +1917,96 @@ def set_user_group(db: Session, user_id: int, group_id: int,
     db.commit()
     db.refresh(row)
     return row
+
+
+# --- YUKU admin audit log ---------------------------------------------------
+
+def create_audit_log(db: Session,
+                     action: str,
+                     admin_username: Optional[str] = None,
+                     admin_id: Optional[int] = None,
+                     target_type: Optional[str] = None,
+                     target_name: Optional[str] = None,
+                     method: Optional[str] = None,
+                     path: Optional[str] = None,
+                     status_code: Optional[int] = None,
+                     ip: Optional[str] = None,
+                     user_agent: Optional[str] = None,
+                     details: Optional[dict] = None) -> AdminAuditLog:
+    """Appends one row to the admin action history."""
+    row = AdminAuditLog(
+        action=action,
+        admin_username=admin_username,
+        admin_id=admin_id,
+        target_type=target_type,
+        target_name=(str(target_name)[:128] if target_name is not None else None),
+        method=method,
+        path=path,
+        status_code=status_code,
+        ip=ip,
+        user_agent=user_agent,
+        details=details,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_audit_logs(db: Session,
+                   offset: Optional[int] = None,
+                   limit: Optional[int] = None,
+                   admin_username: Optional[str] = None,
+                   action: Optional[str] = None,
+                   target_type: Optional[str] = None,
+                   search: Optional[str] = None,
+                   date_from: Optional[datetime] = None,
+                   date_to: Optional[datetime] = None) -> Tuple[List[AdminAuditLog], int]:
+    """Audit rows newest-first plus the total matching the same filters.
+
+    ``search`` matches the target name, the IP and the request path, so one box
+    covers "what happened to user X" and "what came from that IP".
+    """
+    query = db.query(AdminAuditLog)
+
+    if admin_username:
+        query = query.filter(AdminAuditLog.admin_username == admin_username)
+    if action:
+        query = query.filter(AdminAuditLog.action == action)
+    if target_type:
+        query = query.filter(AdminAuditLog.target_type == target_type)
+    if search:
+        query = query.filter(or_(
+            AdminAuditLog.target_name.ilike(f"%{search}%"),
+            AdminAuditLog.ip.ilike(f"%{search}%"),
+            AdminAuditLog.path.ilike(f"%{search}%"),
+        ))
+    if date_from:
+        query = query.filter(AdminAuditLog.created_at >= date_from)
+    if date_to:
+        query = query.filter(AdminAuditLog.created_at <= date_to)
+
+    count = query.count()
+    query = query.order_by(AdminAuditLog.created_at.desc(), AdminAuditLog.id.desc())
+
+    if offset:
+        query = query.offset(offset)
+    if limit:
+        query = query.limit(limit)
+
+    return query.all(), count
+
+
+def get_audit_log_admins(db: Session) -> List[str]:
+    """Distinct admin usernames present in the history (for the UI filter)."""
+    rows = db.query(AdminAuditLog.admin_username).distinct().all()
+    return sorted({r[0] for r in rows if r[0]})
+
+
+def purge_audit_logs(db: Session, older_than: datetime) -> int:
+    """Deletes audit rows older than ``older_than``; returns the row count."""
+    deleted = db.query(AdminAuditLog).filter(
+        AdminAuditLog.created_at < older_than
+    ).delete(synchronize_session=False)
+    db.commit()
+    return deleted

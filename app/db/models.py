@@ -452,6 +452,31 @@ class UserGroupUsage(Base):
     group = relationship("HostGroup", back_populates="user_usages")
 
 
+class AdminAuditLog(Base):
+    """One row per mutating panel request: who, from where, what changed.
+
+    admin_username is stored as plain text (not only a FK) because the
+    env-configured sudoer (SUDO_USERNAME) has no row in `admins` at all —
+    see Admin.get_admin in app/models/admin.py.
+    """
+    __tablename__ = "admin_audit_logs"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    admin_username = Column(String(34), nullable=True, index=True)
+    admin_id = Column(Integer, ForeignKey("admins.id", ondelete="SET NULL"), nullable=True)
+    action = Column(String(64), nullable=False, index=True)
+    target_type = Column(String(32), nullable=True)
+    target_name = Column(String(128), nullable=True, index=True)
+    method = Column(String(8), nullable=True)
+    path = Column(String(256), nullable=True)
+    status_code = Column(Integer, nullable=True)
+    ip = Column(String(64), nullable=True)
+    user_agent = Column(String(512), nullable=True)
+    # {"before": {...}, "after": {...}} — only changed fields, secrets stripped
+    details = Column(JSON, nullable=True)
+
+
 class NotificationReminder(Base):
     __tablename__ = "notification_reminders"
 

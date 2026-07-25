@@ -14,6 +14,7 @@ import {
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
   ChartPieIcon,
+  ClipboardDocumentListIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
   DocumentMinusIcon,
@@ -34,6 +35,7 @@ import { updateThemeColor } from "utils/themeColor";
 import { Language } from "./Language";
 import { YukuSettingsModal } from "./YukuSettingsModal";
 import { HostGroupsModal } from "./HostGroupsModal";
+import { AuditLogModal } from "./AuditLogModal";
 import useGetUser from "hooks/useGetUser";
 
 type HeaderProps = {
@@ -56,6 +58,7 @@ const HostsIcon = chakra(LinkIcon, iconProps);
 const NodesIcon = chakra(SquaresPlusIcon, iconProps);
 const NodesUsageIcon = chakra(ChartPieIcon, iconProps);
 const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
+const AuditLogIcon = chakra(ClipboardDocumentListIcon, iconProps);
 const NotificationCircle = chakra(Box, {
   baseStyle: {
     bg: "yellow.500",
@@ -106,6 +109,7 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
   );
   const [yukuSettingsOpen, setYukuSettingsOpen] = useState(false);
   const [groupsOpen, setGroupsOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
   const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
 
   const handleOnClose = () => {
@@ -195,6 +199,14 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
                   >
                     Лимиты по группам
                   </MenuItem>
+                  <MenuItem
+                    maxW="170px"
+                    fontSize="sm"
+                    icon={<AuditLogIcon />}
+                    onClick={() => setAuditOpen(true)}
+                  >
+                    История действий
+                  </MenuItem>
                 </>
               )}
               <Link to={DONATION_URL} target="_blank">
@@ -273,6 +285,7 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
         isOpen={yukuSettingsOpen}
         onClose={() => setYukuSettingsOpen(false)}
       />
+      <AuditLogModal isOpen={auditOpen} onClose={() => setAuditOpen(false)} />
       <HostGroupsModal isOpen={groupsOpen} onClose={() => setGroupsOpen(false)} />
     </HStack>
   );

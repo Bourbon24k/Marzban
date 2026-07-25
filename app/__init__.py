@@ -32,6 +32,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# YUKU: admin action history — records every mutating /api request
+from app.utils.audit import AuditMiddleware  # noqa: E402
+
+app.add_middleware(AuditMiddleware)
 from app import dashboard, jobs, routers, telegram  # noqa
 from app.routers import api_router  # noqa
 
