@@ -19,6 +19,9 @@ DEFAULT_SETTINGS = {
     "announce": DEFAULT_ANNOUNCE,
     # "left" (as authored) or "center" (lines space-padded before sending)
     "announce_align": "left",
+    # routing/DNS overlay for v2ray-json subscriptions: "off" or a template
+    # name under app/templates/v2ray/ (ships with "yuku_routing")
+    "subscription_routing": "off",
 }
 
 

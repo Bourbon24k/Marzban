@@ -91,11 +91,21 @@ def generate_outline_subscription(
     )
 
 
+def subscription_routing_profile() -> Union[str, None]:
+    """Name of the routing/DNS profile to overlay on v2ray-json subscriptions.
+
+    "off" (the default) keeps Marzban's plain template. Anything else is used as
+    a template name under app/templates/v2ray/.
+    """
+    value = (_get_yuku_settings().get("subscription_routing") or "off").strip()
+    return None if value in ("", "off") else value
+
+
 def generate_v2ray_json_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
         group_ctx: dict = None
 ) -> str:
-    conf = V2rayJsonConfig()
+    conf = V2rayJsonConfig(routing_profile=subscription_routing_profile())
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(

@@ -559,7 +559,11 @@ class V2rayShareLink(str):
 
 class V2rayJsonConfig(str):
 
-    def __init__(self):
+    def __new__(cls, *args, **kwargs):
+        # the class subclasses str, whose __new__ would choke on our kwargs
+        return super().__new__(cls)
+
+    def __init__(self, routing_profile: str = None):
         self.config = []
         self.template = render_template(V2RAY_SUBSCRIPTION_TEMPLATE)
         self.mux_template = render_template(MUX_TEMPLATE)
@@ -584,15 +588,61 @@ class V2rayJsonConfig(str):
 
         del user_agent_data, grpc_user_agent_data
 
+        # Parsed once. add_config() shares these sub-objects between every
+        # config instead of re-parsing the template per host: with the routing
+        # profile on, the template is ~200 KB and a user can have dozens of
+        # hosts, so re-parsing it each time is the difference between a few ms
+        # and a few seconds per /sub request.
+        self.base = json.loads(self.template)
+        self.base.pop("remarks", None)
+        self.base_outbounds = self.base.pop("outbounds", [])
+        self.profile_outbounds = []
+        self.routing_profile = routing_profile
+        if routing_profile:
+            self._apply_routing_profile(routing_profile)
+
+    def _apply_routing_profile(self, name: str) -> None:
+        """Overlays a shipped routing/DNS profile (split tunnel + ad blocking).
+
+        Missing or broken profile files are ignored: a subscription without the
+        overlay still works, one that fails to render does not.
+        """
+        try:
+            profile = json.loads(render_template(f"v2ray/{name}.json"))
+        except Exception:
+            self.routing_profile = None
+            return
+
+        if profile.get("dns"):
+            self.base["dns"] = profile["dns"]
+        if profile.get("routing"):
+            self.base["routing"] = profile["routing"]
+
+        # rules pointing at "direct" need that outbound to exist; it goes last so
+        # the proxy outbound stays first and remains Xray's default
+        self.profile_outbounds = profile.get("outbounds") or []
+
+        dest_override = profile.get("sniffing_dest_override")
+        if dest_override:
+            # domain rules can only match what sniffing exposes (QUIC included)
+            for inbound in self.base.get("inbounds", []):
+                sniffing = inbound.get("sniffing")
+                if sniffing and sniffing.get("enabled"):
+                    sniffing["destOverride"] = list(dest_override)
+
     def add_config(self, remarks, outbounds):
-        json_template = json.loads(self.template)
-        json_template["remarks"] = remarks
-        json_template["outbounds"] = outbounds + json_template["outbounds"]
-        self.config.append(json_template)
+        config = dict(self.base)
+        config["remarks"] = remarks
+        config["outbounds"] = outbounds + self.base_outbounds + self.profile_outbounds
+        self.config.append(config)
 
     def render(self, reverse=False):
         if reverse:
             self.config.reverse()
+        if self.routing_profile:
+            # the profile repeats per config; indentation alone would add
+            # megabytes to the response
+            return json.dumps(self.config, separators=(",", ":"), cls=UUIDEncoder)
         return json.dumps(self.config, indent=4, cls=UUIDEncoder)
 
     @staticmethod

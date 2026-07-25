@@ -64,6 +64,7 @@ type Settings = {
   default_device_limit: string;
   announce: string;
   announce_align: string;
+  subscription_routing: string;
 };
 
 const EMPTY: Settings = {
@@ -72,6 +73,7 @@ const EMPTY: Settings = {
   default_device_limit: "0",
   announce: "",
   announce_align: "left",
+  subscription_routing: "off",
 };
 
 // Mirrors align_announce() in app/subscription/share.py: emoji/CJK count as two
@@ -285,6 +287,28 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                     setData({ ...data, device_limit_notice: e.target.value })
                   }
                 />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Роутинг и DNS в подписке (v2ray-json)</FormLabel>
+                <Select
+                  value={data.subscription_routing}
+                  onChange={(e) =>
+                    setData({ ...data, subscription_routing: e.target.value })
+                  }
+                >
+                  <option value="off">выключено (обычный конфиг)</option>
+                  <option value="yuku_routing">
+                    RU split-tunnel + блокировка рекламы
+                  </option>
+                </Select>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Российские сайты и локальная сеть идут мимо VPN, реклама и
+                  телеметрия режутся, DNS для RU-доменов — через DoH Яндекса.
+                  ⚠️ Профиль повторяется в каждом конфиге: подписка вырастает с
+                  десятков КБ до нескольких МБ. Включай, только если на nginx
+                  включён gzip для /sub.
+                </Text>
               </FormControl>
 
               <FormControl>
