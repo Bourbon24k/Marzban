@@ -71,7 +71,10 @@ const NavRow: FC<{
       justifyContent={collapsed ? "center" : "flex-start"}
       bg={active ? "primary.500" : "transparent"}
       color={active ? "white" : undefined}
-      _hover={{ bg: active ? "primary.500" : "gray.100", _dark: { bg: active ? "primary.500" : "gray.700" } }}
+      _hover={{
+        bg: active ? "primary.500" : "gray.100",
+        _dark: { bg: active ? "primary.500" : "gray.700" },
+      }}
     >
       <Icon />
       {!collapsed && (
@@ -112,20 +115,18 @@ const NavRow: FC<{
   );
 };
 
-export const Sidebar: FC = () => {
+/** The nav itself. Shared by the desktop rail and the mobile drawer, which is
+ *  why collapsing and the "navigated somewhere" callback come from outside. */
+export const SidebarNav: FC<{
+  collapsed?: boolean;
+  onNavigate?: () => void;
+  header?: React.ReactNode;
+}> = ({ collapsed = false, onNavigate, header }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const { userData, getUserIsSuccess, getUserIsPending } = useGetUser();
   const isSudo = !getUserIsPending && getUserIsSuccess && userData?.is_sudo;
-
-  const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem(COLLAPSED_KEY) === "1"
-  );
   const [showDonationDot, setShowDonationDot] = useState(shouldShowDonation());
-
-  useEffect(() => {
-    localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
-  }, [collapsed]);
 
   const items: Item[] = [
     { to: "/", label: t("sidebar.users"), icon: UsersNavIcon },
@@ -151,8 +152,56 @@ export const Sidebar: FC = () => {
   ];
 
   return (
+    <>
+      {header}
+      {items
+        .filter((item) => !item.sudoOnly || isSudo)
+        .map((item) => (
+          <NavRow
+            key={item.to}
+            item={item}
+            collapsed={collapsed}
+            active={location.pathname === item.to}
+            onClick={onNavigate}
+          />
+        ))}
+
+      <Box flex="1" />
+
+      {footerItems.map((item) => (
+        <NavRow
+          key={item.to}
+          item={item}
+          collapsed={collapsed}
+          active={location.pathname === item.to}
+          onClick={() => {
+            if (item.dot) {
+              dismissDonationNotice();
+              setShowDonationDot(false);
+            }
+            onNavigate?.();
+          }}
+        />
+      ))}
+    </>
+  );
+};
+
+/** Desktop rail. Hidden below md — there the drawer in Layout takes over. */
+export const Sidebar: FC = () => {
+  const { t } = useTranslation();
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(COLLAPSED_KEY) === "1"
+  );
+
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
+  }, [collapsed]);
+
+  return (
     <VStack
       as="nav"
+      display={{ base: "none", md: "flex" }}
       align="stretch"
       spacing="1"
       w={collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded}
@@ -168,51 +217,30 @@ export const Sidebar: FC = () => {
       transition="width 0.15s ease"
       overflowY="auto"
     >
-      <HStack justifyContent={collapsed ? "center" : "space-between"} px="1" pb="2">
-        {!collapsed && (
-          <Text fontWeight="semibold" fontSize="md" noOfLines={1}>
-            Yuku
-          </Text>
-        )}
-        <IconButton
-          size="sm"
-          variant="ghost"
-          aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          <BurgerIcon />
-        </IconButton>
-      </HStack>
-
-      {items
-        .filter((item) => !item.sudoOnly || isSudo)
-        .map((item) => (
-          <NavRow
-            key={item.to}
-            item={item}
-            collapsed={collapsed}
-            active={location.pathname === item.to}
-          />
-        ))}
-
-      <Box flex="1" />
-
-      {footerItems.map((item) => (
-        <NavRow
-          key={item.to}
-          item={item}
-          collapsed={collapsed}
-          active={location.pathname === item.to}
-          onClick={
-            item.dot
-              ? () => {
-                  dismissDonationNotice();
-                  setShowDonationDot(false);
-                }
-              : undefined
-          }
-        />
-      ))}
+      <SidebarNav
+        collapsed={collapsed}
+        header={
+          <HStack
+            justifyContent={collapsed ? "center" : "space-between"}
+            px="1"
+            pb="2"
+          >
+            {!collapsed && (
+              <Text fontWeight="semibold" fontSize="md" noOfLines={1}>
+                Yuku
+              </Text>
+            )}
+            <IconButton
+              size="sm"
+              variant="ghost"
+              aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              <BurgerIcon />
+            </IconButton>
+          </HStack>
+        }
+      />
     </VStack>
   );
 };

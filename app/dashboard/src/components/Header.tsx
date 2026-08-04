@@ -1,5 +1,5 @@
 import { Box, chakra, HStack, IconButton, Text, useColorMode } from "@chakra-ui/react";
-import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { REPO_URL } from "constants/Project";
 import differenceInDays from "date-fns/differenceInDays";
 import isValid from "date-fns/isValid";
@@ -12,6 +12,8 @@ import { Language } from "./Language";
 type HeaderProps = {
   actions?: ReactNode;
   title?: string;
+  /** Opens the nav drawer; only rendered where the sidebar is hidden. */
+  onMenuOpen?: () => void;
 };
 const iconProps = {
   baseStyle: {
@@ -22,6 +24,7 @@ const iconProps = {
 
 const DarkIcon = chakra(MoonIcon, iconProps);
 const LightIcon = chakra(SunIcon, iconProps);
+const MenuIcon = chakra(Bars3Icon, iconProps);
 
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
@@ -45,7 +48,7 @@ export const dismissDonationNotice = (): void => {
   localStorage.setItem(NOTIFICATION_KEY, new Date().getTime().toString());
 };
 
-export const Header: FC<HeaderProps> = ({ title }) => {
+export const Header: FC<HeaderProps> = ({ title, onMenuOpen }) => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
@@ -55,11 +58,30 @@ export const Header: FC<HeaderProps> = ({ title }) => {
       gap={2}
       justifyContent="space-between"
       position="relative"
+      minW="0"
     >
-      <Text as="h1" fontWeight="semibold" fontSize="2xl" noOfLines={1}>
-        {title ?? t("users")}
-      </Text>
-      <Box overflow="auto" css={{ direction: "rtl" }}>
+      <HStack minW="0" spacing="2">
+        {onMenuOpen && (
+          <IconButton
+            display={{ base: "inline-flex", md: "none" }}
+            size="sm"
+            variant="outline"
+            aria-label={t("sidebar.expand")}
+            onClick={onMenuOpen}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+        <Text
+          as="h1"
+          fontWeight="semibold"
+          fontSize={{ base: "lg", md: "2xl" }}
+          noOfLines={1}
+        >
+          {title ?? t("users")}
+        </Text>
+      </HStack>
+      <Box css={{ direction: "rtl" }} flexShrink={0}>
         <HStack alignItems="center">
           <Language />
 
@@ -77,7 +99,7 @@ export const Header: FC<HeaderProps> = ({ title }) => {
 
           <Box
             css={{ direction: "ltr" }}
-            display="flex"
+            display={{ base: "none", lg: "flex" }}
             alignItems="center"
             pr="2"
             __css={{

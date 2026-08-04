@@ -203,7 +203,7 @@ export const HostGroupsModal: FC<HostGroupsModalProps> = ({ isOpen, onClose }) =
                 />
               </FormControl>
 
-              <HStack align="start">
+              <HStack align="start" flexDir={{ base: "column", sm: "row" }} spacing={{ base: 0, sm: 2 }} gap={{ base: 3, sm: 0 }}>
                 <FormControl>
                   <FormLabel>Лимит на юзера (ГБ)</FormLabel>
                   <Input
@@ -322,8 +322,10 @@ export const HostGroupsModal: FC<HostGroupsModalProps> = ({ isOpen, onClose }) =
                   borderWidth="1px"
                   borderRadius="md"
                   p={3}
+                  flexWrap="wrap"
+                  gap={2}
                 >
-                  <Box>
+                  <Box minW="0">
                     <Text fontWeight="600">{g.name}</Text>
                     <Text fontSize="xs" color="gray.500">
                       {g.traffic_limit

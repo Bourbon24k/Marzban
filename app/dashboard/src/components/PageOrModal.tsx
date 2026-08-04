@@ -47,7 +47,11 @@ export const ModalOverlay: FC<any> = (props) =>
 // full column instead.
 export const ModalContent: FC<any> = ({ children, ...props }) =>
   usePageMode() ? (
-    <Box w="full">{children}</Box>
+    // capped: the forms inside were laid out for a dialog and read badly when
+    // stretched across a wide monitor; tables that need more scroll instead
+    <Box w="full" maxW="6xl">
+      {children}
+    </Box>
   ) : (
     <ChakraModalContent {...props}>{children}</ChakraModalContent>
   );

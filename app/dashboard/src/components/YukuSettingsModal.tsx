@@ -443,7 +443,12 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                           </Button>
                         )}
                       </HStack>
-                      <HStack spacing={2} align="flex-start">
+                      <HStack
+                        spacing={2}
+                        align="flex-start"
+                        flexDir={{ base: "column", sm: "row" }}
+                        gap={{ base: 2, sm: 0 }}
+                      >
                         <Select
                           size="sm"
                           value={group.strategy}
@@ -459,7 +464,7 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                         </Select>
                         <Input
                           size="sm"
-                          maxW="90px"
+                          maxW={{ base: "full", sm: "90px" }}
                           placeholder="1m"
                           value={group.interval}
                           onChange={(e) =>
