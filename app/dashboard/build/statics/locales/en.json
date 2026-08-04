@@ -38,8 +38,8 @@
   "hostsDialog.advancedOptions": "Advanced options",
   "hostsDialog.allowinsecure": "Allow Insecure",
   "hostsDialog.useSniAsHost": "Use sni as host",
-  "hostsDialog.autoSelect": "Include in auto-select",
-  "hostsDialog.autoSelect.info": "Adds the host to the shared \"auto-select\" config: the client picks the fastest of the flagged servers (v2ray-json only)",
+  "hostsDialog.autoSelect": "Auto-select group",
+  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured in the YUKU settings",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "Apply",
   "hostsDialog.currentServer": "IP Address of current server",
@@ -218,5 +218,10 @@
   "usersTable.noUser": "There is no user added to the system",
   "usersTable.noUserMatched": "It seems there is no user matched with what you are looking for",
   "usersTable.status": "status",
-  "usersTable.total": "Total"
+  "usersTable.total": "Total",
+  "hostsDialog.autoSelect.none": "not included",
+  "sidebar.users": "Users",
+  "sidebar.collapse": "Collapse menu",
+  "sidebar.expand": "Expand menu",
+  "header.coreSettings": "Core settings"
 }

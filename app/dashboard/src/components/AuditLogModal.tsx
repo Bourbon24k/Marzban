@@ -6,13 +6,6 @@ import {
   HStack,
   IconButton,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Select,
   Spinner,
   Table,
@@ -27,6 +20,15 @@ import {
   chakra,
   useToast,
 } from "@chakra-ui/react";
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+} from "./PageOrModal";
 import { ArrowPathIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { FC, Fragment, useEffect, useMemo, useState } from "react";
 import { fetch } from "service/http";

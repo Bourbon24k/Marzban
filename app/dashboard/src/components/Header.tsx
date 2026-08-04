@@ -1,45 +1,17 @@
-import {
-  Box,
-  chakra,
-  HStack,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  Text,
-  useColorMode,
-} from "@chakra-ui/react";
-import {
-  ArrowLeftOnRectangleIcon,
-  Bars3Icon,
-  ChartPieIcon,
-  ClipboardDocumentListIcon,
-  Cog6ToothIcon,
-  CurrencyDollarIcon,
-  DocumentMinusIcon,
-  LinkIcon,
-  MoonIcon,
-  SquaresPlusIcon,
-  SunIcon,
-} from "@heroicons/react/24/outline";
-import { DONATION_URL, REPO_URL } from "constants/Project";
-import { useDashboard } from "contexts/DashboardContext";
+import { Box, chakra, HStack, IconButton, Text, useColorMode } from "@chakra-ui/react";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
+import { REPO_URL } from "constants/Project";
 import differenceInDays from "date-fns/differenceInDays";
 import isValid from "date-fns/isValid";
-import { FC, ReactNode, useState } from "react";
+import { FC, ReactNode } from "react";
 import GitHubButton from "react-github-btn";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
 import { updateThemeColor } from "utils/themeColor";
 import { Language } from "./Language";
-import { YukuSettingsModal } from "./YukuSettingsModal";
-import { HostGroupsModal } from "./HostGroupsModal";
-import { AuditLogModal } from "./AuditLogModal";
-import useGetUser from "hooks/useGetUser";
 
 type HeaderProps = {
   actions?: ReactNode;
+  title?: string;
 };
 const iconProps = {
   baseStyle: {
@@ -50,24 +22,6 @@ const iconProps = {
 
 const DarkIcon = chakra(MoonIcon, iconProps);
 const LightIcon = chakra(SunIcon, iconProps);
-const CoreSettingsIcon = chakra(Cog6ToothIcon, iconProps);
-const SettingsIcon = chakra(Bars3Icon, iconProps);
-const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
-const DonationIcon = chakra(CurrencyDollarIcon, iconProps);
-const HostsIcon = chakra(LinkIcon, iconProps);
-const NodesIcon = chakra(SquaresPlusIcon, iconProps);
-const NodesUsageIcon = chakra(ChartPieIcon, iconProps);
-const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
-const AuditLogIcon = chakra(ClipboardDocumentListIcon, iconProps);
-const NotificationCircle = chakra(Box, {
-  baseStyle: {
-    bg: "yellow.500",
-    w: "2",
-    h: "2",
-    rounded: "full",
-    position: "absolute",
-  },
-});
 
 const NOTIFICATION_KEY = "marzban-menu-notification";
 
@@ -86,164 +40,27 @@ export const shouldShowDonation = (): boolean => {
   }
 };
 
-export const Header: FC<HeaderProps> = ({ actions }) => {
-  const { userData, getUserIsSuccess, getUserIsPending } = useGetUser();
+/** Silences the donation dot for a week (the sidebar shows it now). */
+export const dismissDonationNotice = (): void => {
+  localStorage.setItem(NOTIFICATION_KEY, new Date().getTime().toString());
+};
 
-  const isSudo = () => {
-    if (!getUserIsPending && getUserIsSuccess) {
-      return userData.is_sudo;
-    }
-    return false;
-  };
-
-  const {
-    onEditingHosts,
-    onResetAllUsage,
-    onEditingNodes,
-    onShowingNodesUsage,
-  } = useDashboard();
+export const Header: FC<HeaderProps> = ({ title }) => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
-  const [showDonationNotif, setShowDonationNotif] = useState(
-    shouldShowDonation()
-  );
-  const [yukuSettingsOpen, setYukuSettingsOpen] = useState(false);
-  const [groupsOpen, setGroupsOpen] = useState(false);
-  const [auditOpen, setAuditOpen] = useState(false);
   const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
-
-  const handleOnClose = () => {
-    localStorage.setItem(NOTIFICATION_KEY, new Date().getTime().toString());
-    setShowDonationNotif(false);
-  };
 
   return (
     <HStack
       gap={2}
       justifyContent="space-between"
-      __css={{
-        "& .menuList": {
-          direction: "ltr",
-        },
-      }}
       position="relative"
     >
-      <Text as="h1" fontWeight="semibold" fontSize="2xl">
-        {t("users")}
+      <Text as="h1" fontWeight="semibold" fontSize="2xl" noOfLines={1}>
+        {title ?? t("users")}
       </Text>
-      {showDonationNotif && (
-        <NotificationCircle top="0" right="0" zIndex={9999} />
-      )}
       <Box overflow="auto" css={{ direction: "rtl" }}>
         <HStack alignItems="center">
-          <Menu>
-            <MenuButton
-              as={IconButton}
-              size="sm"
-              variant="outline"
-              icon={
-                <>
-                  <SettingsIcon />
-                </>
-              }
-              position="relative"
-            ></MenuButton>
-            <MenuList minW="170px" zIndex={99999} className="menuList">
-              {isSudo() && (
-                <>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<HostsIcon />}
-                    onClick={onEditingHosts.bind(null, true)}
-                  >
-                    {t("header.hostSettings")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<NodesIcon />}
-                    onClick={onEditingNodes.bind(null, true)}
-                  >
-                    {t("header.nodeSettings")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<NodesUsageIcon />}
-                    onClick={onShowingNodesUsage.bind(null, true)}
-                  >
-                    {t("header.nodesUsage")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<ResetUsageIcon />}
-                    onClick={onResetAllUsage.bind(null, true)}
-                  >
-                    {t("resetAllUsage")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<CoreSettingsIcon />}
-                    onClick={() => setYukuSettingsOpen(true)}
-                  >
-                    YUKU настройки
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<NodesUsageIcon />}
-                    onClick={() => setGroupsOpen(true)}
-                  >
-                    Лимиты по группам
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<AuditLogIcon />}
-                    onClick={() => setAuditOpen(true)}
-                  >
-                    История действий
-                  </MenuItem>
-                </>
-              )}
-              <Link to={DONATION_URL} target="_blank">
-                <MenuItem
-                  maxW="170px"
-                  fontSize="sm"
-                  icon={<DonationIcon />}
-                  position="relative"
-                  onClick={handleOnClose}
-                >
-                  {t("header.donation")}{" "}
-                  {showDonationNotif && (
-                    <NotificationCircle top="3" right="2" />
-                  )}
-                </MenuItem>
-              </Link>
-              <Link to="/login">
-                <MenuItem maxW="170px" fontSize="sm" icon={<LogoutIcon />}>
-                  {t("header.logout")}
-                </MenuItem>
-              </Link>
-            </MenuList>
-          </Menu>
-
-          {isSudo() && (
-            <IconButton
-              size="sm"
-              variant="outline"
-              aria-label="core settings"
-              onClick={() => {
-                useDashboard.setState({ isEditingCore: true });
-              }}
-            >
-              <CoreSettingsIcon />
-            </IconButton>
-          )}
-
           <Language />
 
           <IconButton
@@ -281,12 +98,6 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
           </Box>
         </HStack>
       </Box>
-      <YukuSettingsModal
-        isOpen={yukuSettingsOpen}
-        onClose={() => setYukuSettingsOpen(false)}
-      />
-      <AuditLogModal isOpen={auditOpen} onClose={() => setAuditOpen(false)} />
-      <HostGroupsModal isOpen={groupsOpen} onClose={() => setGroupsOpen(false)} />
     </HStack>
   );
 };

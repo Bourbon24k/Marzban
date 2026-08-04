@@ -1,15 +1,8 @@
-import { Box, VStack } from "@chakra-ui/react";
-import { CoreSettingsModal } from "components/CoreSettingsModal";
+import { Box } from "@chakra-ui/react";
 import { DeleteUserModal } from "components/DeleteUserModal";
 import { DeviceStats } from "components/DeviceStats";
 import { Filters } from "components/Filters";
-import { Footer } from "components/Footer";
-import { Header } from "components/Header";
-import { HostsDialog } from "components/HostsDialog";
-import { NodesDialog } from "components/NodesModal";
-import { NodesUsage } from "components/NodesUsage";
 import { QRCodeDialog } from "components/QRCodeDialog";
-import { ResetAllUsageModal } from "components/ResetAllUsageModal";
 import { ResetUserUsageModal } from "components/ResetUserUsageModal";
 import { RevokeSubscriptionModal } from "components/RevokeSubscriptionModal";
 import { UserDialog } from "components/UserDialog";
@@ -18,32 +11,26 @@ import { fetchInbounds, useDashboard } from "contexts/DashboardContext";
 import { FC, useEffect } from "react";
 import { Statistics } from "../components/Statistics";
 
+/** The users screen. Everything that used to sit behind the burger menu has a
+ *  route of its own now (pages/Screens.tsx); the sidebar, header and footer
+ *  live in components/Layout and wrap every page. */
 export const Dashboard: FC = () => {
   useEffect(() => {
     useDashboard.getState().refetchUsers();
     fetchInbounds();
   }, []);
   return (
-    <VStack justifyContent="space-between" minH="100vh" p="6" rowGap={4}>
-      <Box w="full">
-        <Header />
-        <Statistics mt="4" />
-        <DeviceStats mt="4" />
-        <Filters />
-        <UsersTable />
-        <UserDialog />
-        <DeleteUserModal />
-        <QRCodeDialog />
-        <HostsDialog />
-        <ResetUserUsageModal />
-        <RevokeSubscriptionModal />
-        <NodesDialog />
-        <NodesUsage />
-        <ResetAllUsageModal />
-        <CoreSettingsModal />
-      </Box>
-      <Footer />
-    </VStack>
+    <Box w="full">
+      <Statistics />
+      <DeviceStats mt="4" />
+      <Filters />
+      <UsersTable />
+      <UserDialog />
+      <DeleteUserModal />
+      <QRCodeDialog />
+      <ResetUserUsageModal />
+      <RevokeSubscriptionModal />
+    </Box>
   );
 };
 

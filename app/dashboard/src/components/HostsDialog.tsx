@@ -17,12 +17,6 @@ import {
   IconButton,
   InputGroup,
   InputRightElement,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -38,6 +32,14 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+} from "./PageOrModal";
+import {
   ArrowDownIcon,
   ArrowUpIcon,
   DocumentDuplicateIcon,
@@ -51,6 +53,7 @@ import {
   proxyHostSecurity,
 } from "constants/Proxies";
 import { useHosts } from "contexts/HostsContext";
+import { fetch } from "service/http";
 import { motion } from "framer-motion";
 import { FC, useEffect, useState } from "react";
 import {
@@ -98,6 +101,31 @@ const Select = chakra(ChakraSelect, {
     },
   },
 });
+
+export type AutoSelectGroup = { remark?: string };
+
+/** Auto-select groups, so the picker can label them the way the settings do.
+ *  Fetched once per page load and shared by every host row. */
+let autoSelectGroupsCache: AutoSelectGroup[] | null = null;
+
+const useAutoSelectGroups = (): AutoSelectGroup[] => {
+  const [groups, setGroups] = useState<AutoSelectGroup[]>(
+    autoSelectGroupsCache ?? []
+  );
+  useEffect(() => {
+    if (autoSelectGroupsCache) return;
+    fetch("/yuku/auto-select")
+      .then((data: any) => {
+        const list: AutoSelectGroup[] = Array.isArray(data?.groups)
+          ? data.groups
+          : [];
+        autoSelectGroupsCache = list;
+        setGroups(list);
+      })
+      .catch(() => {});
+  }, []);
+  return groups;
+};
 
 const Input = chakra(CustomInput, {
   baseStyle: {
@@ -153,7 +181,18 @@ const hostsSchema = z.record(
       alpn: z.string(),
       fingerprint: z.string(),
       use_sni_as_host: z.boolean().default(false),
-      auto_select: z.boolean().default(false),
+      auto_select: z
+        .number()
+        .or(z.string())
+        .or(z.boolean())
+        .nullable()
+        .transform((value) => {
+          // the column was a bool before groups existed; keep old data readable
+          if (typeof value === "boolean") return value ? 1 : 0;
+          if (typeof value === "number") return value;
+          if (value !== null && !isNaN(parseInt(value))) return parseInt(value);
+          return 0;
+        }),
     })
   )
 );
@@ -179,6 +218,7 @@ const AccordionInbound: FC<AccordionInboundType> = ({
   toggleAccordion,
 }) => {
   const { inbounds } = useDashboard();
+  const autoSelectGroups = useAutoSelectGroups();
   const inbound = [...inbounds.values()]
     .flat()
     .filter((inbound) => inbound.tag === hostKey)[0];
@@ -215,7 +255,7 @@ const AccordionInbound: FC<AccordionInboundType> = ({
       alpn: "",
       fingerprint: "",
       use_sni_as_host: false,
-      auto_select: false,
+      auto_select: 0,
     });
   };
   const duplicateHost = (index: number) => {
@@ -1184,16 +1224,26 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                               )
                             }
                           >
-                            <Checkbox
+                            <FormLabel>
+                              {t("hostsDialog.autoSelect")}
+                            </FormLabel>
+                            <Select
+                              size="sm"
                               {...form.register(
-                                hostKey + "." + index + ".auto_select"
+                                hostKey + "." + index + ".auto_select",
+                                { valueAsNumber: true }
                               )}
                             >
-                              <FormLabel>
-                                {t("hostsDialog.autoSelect")}
-                              </FormLabel>
-                            </Checkbox>
-                            <Text fontSize="xs" color="gray.500" pl={6}>
+                              <option value={0}>
+                                {t("hostsDialog.autoSelect.none")}
+                              </option>
+                              {autoSelectGroups.map((group, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                  {i + 1}. {group.remark}
+                                </option>
+                              ))}
+                            </Select>
+                            <Text fontSize="xs" color="gray.500" mt={1}>
                               {t("hostsDialog.autoSelect.info")}
                             </Text>
                             {accordionErrors &&

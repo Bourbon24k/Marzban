@@ -43,8 +43,8 @@
   "hostsDialog.advancedOptions": "تنظیمات پیشرفته",
   "hostsDialog.allowinsecure": "Allow Insecure",
   "hostsDialog.useSniAsHost": "استفاده از sni به عنوان هاست",
-  "hostsDialog.autoSelect": "Include in auto-select",
-  "hostsDialog.autoSelect.info": "Adds the host to the shared \"auto-select\" config: the client picks the fastest of the flagged servers (v2ray-json only)",
+  "hostsDialog.autoSelect": "Auto-select group",
+  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured in the YUKU settings",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "اعمال",
   "hostsDialog.currentServer": "IP کنونی سرور",
@@ -195,5 +195,10 @@
   "usersTable.noUser": "کاربری افزوده نشده است",
   "usersTable.noUserMatched": "به‌نظر میرسه کاربری که جستجو کردید، وجود ندارد",
   "usersTable.status": "وضعیت",
-  "usersTable.total": "مجموع"
+  "usersTable.total": "مجموع",
+  "hostsDialog.autoSelect.none": "not included",
+  "sidebar.users": "Users",
+  "sidebar.collapse": "Collapse menu",
+  "sidebar.expand": "Expand menu",
+  "header.coreSettings": "تنظیمات هسته"
 }

@@ -1,4 +1,5 @@
 import base64
+import json
 import random
 import secrets
 from collections import defaultdict
@@ -12,7 +13,6 @@ from app import xray
 from app.utils.system import get_public_ip, get_public_ipv6, readable_size
 
 from . import *
-from .v2ray import DEFAULT_AUTO_SELECT
 
 if TYPE_CHECKING:
     from app.models.user import UserResponse
@@ -102,18 +102,40 @@ def subscription_routing_profile() -> Union[str, None]:
     return None if value in ("", "off") else value
 
 
-def subscription_auto_select() -> dict:
-    """Settings of the auto-select entry (remark, balancer strategy, probe).
+AUTO_SELECT_FIELDS = ("remark", "strategy", "interval", "destination")
 
-    Falls back to the shipped defaults for anything the panel hasn't set.
+
+def subscription_auto_select() -> list:
+    """Settings of every auto-select group, index 0 being group 1.
+
+    Groups live in one JSON setting. The single-group keys that shipped first
+    (auto_select_remark and friends) are still honoured as group 1's values, so
+    a panel configured before groups existed keeps its entry; anything stored
+    under the group itself wins over them.
     """
     settings = _get_yuku_settings()
-    values = dict(DEFAULT_AUTO_SELECT)
-    for key in ("remark", "strategy", "interval", "destination"):
+
+    groups = []
+    raw = settings.get("auto_select_groups")
+    if raw:
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, list):
+            groups = [g for g in parsed if isinstance(g, dict)]
+
+    legacy = {}
+    for key in AUTO_SELECT_FIELDS:
         stored = settings.get(f"auto_select_{key}")
         if stored and str(stored).strip():
-            values[key] = str(stored).strip()
-    return values
+            legacy[key] = str(stored).strip()
+    if legacy:
+        groups = list(groups)
+        first = {k: v for k, v in (groups[0] if groups else {}).items() if v}
+        groups[0:1] = [{**legacy, **first}]
+
+    return groups
 
 
 def generate_v2ray_json_subscription(
@@ -127,10 +149,14 @@ def generate_v2ray_json_subscription(
     )
 
     format_variables = setup_format_variables(extra_data)
-    try:
-        auto_select["remark"] = auto_select["remark"].format_map(format_variables)
-    except Exception:
-        pass  # a malformed remark must not break the subscription
+    for group in auto_select:
+        remark = group.get("remark")
+        if not remark:
+            continue
+        try:
+            group["remark"] = remark.format_map(format_variables)
+        except Exception:
+            pass  # a malformed remark must not break the subscription
     return process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
@@ -734,7 +760,8 @@ def process_inbounds_and_tags(
                         conf.add_auto_member(
                             address=resolved_address,
                             inbound=host_inbound,
-                            settings=settings.model_dump()
+                            settings=settings.model_dump(),
+                            group=int(host["auto_select"]),
                         )
 
     return conf.render(reverse=reverse)

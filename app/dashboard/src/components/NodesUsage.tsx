@@ -2,6 +2,12 @@ import {
   Box,
   CircularProgress,
   HStack,
+  Text,
+  VStack,
+  chakra,
+  useColorMode,
+} from "@chakra-ui/react";
+import {
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -9,11 +15,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Text,
-  VStack,
-  chakra,
-  useColorMode,
-} from "@chakra-ui/react";
+} from "./PageOrModal";
 import { ChartPieIcon } from "@heroicons/react/24/outline";
 import { FilterUsageType, useDashboard } from "contexts/DashboardContext";
 import { useNodes } from "contexts/NodesContext";

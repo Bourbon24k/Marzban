@@ -5,13 +5,6 @@ import {
   FormLabel,
   HStack,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Select,
   Spinner,
   Tag,
@@ -21,6 +14,15 @@ import {
   VStack,
   useToast,
 } from "@chakra-ui/react";
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+} from "./PageOrModal";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { fetch } from "service/http";
 
@@ -69,6 +71,21 @@ type Settings = {
   auto_select_strategy: string;
   auto_select_interval: string;
   auto_select_destination: string;
+  auto_select_groups: string;
+};
+
+export type AutoSelectGroup = {
+  remark: string;
+  strategy: string;
+  interval: string;
+  destination: string;
+};
+
+const EMPTY_GROUP: AutoSelectGroup = {
+  remark: "",
+  strategy: "leastLoad",
+  interval: "1m",
+  destination: "",
 };
 
 const EMPTY: Settings = {
@@ -82,6 +99,32 @@ const EMPTY: Settings = {
   auto_select_strategy: "leastLoad",
   auto_select_interval: "1m",
   auto_select_destination: "",
+  auto_select_groups: "",
+};
+
+/** Groups as stored, falling back to the single-group keys the feature
+ *  shipped with so an older panel's entry isn't silently dropped. */
+const readGroups = (settings: Settings): AutoSelectGroup[] => {
+  let parsed: any = [];
+  if (settings.auto_select_groups) {
+    try {
+      parsed = JSON.parse(settings.auto_select_groups);
+    } catch {
+      parsed = [];
+    }
+  }
+  const groups: AutoSelectGroup[] = (Array.isArray(parsed) ? parsed : []).map(
+    (g: any) => ({ ...EMPTY_GROUP, ...(g || {}) })
+  );
+  if (groups.length === 0) {
+    groups.push({
+      remark: settings.auto_select_remark || "",
+      strategy: settings.auto_select_strategy || EMPTY_GROUP.strategy,
+      interval: settings.auto_select_interval || EMPTY_GROUP.interval,
+      destination: settings.auto_select_destination || "",
+    });
+  }
+  return groups;
 };
 
 // Kept in sync with AUTO_SELECT_STRATEGIES in app/subscription/v2ray.py.
@@ -126,6 +169,7 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
   onClose,
 }) => {
   const [data, setData] = useState<Settings>(EMPTY);
+  const [groups, setGroups] = useState<AutoSelectGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const announceRef = useRef<HTMLTextAreaElement | null>(null);
@@ -158,16 +202,38 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
     if (!isOpen) return;
     setLoading(true);
     fetch("/yuku/settings")
-      .then((d: any) => setData({ ...EMPTY, ...d }))
+      .then((d: any) => {
+        const settings: Settings = { ...EMPTY, ...d };
+        setData(settings);
+        setGroups(readGroups(settings));
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [isOpen]);
 
+  const patchGroup = (index: number, patch: Partial<AutoSelectGroup>) =>
+    setGroups((list) =>
+      list.map((g, i) => (i === index ? { ...g, ...patch } : g))
+    );
+
   const save = () => {
     setSaving(true);
-    fetch("/yuku/settings", { method: "PUT", body: data })
+    // the group list is the source of truth from here on; group 1 also
+    // overwrites the single-group keys so both stay in step
+    const first = groups[0] ?? EMPTY_GROUP;
+    const body = {
+      ...data,
+      auto_select_groups: JSON.stringify(groups),
+      auto_select_remark: first.remark,
+      auto_select_strategy: first.strategy,
+      auto_select_interval: first.interval,
+      auto_select_destination: first.destination,
+    };
+    fetch("/yuku/settings", { method: "PUT", body })
       .then((d: any) => {
-        setData({ ...EMPTY, ...d });
+        const settings: Settings = { ...EMPTY, ...d };
+        setData(settings);
+        setGroups(readGroups(settings));
         toast({
           title: "Настройки сохранены",
           status: "success",
@@ -177,12 +243,16 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
         });
         onClose();
       })
-      .catch(() => {
+      .catch((err: any) => {
+        // the backend refuses e.g. deleting a group that hosts still use —
+        // showing only "Ошибка сохранения" would hide why
         toast({
           title: "Ошибка сохранения",
+          description:
+            err?.response?._data?.detail ?? err?.data?.detail,
           status: "error",
           isClosable: true,
-          duration: 3000,
+          duration: 6000,
           position: "top",
         });
       })
@@ -329,56 +399,100 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
 
               <FormControl>
                 <FormLabel>Автовыбор сервера (v2ray-json)</FormLabel>
-                <Input
-                  placeholder="🌍 Автовыбор"
-                  value={data.auto_select_remark}
-                  onChange={(e) =>
-                    setData({ ...data, auto_select_remark: e.target.value })
-                  }
-                />
-                <Text fontSize="xs" color="gray.500" mt={1}>
-                  Название записи, которая появляется первой в подписке. В неё
-                  попадают хосты с галкой «участвует в автовыборе» — клиент сам
-                  переключается между ними. Нужно минимум два таких хоста, иначе
-                  запись не добавляется. Поддерживаются те же переменные, что и
-                  в announce.
+                <Text fontSize="xs" color="gray.500" mb={3}>
+                  Каждая группа — отдельная запись в подписке, куда клиент сам
+                  выбирает самый быстрый сервер. Хост попадает в группу в
+                  настройках хоста. Нужно минимум два хоста на группу, иначе
+                  запись не добавляется. В названии работают те же переменные,
+                  что и в announce.
                 </Text>
 
-                <HStack mt={3} spacing={2} align="flex-start">
-                  <Select
-                    size="sm"
-                    value={data.auto_select_strategy}
-                    onChange={(e) =>
-                      setData({ ...data, auto_select_strategy: e.target.value })
-                    }
-                  >
-                    {AUTO_SELECT_STRATEGIES.map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </Select>
-                  <Input
-                    size="sm"
-                    maxW="90px"
-                    placeholder="1m"
-                    value={data.auto_select_interval}
-                    onChange={(e) =>
-                      setData({ ...data, auto_select_interval: e.target.value })
-                    }
-                  />
-                </HStack>
-                <Input
+                <VStack spacing={3} align="stretch">
+                  {groups.map((group, index) => (
+                    <Box
+                      key={index}
+                      borderWidth="1px"
+                      borderColor="light-border"
+                      borderRadius="md"
+                      p={3}
+                    >
+                      <HStack mb={2} spacing={2}>
+                        <Text fontSize="sm" fontWeight="semibold" minW="8">
+                          №{index + 1}
+                        </Text>
+                        <Input
+                          size="sm"
+                          placeholder={
+                            index === 0 ? "🌍 Автовыбор" : `🌍 Автовыбор ${index + 1}`
+                          }
+                          value={group.remark}
+                          onChange={(e) =>
+                            patchGroup(index, { remark: e.target.value })
+                          }
+                        />
+                        {index === groups.length - 1 && groups.length > 1 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            colorScheme="red"
+                            onClick={() =>
+                              setGroups((list) => list.slice(0, -1))
+                            }
+                          >
+                            Удалить
+                          </Button>
+                        )}
+                      </HStack>
+                      <HStack spacing={2} align="flex-start">
+                        <Select
+                          size="sm"
+                          value={group.strategy}
+                          onChange={(e) =>
+                            patchGroup(index, { strategy: e.target.value })
+                          }
+                        >
+                          {AUTO_SELECT_STRATEGIES.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </Select>
+                        <Input
+                          size="sm"
+                          maxW="90px"
+                          placeholder="1m"
+                          value={group.interval}
+                          onChange={(e) =>
+                            patchGroup(index, { interval: e.target.value })
+                          }
+                        />
+                      </HStack>
+                      <Input
+                        size="sm"
+                        mt={2}
+                        placeholder="http://www.gstatic.com/generate_204"
+                        value={group.destination}
+                        onChange={(e) =>
+                          patchGroup(index, { destination: e.target.value })
+                        }
+                      />
+                    </Box>
+                  ))}
+                </VStack>
+
+                <Button
                   size="sm"
-                  mt={2}
-                  placeholder="http://www.gstatic.com/generate_204"
-                  value={data.auto_select_destination}
-                  onChange={(e) =>
-                    setData({ ...data, auto_select_destination: e.target.value })
-                  }
-                />
+                  variant="outline"
+                  w="full"
+                  mt={3}
+                  fontWeight="normal"
+                  onClick={() => setGroups((list) => [...list, { ...EMPTY_GROUP }])}
+                >
+                  Добавить автовыбор
+                </Button>
                 <Text fontSize="xs" color="gray.500" mt={1}>
-                  Стратегия, интервал замеров и URL для проверки. Слишком
+                  Удалить можно только последнюю группу, и только если в ней
+                  нет хостов — иначе они пропали бы из подписки молча. Слишком
                   частые замеры (меньше 30s) гоняют лишний трафик через каждый
                   сервер.
                 </Text>

@@ -18,18 +18,20 @@ import {
   FormLabel,
   HStack,
   IconButton,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
   Switch,
   Text,
   Tooltip,
   useToast,
   VStack,
 } from "@chakra-ui/react";
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+} from "./PageOrModal";
 import {
   EyeIcon,
   EyeSlashIcon,

@@ -591,7 +591,7 @@ class V2rayJsonConfig(str):
         # the class subclasses str, whose __new__ would choke on our kwargs
         return super().__new__(cls)
 
-    def __init__(self, routing_profile: str = None, auto_select: dict = None):
+    def __init__(self, routing_profile: str = None, auto_select: list = None):
         self.config = []
         self.template = render_template(V2RAY_SUBSCRIPTION_TEMPLATE)
         self.mux_template = render_template(MUX_TEMPLATE)
@@ -629,11 +629,12 @@ class V2rayJsonConfig(str):
         if routing_profile:
             self._apply_routing_profile(routing_profile)
 
-        # auto-select: hosts flagged in the panel are collected here and turned
-        # into one extra balanced config by render()
-        self.auto_select = auto_select or {}
-        self.auto_outbounds = []
-        self.auto_member_tags = []
+        # auto-select: hosts assigned to a group in the panel are collected per
+        # group and turned into one extra balanced config each by render().
+        # auto_select is a list of group settings; index 0 is group 1.
+        self.auto_select = list(auto_select or [])
+        self.auto_outbounds = {}    # group -> member outbounds (+ their dialers)
+        self.auto_member_tags = {}  # group -> member tags
 
     def _apply_routing_profile(self, name: str) -> None:
         """Overlays a shipped routing/DNS profile (split tunnel + ad blocking).
@@ -678,13 +679,11 @@ class V2rayJsonConfig(str):
     def render(self, reverse=False):
         if reverse:
             self.config.reverse()
-        auto_config = self.build_auto_config(
-            self.auto_select.get("remark") or DEFAULT_AUTO_SELECT["remark"]
-        )
-        if auto_config:
-            # always first, so the entry the user is meant to pick is on top
-            # whichever way the host list is ordered
-            self.config.insert(0, auto_config)
+        # always on top, in group order, whichever way the host list is ordered
+        for group in sorted(self.auto_member_tags, reverse=True):
+            auto_config = self.build_auto_config(group)
+            if auto_config:
+                self.config.insert(0, auto_config)
         if self.routing_profile:
             # the profile repeats per config; indentation alone would add
             # megabytes to the response
@@ -1299,13 +1298,18 @@ class V2rayJsonConfig(str):
             outbounds=self.make_outbounds(address, inbound, settings),
         )
 
-    def add_auto_member(self, address: str, inbound: dict, settings: dict) -> None:
-        """Registers a host as a candidate of the auto-select balancer.
+    def add_auto_member(self, address: str, inbound: dict, settings: dict,
+                        group: int = 1) -> None:
+        """Registers a host as a candidate of one auto-select group.
 
         The host keeps its own entry in the subscription; this only adds it to
-        the extra balanced config built by build_auto_config().
+        the extra balanced config built by build_auto_config(). Groups are
+        independent: a host belongs to at most one.
         """
-        n = len(self.auto_member_tags) + 1
+        if not group or group < 1:
+            return
+        tags = self.auto_member_tags.setdefault(group, [])
+        n = len(tags) + 1
         tag = "proxy" if n == 1 else f"proxy-{n}"
         try:
             outbounds = self.make_outbounds(address, inbound, settings, tag=tag)
@@ -1313,17 +1317,37 @@ class V2rayJsonConfig(str):
             # a member that can't be rendered must not cost the user the whole
             # subscription — it simply doesn't join the balancer
             return
-        self.auto_member_tags.append(tag)
-        self.auto_outbounds.extend(outbounds)
+        tags.append(tag)
+        self.auto_outbounds.setdefault(group, []).extend(outbounds)
 
-    def _observatory_config(self, strategy: str) -> dict:
+    def group_settings(self, group: int) -> dict:
+        """Settings of one auto-select group, over the shipped defaults.
+
+        Groups the panel never configured still work: they fall back to the
+        defaults, with the group number appended to the remark so two entries
+        can't end up with the same name.
+        """
+        values = dict(DEFAULT_AUTO_SELECT)
+        stored = {}
+        index = group - 1
+        if 0 <= index < len(self.auto_select):
+            stored = self.auto_select[index] or {}
+        for key in values:
+            value = stored.get(key)
+            if value not in (None, ""):
+                values[key] = value
+        if group > 1 and not stored.get("remark"):
+            values["remark"] = f'{DEFAULT_AUTO_SELECT["remark"]} {group}'
+        return values
+
+    def _observatory_config(self, strategy: str, settings: dict) -> dict:
         """Probe block feeding the balancer's health data.
 
         leastLoad reads burstObservatory (per-request RTT distribution),
         leastPing reads the plain observatory. roundRobin/random need neither.
         """
-        interval = self.auto_select.get("interval") or DEFAULT_AUTO_SELECT["interval"]
-        destination = self.auto_select.get("destination") or DEFAULT_AUTO_SELECT["destination"]
+        interval = settings.get("interval") or DEFAULT_AUTO_SELECT["interval"]
+        destination = settings.get("destination") or DEFAULT_AUTO_SELECT["destination"]
 
         if strategy == "leastLoad":
             return {
@@ -1349,21 +1373,22 @@ class V2rayJsonConfig(str):
             }
         return {}
 
-    def build_auto_config(self, remark: str) -> Union[dict, None]:
+    def build_auto_config(self, group: int) -> Union[dict, None]:
         """One extra config whose outbounds are picked by an Xray balancer.
 
-        Returns None when fewer than two hosts opted in — a balancer over a
-        single server is just that server under a second name.
+        Returns None when fewer than two hosts joined the group — a balancer
+        over a single server is just that server under a second name.
         """
-        if len(self.auto_member_tags) < 2:
+        if len(self.auto_member_tags.get(group) or []) < 2:
             return None
 
-        strategy = self.auto_select.get("strategy") or DEFAULT_AUTO_SELECT["strategy"]
+        settings = self.group_settings(group)
+        strategy = settings.get("strategy") or DEFAULT_AUTO_SELECT["strategy"]
         if strategy not in AUTO_SELECT_STRATEGIES:
             strategy = DEFAULT_AUTO_SELECT["strategy"]
 
         config = dict(self.base)
-        config["remarks"] = remark
+        config["remarks"] = settings["remark"]
 
         routing = copy.deepcopy(self.base.get("routing") or {})
         rules = routing.get("rules") or []
@@ -1385,9 +1410,10 @@ class V2rayJsonConfig(str):
             "strategy": AUTO_SELECT_STRATEGIES[strategy],
         }]
         config["routing"] = routing
-        config.update(self._observatory_config(strategy))
+        config.update(self._observatory_config(strategy, settings))
 
-        outbounds = self.auto_outbounds + self.base_outbounds + self.profile_outbounds
+        outbounds = (list(self.auto_outbounds.get(group) or [])
+                     + self.base_outbounds + self.profile_outbounds)
         tags = {o.get("tag") for o in outbounds}
         # fallbackTag and the bittorrent rule point at "direct"; a rule aimed at
         # a tag that doesn't exist silently falls through to the first outbound

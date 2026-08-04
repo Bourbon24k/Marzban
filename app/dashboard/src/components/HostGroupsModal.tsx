@@ -9,13 +9,6 @@ import {
   HStack,
   IconButton,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Select,
   Spinner,
   Text,
@@ -23,6 +16,15 @@ import {
   VStack,
   useToast,
 } from "@chakra-ui/react";
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+} from "./PageOrModal";
 import { DeleteIcon } from "./DeleteUserModal";
 import { FC, useEffect, useMemo, useState } from "react";
 import { fetch } from "service/http";
