@@ -2,6 +2,7 @@ import {
   Box,
   chakra,
   HStack,
+  Icon as ChakraIcon,
   IconButton,
   Text,
   Tooltip,
@@ -9,14 +10,13 @@ import {
 } from "@chakra-ui/react";
 import {
   ArrowLeftOnRectangleIcon,
-  Bars3Icon,
   ChartPieIcon,
+  ChevronLeftIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
-  DocumentMinusIcon,
   LinkIcon,
-  SquaresPlusIcon,
+  ServerStackIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import { DONATION_URL } from "constants/Project";
@@ -26,31 +26,25 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { dismissDonationNotice, shouldShowDonation } from "./Header";
 
-const iconProps = { baseStyle: { w: 5, h: 5 } };
+const COLLAPSED_KEY = "panel-sidebar-collapsed";
 
-const UsersNavIcon = chakra(UsersIcon, iconProps);
-const HostsIcon = chakra(LinkIcon, iconProps);
-const NodesIcon = chakra(SquaresPlusIcon, iconProps);
-const UsageIcon = chakra(ChartPieIcon, iconProps);
-const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
-const SettingsIcon = chakra(Cog6ToothIcon, iconProps);
-const AuditIcon = chakra(ClipboardDocumentListIcon, iconProps);
-const DonationIcon = chakra(CurrencyDollarIcon, iconProps);
-const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
-const BurgerIcon = chakra(Bars3Icon, { baseStyle: { w: 4, h: 4 } });
-
-const COLLAPSED_KEY = "yuku-sidebar-collapsed";
-
-export const SIDEBAR_WIDTH = { collapsed: "60px", expanded: "220px" };
+export const SIDEBAR_WIDTH = { collapsed: "64px", expanded: "236px" };
 
 type Item = {
   to: string;
   label: string;
-  icon: FC;
+  icon: any;
   sudoOnly?: boolean;
   external?: boolean;
   dot?: boolean;
+  /** highlight the item for every route beneath it, e.g. /settings/core */
+  prefix?: boolean;
 };
+
+type Group = { title?: string; items: Item[] };
+
+const isActive = (pathname: string, item: Item) =>
+  item.prefix ? pathname.startsWith(item.to) : pathname === item.to;
 
 const NavRow: FC<{
   item: Item;
@@ -58,7 +52,6 @@ const NavRow: FC<{
   active: boolean;
   onClick?: () => void;
 }> = ({ item, collapsed, active, onClick }) => {
-  const Icon = item.icon;
   const row = (
     <HStack
       as="span"
@@ -66,17 +59,16 @@ const NavRow: FC<{
       spacing="3"
       px="3"
       py="2"
-      borderRadius="md"
+      borderRadius="lg"
       position="relative"
       justifyContent={collapsed ? "center" : "flex-start"}
-      bg={active ? "primary.500" : "transparent"}
-      color={active ? "white" : undefined}
-      _hover={{
-        bg: active ? "primary.500" : "gray.100",
-        _dark: { bg: active ? "primary.500" : "gray.700" },
-      }}
+      bg={active ? "ui.accentSubtle" : "transparent"}
+      color={active ? "ui.accent" : "ui.textMuted"}
+      fontWeight={active ? "500" : "400"}
+      _hover={{ bg: active ? "ui.accentSubtle" : "ui.surfaceHover", color: active ? "ui.accent" : "ui.text" }}
+      transition="background .12s ease, color .12s ease"
     >
-      <Icon />
+      <ChakraIcon as={item.icon} w="5" h="5" flexShrink={0} />
       {!collapsed && (
         <Text fontSize="sm" noOfLines={1}>
           {item.label}
@@ -84,7 +76,7 @@ const NavRow: FC<{
       )}
       {item.dot && (
         <Box
-          bg="yellow.500"
+          bg="orange.400"
           w="2"
           h="2"
           rounded="full"
@@ -96,18 +88,14 @@ const NavRow: FC<{
     </HStack>
   );
 
-  const link = item.external ? (
-    <Link to={item.to} target="_blank" onClick={onClick}>
-      {row}
-    </Link>
-  ) : (
-    <Link to={item.to} onClick={onClick}>
+  const link = (
+    <Link to={item.to} onClick={onClick} target={item.external ? "_blank" : undefined}>
       {row}
     </Link>
   );
 
   return collapsed ? (
-    <Tooltip label={item.label} placement="right" openDelay={300}>
+    <Tooltip label={item.label} placement="right" openDelay={200}>
       <Box w="full">{link}</Box>
     </Tooltip>
   ) : (
@@ -128,64 +116,96 @@ export const SidebarNav: FC<{
   const isSudo = !getUserIsPending && getUserIsSuccess && userData?.is_sudo;
   const [showDonationDot, setShowDonationDot] = useState(shouldShowDonation());
 
-  const items: Item[] = [
-    { to: "/", label: t("sidebar.users"), icon: UsersNavIcon },
-    { to: "/hosts", label: t("header.hostSettings"), icon: HostsIcon, sudoOnly: true },
-    { to: "/nodes", label: t("header.nodeSettings"), icon: NodesIcon, sudoOnly: true },
-    { to: "/nodes-usage", label: t("header.nodesUsage"), icon: UsageIcon, sudoOnly: true },
-    { to: "/reset-usage", label: t("resetAllUsage"), icon: ResetUsageIcon, sudoOnly: true },
-    { to: "/core", label: t("header.coreSettings"), icon: SettingsIcon, sudoOnly: true },
-    { to: "/yuku", label: "YUKU настройки", icon: SettingsIcon, sudoOnly: true },
-    { to: "/groups", label: "Лимиты по группам", icon: UsageIcon, sudoOnly: true },
-    { to: "/audit", label: "История действий", icon: AuditIcon, sudoOnly: true },
+  const groups: Group[] = [
+    { items: [{ to: "/", label: t("sidebar.users"), icon: UsersIcon }] },
+    {
+      title: "Инфраструктура",
+      items: [
+        { to: "/hosts", label: t("header.hostSettings"), icon: LinkIcon, sudoOnly: true },
+        { to: "/nodes", label: t("header.nodeSettings"), icon: ServerStackIcon, sudoOnly: true },
+        { to: "/nodes-usage", label: t("header.nodesUsage"), icon: ChartPieIcon, sudoOnly: true },
+      ],
+    },
+    {
+      title: "Система",
+      items: [
+        { to: "/settings", label: "Настройки", icon: Cog6ToothIcon, sudoOnly: true, prefix: true },
+        { to: "/audit", label: "История действий", icon: ClipboardDocumentListIcon, sudoOnly: true },
+      ],
+    },
   ];
 
   const footerItems: Item[] = [
     {
       to: DONATION_URL,
       label: t("header.donation"),
-      icon: DonationIcon,
+      icon: CurrencyDollarIcon,
       external: true,
       dot: showDonationDot,
     },
-    { to: "/login", label: t("header.logout"), icon: LogoutIcon },
+    { to: "/login", label: t("header.logout"), icon: ArrowLeftOnRectangleIcon },
   ];
 
   return (
     <>
       {header}
-      {items
-        .filter((item) => !item.sudoOnly || isSudo)
-        .map((item) => (
+
+      {groups.map((group, i) => {
+        const items = group.items.filter((item) => !item.sudoOnly || isSudo);
+        if (items.length === 0) return null;
+        return (
+          <VStack key={i} align="stretch" spacing="1" pb="2">
+            {group.title && !collapsed && (
+              <Text
+                px="3"
+                pt="3"
+                pb="1"
+                fontSize="10px"
+                textTransform="uppercase"
+                letterSpacing="0.06em"
+                color="ui.textFaint"
+              >
+                {group.title}
+              </Text>
+            )}
+            {group.title && collapsed && <Box h="1px" bg="ui.border" mx="3" my="2" />}
+            {items.map((item) => (
+              <NavRow
+                key={item.to}
+                item={item}
+                collapsed={collapsed}
+                active={isActive(location.pathname, item)}
+                onClick={onNavigate}
+              />
+            ))}
+          </VStack>
+        );
+      })}
+
+      <Box flex="1" />
+
+      <VStack align="stretch" spacing="1">
+        {footerItems.map((item) => (
           <NavRow
             key={item.to}
             item={item}
             collapsed={collapsed}
             active={location.pathname === item.to}
-            onClick={onNavigate}
+            onClick={() => {
+              if (item.dot) {
+                dismissDonationNotice();
+                setShowDonationDot(false);
+              }
+              onNavigate?.();
+            }}
           />
         ))}
-
-      <Box flex="1" />
-
-      {footerItems.map((item) => (
-        <NavRow
-          key={item.to}
-          item={item}
-          collapsed={collapsed}
-          active={location.pathname === item.to}
-          onClick={() => {
-            if (item.dot) {
-              dismissDonationNotice();
-              setShowDonationDot(false);
-            }
-            onNavigate?.();
-          }}
-        />
-      ))}
+      </VStack>
     </>
   );
 };
+
+const CollapseIcon = chakra(ChevronLeftIcon, { baseStyle: { w: 4, h: 4 } });
 
 /** Desktop rail. Hidden below md — there the drawer in Layout takes over. */
 export const Sidebar: FC = () => {
@@ -203,7 +223,7 @@ export const Sidebar: FC = () => {
       as="nav"
       display={{ base: "none", md: "flex" }}
       align="stretch"
-      spacing="1"
+      spacing="0"
       w={collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded}
       flexShrink={0}
       h="100vh"
@@ -211,24 +231,37 @@ export const Sidebar: FC = () => {
       top="0"
       py="4"
       px="2"
+      bg="ui.surface"
       borderRightWidth="1px"
-      borderColor="light-border"
-      _dark={{ borderColor: "gray.700" }}
-      transition="width 0.15s ease"
+      borderColor="ui.border"
+      transition="width .15s ease"
       overflowY="auto"
     >
       <SidebarNav
         collapsed={collapsed}
         header={
-          <HStack
-            justifyContent={collapsed ? "center" : "space-between"}
-            px="1"
-            pb="2"
-          >
+          <HStack justifyContent={collapsed ? "center" : "space-between"} px="1" pb="3">
             {!collapsed && (
-              <Text fontWeight="semibold" fontSize="md" noOfLines={1}>
-                Yuku
-              </Text>
+              <HStack spacing="2" minW="0">
+                <Box
+                  w="7"
+                  h="7"
+                  borderRadius="lg"
+                  bg="primary.500"
+                  color="white"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  fontSize="sm"
+                  fontWeight="700"
+                  flexShrink={0}
+                >
+                  M
+                </Box>
+                <Text fontWeight="600" fontSize="md" noOfLines={1}>
+                  Marzban
+                </Text>
+              </HStack>
             )}
             <IconButton
               size="sm"
@@ -236,7 +269,7 @@ export const Sidebar: FC = () => {
               aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
               onClick={() => setCollapsed((value) => !value)}
             >
-              <BurgerIcon />
+              <CollapseIcon transform={collapsed ? "rotate(180deg)" : undefined} />
             </IconButton>
           </HStack>
         }

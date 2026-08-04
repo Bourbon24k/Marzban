@@ -92,7 +92,7 @@ const ACTION_LABELS: Record<string, string> = {
   template_create: "Создан шаблон",
   template_modify: "Изменён шаблон",
   template_delete: "Удалён шаблон",
-  yuku_settings: "YUKU настройки",
+  yuku_settings: "Настройки панели",
   other: "Прочее",
 };
 

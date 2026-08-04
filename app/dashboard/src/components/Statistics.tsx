@@ -1,4 +1,4 @@
-import { Box, BoxProps, Card, chakra, HStack, SimpleGrid, Text } from "@chakra-ui/react";
+import { Box, BoxProps, chakra, HStack, SimpleGrid, Text } from "@chakra-ui/react";
 import {
   BoltIcon,
   ChartBarIcon,
@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetch } from "service/http";
 import { formatBytes, numberWithCommas } from "utils/formatByte";
+import { Panel } from "./ui";
 
 const TotalUsersIcon = chakra(UsersIcon, {
   baseStyle: {
@@ -63,74 +64,32 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
   title,
   content,
   icon,
-}) => {
-  return (
-    <Card
-      p={6}
-      borderWidth="1px"
-      borderColor="light-border"
-      bg="#F9FAFB"
-      _dark={{ borderColor: "gray.600", bg: "gray.750" }}
-      borderStyle="solid"
-      boxShadow="none"
-      borderRadius="12px"
-      width="full"
-      display="flex"
-      justifyContent="space-between"
-      flexDirection="row"
-    >
-      <HStack alignItems="center" columnGap="4">
-        <Box
-          p="2"
-          position="relative"
-          color="white"
-          _before={{
-            content: `""`,
-            position: "absolute",
-            top: 0,
-            left: 0,
-            bg: "primary.400",
-            display: "block",
-            w: "full",
-            h: "full",
-            borderRadius: "5px",
-            opacity: ".5",
-            z: "1",
-          }}
-          _after={{
-            content: `""`,
-            position: "absolute",
-            top: "-5px",
-            left: "-5px",
-            bg: "primary.400",
-            display: "block",
-            w: "calc(100% + 10px)",
-            h: "calc(100% + 10px)",
-            borderRadius: "8px",
-            opacity: ".4",
-            z: "1",
-          }}
-        >
-          {icon}
-        </Box>
-        <Text
-          color="gray.600"
-          _dark={{
-            color: "gray.300",
-          }}
-          fontWeight="medium"
-          textTransform="capitalize"
-          fontSize="sm"
-        >
-          {title}
-        </Text>
-      </HStack>
-      <Box fontSize="3xl" fontWeight="semibold" mt="2">
-        {content}
+}) => (
+  <Panel p="5">
+    <HStack alignItems="center" spacing="3" mb="3">
+      <Box
+        w="9"
+        h="9"
+        borderRadius="lg"
+        bg="ui.accentSubtle"
+        color="ui.accent"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        flexShrink={0}
+      >
+        {icon}
       </Box>
-    </Card>
-  );
-};
+      <Text color="ui.textMuted" fontWeight="500" fontSize="sm" noOfLines={1}>
+        {title}
+      </Text>
+    </HStack>
+    <Box fontSize="2xl" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }} minH="9">
+      {content}
+    </Box>
+  </Panel>
+);
+
 export const StatisticsQueryKey = "statistics-query-key";
 export const Statistics: FC<BoxProps> = (props) => {
   const { version } = useDashboard();
@@ -147,7 +106,7 @@ export const Statistics: FC<BoxProps> = (props) => {
   return (
     <SimpleGrid
       columns={{ base: 1, sm: 2, lg: 3 }}
-      gap={4}
+      gap="3"
       {...props}
     >
       <StatisticCard
@@ -196,7 +155,7 @@ export const Statistics: FC<BoxProps> = (props) => {
                 fontSize="md"
                 as="span"
                 pb="2px"
-                color="gray.500"
+                color="ui.textMuted"
               >
                 ↑ {formatBytes(systemData.outgoing_bandwidth_speed, 1)}/s
               </Text>

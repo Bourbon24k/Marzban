@@ -39,7 +39,7 @@
   "hostsDialog.allowinsecure": "Allow Insecure",
   "hostsDialog.useSniAsHost": "Use sni as host",
   "hostsDialog.autoSelect": "Auto-select group",
-  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured in the YUKU settings",
+  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured under Settings → Auto-select",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "Apply",
   "hostsDialog.currentServer": "IP Address of current server",
@@ -223,5 +223,7 @@
   "sidebar.users": "Users",
   "sidebar.collapse": "Collapse menu",
   "sidebar.expand": "Expand menu",
-  "header.coreSettings": "Core settings"
+  "header.coreSettings": "Core settings",
+  "hostsDialog.remark": "Remark",
+  "hostsDialog.address": "Address"
 }

@@ -45,7 +45,7 @@ i18n
                 // Cache-Control, i18next fetches them by XHR, and an XHR is not
                 // covered by the browser's hard-reload cache bypass — a stale
                 // copy otherwise survives until the heuristic freshness expires.
-                queryStringParams: { v: "yuku-autoselect-1" },
+                queryStringParams: { v: "redesign-1" },
             },
         },
         function (err, t) {

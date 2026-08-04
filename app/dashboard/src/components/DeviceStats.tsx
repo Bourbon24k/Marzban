@@ -1,12 +1,11 @@
 import {
   Box,
   BoxProps,
-  Card,
-  HStack,
   SimpleGrid,
   Text,
   useColorMode,
 } from "@chakra-ui/react";
+import { ChartBarIcon } from "@heroicons/react/24/outline";
 import { ApexOptions } from "apexcharts";
 import { FC, ReactNode } from "react";
 import ReactApexChart from "react-apexcharts";
@@ -14,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetch } from "service/http";
 import { numberWithCommas } from "utils/formatByte";
+import { Panel, Section } from "./ui";
 
 export const DeviceStatsQueryKey = "device-stats-query-key";
 
@@ -32,22 +32,14 @@ const MiniStat: FC<{ label: string; value: ReactNode; accent?: string }> = ({
   value,
   accent,
 }) => (
-  <Card
-    p={4}
-    borderWidth="1px"
-    borderColor="light-border"
-    bg="#F9FAFB"
-    _dark={{ borderColor: "gray.600", bg: "gray.750" }}
-    boxShadow="none"
-    borderRadius="12px"
-  >
-    <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.400" }} mb={1}>
+  <Panel p="4">
+    <Text fontSize="xs" color="ui.textMuted" mb="1" noOfLines={1}>
       {label}
     </Text>
-    <Text fontSize="2xl" fontWeight="semibold" color={accent}>
+    <Text fontSize="2xl" fontWeight="600" color={accent} sx={{ fontVariantNumeric: "tabular-nums" }}>
       {value}
     </Text>
-  </Card>
+  </Panel>
 );
 
 export const DeviceStats: FC<BoxProps> = (props) => {
@@ -63,7 +55,7 @@ export const DeviceStats: FC<BoxProps> = (props) => {
 
   const labels = data.by_platform.map((p) => p.platform);
   const series = data.by_platform.map((p) => p.count);
-  const axisColor = colorMode === "dark" ? "#CBD5E0" : undefined;
+  const axisColor = colorMode === "dark" ? "#9298a4" : "#6b7280";
 
   const chartOptions: ApexOptions = {
     chart: { type: "bar", toolbar: { show: false }, animations: { enabled: false } },
@@ -72,16 +64,13 @@ export const DeviceStats: FC<BoxProps> = (props) => {
     xaxis: { categories: labels, labels: { style: { colors: axisColor } } },
     yaxis: { labels: { style: { colors: axisColor } } },
     tooltip: { theme: colorMode },
-    grid: { borderColor: colorMode === "dark" ? "#2D3748" : "#E2E8F0" },
-    colors: ["#805AD5"],
+    grid: { borderColor: colorMode === "dark" ? "#2f3136" : "#e4e6eb" },
+    colors: ["#5c7cfa"],
   };
 
   return (
     <Box {...props}>
-      <Text fontWeight="semibold" fontSize="md" mb={3}>
-        {t("deviceStats.title")}
-      </Text>
-      <SimpleGrid columns={{ base: 2, md: 4 }} gap={4} mb={4}>
+      <SimpleGrid columns={{ base: 2, md: 4 }} gap="3" mb={series.length > 0 ? "4" : "0"}>
         <MiniStat
           label={t("deviceStats.activeDevices")}
           value={numberWithCommas(data.active_devices)}
@@ -102,25 +91,14 @@ export const DeviceStats: FC<BoxProps> = (props) => {
         />
       </SimpleGrid>
       {series.length > 0 && (
-        <Card
-          p={4}
-          borderWidth="1px"
-          borderColor="light-border"
-          bg="#F9FAFB"
-          _dark={{ borderColor: "gray.600", bg: "gray.750" }}
-          boxShadow="none"
-          borderRadius="12px"
-        >
-          <Text fontSize="sm" color="gray.500" _dark={{ color: "gray.400" }} mb={2}>
-            {t("deviceStats.byPlatform")}
-          </Text>
+        <Section icon={ChartBarIcon} title={t("deviceStats.byPlatform")}>
           <ReactApexChart
             options={chartOptions}
             series={[{ name: t("deviceStats.devices"), data: series }]}
             type="bar"
             height={Math.max(140, labels.length * 38)}
           />
-        </Card>
+        </Section>
       )}
     </Box>
   );

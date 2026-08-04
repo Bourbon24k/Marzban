@@ -44,7 +44,7 @@
   "hostsDialog.allowinsecure": "Allow Insecure",
   "hostsDialog.useSniAsHost": "استفاده از sni به عنوان هاست",
   "hostsDialog.autoSelect": "Auto-select group",
-  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured in the YUKU settings",
+  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured under Settings → Auto-select",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "اعمال",
   "hostsDialog.currentServer": "IP کنونی سرور",
@@ -200,5 +200,7 @@
   "sidebar.users": "Users",
   "sidebar.collapse": "Collapse menu",
   "sidebar.expand": "Expand menu",
-  "header.coreSettings": "تنظیمات هسته"
+  "header.coreSettings": "تنظیمات هسته",
+  "hostsDialog.remark": "نام",
+  "hostsDialog.address": "آدرس"
 }

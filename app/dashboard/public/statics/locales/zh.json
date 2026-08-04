@@ -39,7 +39,7 @@
   "hostsDialog.allowinsecure": "允许不安全连接",
   "hostsDialog.useSniAsHost": "Use sni as host",
   "hostsDialog.autoSelect": "Auto-select group",
-  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured in the YUKU settings",
+  "hostsDialog.autoSelect.info": "Auto-select entry this host joins: the client picks the fastest of its servers (v2ray-json only). Groups are configured under Settings → Auto-select",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "保存",
   "hostsDialog.currentServer": "当前服务器的 IP 地址",
@@ -196,5 +196,7 @@
   "sidebar.users": "Users",
   "sidebar.collapse": "Collapse menu",
   "sidebar.expand": "Expand menu",
-  "header.coreSettings": "核心设置"
+  "header.coreSettings": "核心设置",
+  "hostsDialog.remark": "备注",
+  "hostsDialog.address": "地址"
 }
