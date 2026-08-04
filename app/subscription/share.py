@@ -12,6 +12,7 @@ from app import xray
 from app.utils.system import get_public_ip, get_public_ipv6, readable_size
 
 from . import *
+from .v2ray import DEFAULT_AUTO_SELECT
 
 if TYPE_CHECKING:
     from app.models.user import UserResponse
@@ -101,13 +102,35 @@ def subscription_routing_profile() -> Union[str, None]:
     return None if value in ("", "off") else value
 
 
+def subscription_auto_select() -> dict:
+    """Settings of the auto-select entry (remark, balancer strategy, probe).
+
+    Falls back to the shipped defaults for anything the panel hasn't set.
+    """
+    settings = _get_yuku_settings()
+    values = dict(DEFAULT_AUTO_SELECT)
+    for key in ("remark", "strategy", "interval", "destination"):
+        stored = settings.get(f"auto_select_{key}")
+        if stored and str(stored).strip():
+            values[key] = str(stored).strip()
+    return values
+
+
 def generate_v2ray_json_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
         group_ctx: dict = None
 ) -> str:
-    conf = V2rayJsonConfig(routing_profile=subscription_routing_profile())
+    auto_select = subscription_auto_select()
+    conf = V2rayJsonConfig(
+        routing_profile=subscription_routing_profile(),
+        auto_select=auto_select,
+    )
 
     format_variables = setup_format_variables(extra_data)
+    try:
+        auto_select["remark"] = auto_select["remark"].format_map(format_variables)
+    except Exception:
+        pass  # a malformed remark must not break the subscription
     return process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
@@ -698,12 +721,21 @@ def process_inbounds_and_tags(
                             settings=settings.model_dump()
                         )
                 else:
+                    resolved_address = address.format_map(format_variables)
                     conf.add(
                         remark=host["remark"].format_map(format_variables) + group_label,
-                        address=address.format_map(format_variables),
+                        address=resolved_address,
                         inbound=host_inbound,
                         settings=settings.model_dump()
                     )
+                    # auto-select candidates: v2ray-json only (no other format
+                    # can express an Xray balancer), and never a cut-off host
+                    if host.get("auto_select") and hasattr(conf, "add_auto_member"):
+                        conf.add_auto_member(
+                            address=resolved_address,
+                            inbound=host_inbound,
+                            settings=settings.model_dump()
+                        )
 
     return conf.render(reverse=reverse)
 

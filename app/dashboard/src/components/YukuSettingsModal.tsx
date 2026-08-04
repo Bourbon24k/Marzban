@@ -65,6 +65,10 @@ type Settings = {
   announce: string;
   announce_align: string;
   subscription_routing: string;
+  auto_select_remark: string;
+  auto_select_strategy: string;
+  auto_select_interval: string;
+  auto_select_destination: string;
 };
 
 const EMPTY: Settings = {
@@ -74,7 +78,19 @@ const EMPTY: Settings = {
   announce: "",
   announce_align: "left",
   subscription_routing: "off",
+  auto_select_remark: "",
+  auto_select_strategy: "leastLoad",
+  auto_select_interval: "1m",
+  auto_select_destination: "",
 };
+
+// Kept in sync with AUTO_SELECT_STRATEGIES in app/subscription/v2ray.py.
+const AUTO_SELECT_STRATEGIES: Array<[string, string]> = [
+  ["leastLoad", "leastLoad — самый быстрый по замерам (burstObservatory)"],
+  ["leastPing", "leastPing — самый низкий пинг (observatory)"],
+  ["roundRobin", "roundRobin — по очереди, без замеров"],
+  ["random", "random — случайный, без замеров"],
+];
 
 // Mirrors align_announce() in app/subscription/share.py: emoji/CJK count as two
 // cells, variation selectors and ZWJ as none.
@@ -308,6 +324,63 @@ export const YukuSettingsModal: FC<YukuSettingsModalProps> = ({
                   ⚠️ Профиль повторяется в каждом конфиге: подписка вырастает с
                   десятков КБ до нескольких МБ. Включай, только если на nginx
                   включён gzip для /sub.
+                </Text>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Автовыбор сервера (v2ray-json)</FormLabel>
+                <Input
+                  placeholder="🌍 Автовыбор"
+                  value={data.auto_select_remark}
+                  onChange={(e) =>
+                    setData({ ...data, auto_select_remark: e.target.value })
+                  }
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Название записи, которая появляется первой в подписке. В неё
+                  попадают хосты с галкой «участвует в автовыборе» — клиент сам
+                  переключается между ними. Нужно минимум два таких хоста, иначе
+                  запись не добавляется. Поддерживаются те же переменные, что и
+                  в announce.
+                </Text>
+
+                <HStack mt={3} spacing={2} align="flex-start">
+                  <Select
+                    size="sm"
+                    value={data.auto_select_strategy}
+                    onChange={(e) =>
+                      setData({ ...data, auto_select_strategy: e.target.value })
+                    }
+                  >
+                    {AUTO_SELECT_STRATEGIES.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                  <Input
+                    size="sm"
+                    maxW="90px"
+                    placeholder="1m"
+                    value={data.auto_select_interval}
+                    onChange={(e) =>
+                      setData({ ...data, auto_select_interval: e.target.value })
+                    }
+                  />
+                </HStack>
+                <Input
+                  size="sm"
+                  mt={2}
+                  placeholder="http://www.gstatic.com/generate_204"
+                  value={data.auto_select_destination}
+                  onChange={(e) =>
+                    setData({ ...data, auto_select_destination: e.target.value })
+                  }
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Стратегия, интервал замеров и URL для проверки. Слишком
+                  частые замеры (меньше 30s) гоняют лишний трафик через каждый
+                  сервер.
                 </Text>
               </FormControl>
 

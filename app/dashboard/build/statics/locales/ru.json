@@ -38,6 +38,8 @@
   "hostsDialog.advancedOptions": "Дополнительные опции",
   "hostsDialog.allowinsecure": "Allow Insecure",
   "hostsDialog.useSniAsHost": "Use sni as host",
+  "hostsDialog.autoSelect": "Участвует в автовыборе",
+  "hostsDialog.autoSelect.info": "Хост попадает в общий конфиг «Автовыбор»: клиент сам берёт самый быстрый из отмеченных серверов (только v2ray-json)",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "Применить",
   "hostsDialog.currentServer": "IP текущего сервера",

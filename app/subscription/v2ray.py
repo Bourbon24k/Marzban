@@ -557,13 +557,41 @@ class V2rayShareLink(str):
         )
 
 
+AUTO_BALANCER_TAG = "auto"
+
+# Balancer strategies offered to the panel, with the settings each needs.
+# leastLoad's numbers are the ones the reference config ships with: candidates
+# whose RTT is within 1s are considered equal (tolerance 1%), two are kept.
+AUTO_SELECT_STRATEGIES = {
+    "leastLoad": {
+        "type": "leastLoad",
+        "settings": {
+            "baselines": ["1s"],
+            "expected": 2,
+            "maxRTT": "1s",
+            "tolerance": 0.01,
+        },
+    },
+    "leastPing": {"type": "leastPing"},
+    "roundRobin": {"type": "roundRobin"},
+    "random": {"type": "random"},
+}
+
+DEFAULT_AUTO_SELECT = {
+    "remark": "🌍 Автовыбор",
+    "strategy": "leastLoad",
+    "interval": "1m",
+    "destination": "http://www.gstatic.com/generate_204",
+}
+
+
 class V2rayJsonConfig(str):
 
     def __new__(cls, *args, **kwargs):
         # the class subclasses str, whose __new__ would choke on our kwargs
         return super().__new__(cls)
 
-    def __init__(self, routing_profile: str = None):
+    def __init__(self, routing_profile: str = None, auto_select: dict = None):
         self.config = []
         self.template = render_template(V2RAY_SUBSCRIPTION_TEMPLATE)
         self.mux_template = render_template(MUX_TEMPLATE)
@@ -600,6 +628,12 @@ class V2rayJsonConfig(str):
         self.routing_profile = routing_profile
         if routing_profile:
             self._apply_routing_profile(routing_profile)
+
+        # auto-select: hosts flagged in the panel are collected here and turned
+        # into one extra balanced config by render()
+        self.auto_select = auto_select or {}
+        self.auto_outbounds = []
+        self.auto_member_tags = []
 
     def _apply_routing_profile(self, name: str) -> None:
         """Overlays a shipped routing/DNS profile (split tunnel + ad blocking).
@@ -644,6 +678,13 @@ class V2rayJsonConfig(str):
     def render(self, reverse=False):
         if reverse:
             self.config.reverse()
+        auto_config = self.build_auto_config(
+            self.auto_select.get("remark") or DEFAULT_AUTO_SELECT["remark"]
+        )
+        if auto_config:
+            # always first, so the entry the user is meant to pick is on top
+            # whichever way the host list is ordered
+            self.config.insert(0, auto_config)
         if self.routing_profile:
             # the profile repeats per config; indentation alone would add
             # megabytes to the response
@@ -1139,7 +1180,14 @@ class V2rayJsonConfig(str):
                                           tls_settings=tls_settings,
                                           sockopt=sockopt)
 
-    def add(self, remark: str, address: str, inbound: dict, settings: dict):
+    def make_outbounds(self, address: str, inbound: dict, settings: dict,
+                       tag: str = "proxy") -> list:
+        """Builds the proxy outbound for one host (plus its dialer, if any).
+
+        `tag` lets the auto-select balancer emit the same host under proxy-2,
+        proxy-3, ... in a single config; the dialer tag follows it so two
+        members with fragment/noise settings can't collide.
+        """
 
         net = inbound['network']
         protocol = inbound['protocol']
@@ -1162,7 +1210,7 @@ class V2rayJsonConfig(str):
                 path = get_grpc_gun(path)
 
         outbound = {
-            "tag": "proxy",
+            "tag": tag,
             "protocol": protocol
         }
 
@@ -1197,6 +1245,8 @@ class V2rayJsonConfig(str):
         dialer_proxy = ''
         extra_outbound = self.make_dialer_outbound(fragment, noise)
         if extra_outbound:
+            if tag != "proxy":
+                extra_outbound["tag"] = f"dialer-{tag}"
             dialer_proxy = extra_outbound['tag']
             outbounds.append(extra_outbound)
 
@@ -1241,4 +1291,110 @@ class V2rayJsonConfig(str):
             outbound["mux"] = mux_config
             outbound["mux"]["enabled"] = True
 
-        self.add_config(remarks=remark, outbounds=outbounds)
+        return outbounds
+
+    def add(self, remark: str, address: str, inbound: dict, settings: dict):
+        self.add_config(
+            remarks=remark,
+            outbounds=self.make_outbounds(address, inbound, settings),
+        )
+
+    def add_auto_member(self, address: str, inbound: dict, settings: dict) -> None:
+        """Registers a host as a candidate of the auto-select balancer.
+
+        The host keeps its own entry in the subscription; this only adds it to
+        the extra balanced config built by build_auto_config().
+        """
+        n = len(self.auto_member_tags) + 1
+        tag = "proxy" if n == 1 else f"proxy-{n}"
+        try:
+            outbounds = self.make_outbounds(address, inbound, settings, tag=tag)
+        except Exception:
+            # a member that can't be rendered must not cost the user the whole
+            # subscription — it simply doesn't join the balancer
+            return
+        self.auto_member_tags.append(tag)
+        self.auto_outbounds.extend(outbounds)
+
+    def _observatory_config(self, strategy: str) -> dict:
+        """Probe block feeding the balancer's health data.
+
+        leastLoad reads burstObservatory (per-request RTT distribution),
+        leastPing reads the plain observatory. roundRobin/random need neither.
+        """
+        interval = self.auto_select.get("interval") or DEFAULT_AUTO_SELECT["interval"]
+        destination = self.auto_select.get("destination") or DEFAULT_AUTO_SELECT["destination"]
+
+        if strategy == "leastLoad":
+            return {
+                "burstObservatory": {
+                    "subjectSelector": ["proxy"],
+                    "pingConfig": {
+                        "destination": destination,
+                        "connectivity": "",
+                        "interval": interval,
+                        "timeout": "3s",
+                        "sampling": 1,
+                    },
+                }
+            }
+        if strategy == "leastPing":
+            return {
+                "observatory": {
+                    "subjectSelector": ["proxy"],
+                    "probeURL": destination,
+                    "probeInterval": interval,
+                    "enableConcurrency": True,
+                }
+            }
+        return {}
+
+    def build_auto_config(self, remark: str) -> Union[dict, None]:
+        """One extra config whose outbounds are picked by an Xray balancer.
+
+        Returns None when fewer than two hosts opted in — a balancer over a
+        single server is just that server under a second name.
+        """
+        if len(self.auto_member_tags) < 2:
+            return None
+
+        strategy = self.auto_select.get("strategy") or DEFAULT_AUTO_SELECT["strategy"]
+        if strategy not in AUTO_SELECT_STRATEGIES:
+            strategy = DEFAULT_AUTO_SELECT["strategy"]
+
+        config = dict(self.base)
+        config["remarks"] = remark
+
+        routing = copy.deepcopy(self.base.get("routing") or {})
+        rules = routing.get("rules") or []
+        # whatever the routing profile sent through "proxy" now goes through the
+        # balancer; its direct/block rules are left alone
+        for rule in rules:
+            if rule.get("outboundTag") == "proxy":
+                rule.pop("outboundTag")
+                rule["balancerTag"] = AUTO_BALANCER_TAG
+        if not any(r.get("balancerTag") == AUTO_BALANCER_TAG for r in rules):
+            # no profile: keep torrents off the exits, send the rest to the balancer
+            rules.append({"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"})
+            rules.append({"type": "field", "network": "tcp,udp", "balancerTag": AUTO_BALANCER_TAG})
+        routing["rules"] = rules
+        routing["balancers"] = [{
+            "tag": AUTO_BALANCER_TAG,
+            "selector": ["proxy"],
+            "fallbackTag": "direct",
+            "strategy": AUTO_SELECT_STRATEGIES[strategy],
+        }]
+        config["routing"] = routing
+        config.update(self._observatory_config(strategy))
+
+        outbounds = self.auto_outbounds + self.base_outbounds + self.profile_outbounds
+        tags = {o.get("tag") for o in outbounds}
+        # fallbackTag and the bittorrent rule point at "direct"; a rule aimed at
+        # a tag that doesn't exist silently falls through to the first outbound
+        if "direct" not in tags:
+            outbounds.append({"protocol": "freedom", "tag": "direct"})
+        if "block" not in tags and any(r.get("outboundTag") == "block" for r in rules):
+            outbounds.append({"protocol": "blackhole", "tag": "block"})
+        config["outbounds"] = outbounds
+
+        return config

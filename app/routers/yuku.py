@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from app.db import Session, crud, get_db
 from app.models.admin import Admin
@@ -7,6 +7,7 @@ from app.subscription.share import (
     DEFAULT_ANNOUNCE,
     invalidate_yuku_settings_cache,
 )
+from app.subscription.v2ray import AUTO_SELECT_STRATEGIES, DEFAULT_AUTO_SELECT
 from app.utils import audit, responses
 
 router = APIRouter(tags=["YUKU"], prefix="/api/yuku", responses={401: responses._401})
@@ -22,6 +23,11 @@ DEFAULT_SETTINGS = {
     # routing/DNS overlay for v2ray-json subscriptions: "off" or a template
     # name under app/templates/v2ray/ (ships with "yuku_routing")
     "subscription_routing": "off",
+    # auto-select entry, built from hosts flagged in the hosts dialog
+    "auto_select_remark": DEFAULT_AUTO_SELECT["remark"],
+    "auto_select_strategy": DEFAULT_AUTO_SELECT["strategy"],
+    "auto_select_interval": DEFAULT_AUTO_SELECT["interval"],
+    "auto_select_destination": DEFAULT_AUTO_SELECT["destination"],
 }
 
 
@@ -52,6 +58,12 @@ def update_settings(
 ):
     """Update YUKU settings. Only known keys are accepted."""
     allowed = {k: v for k, v in values.items() if k in DEFAULT_SETTINGS}
+    strategy = allowed.get("auto_select_strategy")
+    if strategy is not None and strategy not in AUTO_SELECT_STRATEGIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown strategy. Available: {', '.join(AUTO_SELECT_STRATEGIES)}",
+        )
     if allowed:
         current = get_merged_settings(db)
         audit.detail(
@@ -64,6 +76,12 @@ def update_settings(
         # announce/notice text applies to the very next /sub request
         invalidate_yuku_settings_cache()
     return get_merged_settings(db)
+
+
+@router.get("/auto-select-strategies")
+def auto_select_strategies(admin: Admin = Depends(Admin.get_current)):
+    """Balancer strategies the auto-select entry can use, and their defaults."""
+    return {"strategies": list(AUTO_SELECT_STRATEGIES), "defaults": DEFAULT_AUTO_SELECT}
 
 
 @router.get("/announce-variables")

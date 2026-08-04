@@ -17,7 +17,7 @@ router = APIRouter(tags=["System"], prefix="/api", responses={401: responses._40
 _HOST_FIELDS = (
     "remark", "address", "port", "path", "sni", "host", "security", "alpn",
     "fingerprint", "allowinsecure", "is_disabled", "mux_enable",
-    "random_user_agent", "use_sni_as_host",
+    "random_user_agent", "use_sni_as_host", "auto_select",
 )
 
 

@@ -38,6 +38,8 @@
   "hostsDialog.advancedOptions": "高级选项",
   "hostsDialog.allowinsecure": "允许不安全连接",
   "hostsDialog.useSniAsHost": "Use sni as host",
+  "hostsDialog.autoSelect": "Include in auto-select",
+  "hostsDialog.autoSelect.info": "Adds the host to the shared \"auto-select\" config: the client picks the fastest of the flagged servers (v2ray-json only)",
   "hostsDialog.alpn": "ALPN",
   "hostsDialog.apply": "保存",
   "hostsDialog.currentServer": "当前服务器的 IP 地址",

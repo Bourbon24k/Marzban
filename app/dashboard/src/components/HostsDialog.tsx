@@ -153,6 +153,7 @@ const hostsSchema = z.record(
       alpn: z.string(),
       fingerprint: z.string(),
       use_sni_as_host: z.boolean().default(false),
+      auto_select: z.boolean().default(false),
     })
   )
 );
@@ -214,6 +215,7 @@ const AccordionInbound: FC<AccordionInboundType> = ({
       alpn: "",
       fingerprint: "",
       use_sni_as_host: false,
+      auto_select: false,
     });
   };
   const duplicateHost = (index: number) => {
@@ -1171,6 +1173,33 @@ const AccordionInbound: FC<AccordionInboundType> = ({
                                     accordionErrors[index]?.random_user_agent
                                       ?.message
                                   }
+                                </Error>
+                              )}
+                          </FormControl>
+                          <FormControl
+                            isInvalid={
+                              !!(
+                                accordionErrors &&
+                                accordionErrors[index]?.auto_select
+                              )
+                            }
+                          >
+                            <Checkbox
+                              {...form.register(
+                                hostKey + "." + index + ".auto_select"
+                              )}
+                            >
+                              <FormLabel>
+                                {t("hostsDialog.autoSelect")}
+                              </FormLabel>
+                            </Checkbox>
+                            <Text fontSize="xs" color="gray.500" pl={6}>
+                              {t("hostsDialog.autoSelect.info")}
+                            </Text>
+                            {accordionErrors &&
+                              accordionErrors[index]?.auto_select && (
+                                <Error>
+                                  {accordionErrors[index]?.auto_select?.message}
                                 </Error>
                               )}
                           </FormControl>

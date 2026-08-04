@@ -144,6 +144,7 @@ _HOST_EDITABLE_FIELDS = (
     "remark", "address", "port", "path", "sni", "host", "security", "alpn",
     "fingerprint", "allowinsecure", "is_disabled", "mux_enable",
     "fragment_setting", "noise_setting", "random_user_agent", "use_sni_as_host",
+    "auto_select",
 )
 
 # fields that identify "the same host" well enough to re-pair it after an edit
