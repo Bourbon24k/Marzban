@@ -205,6 +205,16 @@ const HostRow: FC<HostRowProps> = ({
     if (errors && !open) setOpen(true);
   }, [errors]);
 
+  // the group picker is uncontrolled, so its <option>s have to exist before a
+  // value can stick. form.reset() usually lands before the group list does, and
+  // the browser quietly drops the assignment — the row then reads "none" while
+  // the form still holds the real group. Re-apply it once the options render.
+  useEffect(() => {
+    if (!autoSelectGroups.length) return;
+    const path = name("auto_select") as any;
+    form.setValue(path, (Number(form.getValues(path)) || 0) as any);
+  }, [autoSelectGroups.length]);
+
   const disabled = !!value?.is_disabled;
   const group = Number(value?.auto_select) || 0;
 
