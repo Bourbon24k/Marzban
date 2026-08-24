@@ -13,6 +13,12 @@ if IS_SQLITE:
         SQLALCHEMY_DATABASE_URL,
         # timeout = how long the DBAPI waits for a locked db before erroring
         connect_args={"check_same_thread": False, "timeout": 30},
+        # Пул задавать обязательно: с дефолтным QueuePool (5+10) одиннадцать нод
+        # выбирали все соединения, задачи копились и панель уходила в OOM.
+        pool_size=SQLALCHEMY_POOL_SIZE,
+        max_overflow=SQLIALCHEMY_MAX_OVERFLOW,
+        pool_recycle=3600,
+        pool_timeout=30,
     )
 
     @event.listens_for(engine, "connect")
