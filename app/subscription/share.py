@@ -167,6 +167,14 @@ EXPIRED_NOTICE_LINES = [
     "🔴 Подписка закончилась",
     "➡️ Продлите: t.me/yuku_vpn_bot",
 ]
+LIMITED_NOTICE_LINES = [
+    "\U0001F534 Трафик израсходован",
+    "\u27a1\ufe0f Докупить: t.me/yuku_vpn_bot",
+]
+DISABLED_NOTICE_LINES = [
+    "\U0001F534 Подписка была отключена",
+    "\u27a1\ufe0f Поддержка: t.me/yuku_vpn_bot",
+]
 DEVICE_LIMIT_NOTICE_LINES = [
     "🔴 Превышен лимит устройств",
     "➡️ Поддержка: t.me/yuku_vpn_bot",
@@ -456,6 +464,16 @@ def _generate_expired_notice(config_format: str) -> str:
     return _generate_notice(config_format, _notice_lines_from("expired_notice", EXPIRED_NOTICE_LINES))
 
 
+def _generate_limited_notice(config_format: str) -> str:
+    """Подписка-уведомление для вычерпавших трафик (без реальных серверов)."""
+    return _generate_notice(config_format, _notice_lines_from("limited_notice", LIMITED_NOTICE_LINES))
+
+
+def _generate_disabled_notice(config_format: str) -> str:
+    """Подписка-уведомление для отключённых (без реальных серверов)."""
+    return _generate_notice(config_format, _notice_lines_from("disabled_notice", DISABLED_NOTICE_LINES))
+
+
 def generate_subscription(
         user: "UserResponse",
         config_format: Literal["v2ray", "clash-meta", "clash", "sing-box", "outline", "v2ray-json"],
@@ -481,6 +499,18 @@ def generate_subscription(
 
     if getattr(user, "status", None) == UserStatus.expired:
         config = _generate_expired_notice(config_format)
+        if as_base64:
+            config = base64.b64encode(config.encode()).decode()
+        return config
+
+    if getattr(user, "status", None) == UserStatus.limited:
+        config = _generate_limited_notice(config_format)
+        if as_base64:
+            config = base64.b64encode(config.encode()).decode()
+        return config
+
+    if getattr(user, "status", None) == UserStatus.disabled:
+        config = _generate_disabled_notice(config_format)
         if as_base64:
             config = base64.b64encode(config.encode()).decode()
         return config
