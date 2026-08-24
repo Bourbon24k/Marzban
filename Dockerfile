@@ -13,7 +13,8 @@ RUN apt-get update \
 
 COPY ./requirements.txt /code/
 RUN python3 -m pip install --upgrade pip setuptools \
-    && pip install --no-cache-dir --upgrade -r /code/requirements.txt
+    && pip install --no-cache-dir --upgrade -r /code/requirements.txt \
+    && pip install --no-cache-dir "setuptools<81"
 
 FROM python:$PYTHON_VERSION-slim
 
