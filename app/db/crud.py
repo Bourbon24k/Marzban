@@ -124,6 +124,7 @@ def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> List[Proxy
     inbound.hosts.append(
         ProxyHost(
             remark=host.remark,
+            server_description=host.server_description,
             address=host.address,
             port=host.port,
             path=host.path,
@@ -141,7 +142,7 @@ def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> List[Proxy
 
 
 _HOST_EDITABLE_FIELDS = (
-    "remark", "address", "port", "path", "sni", "host", "security", "alpn",
+    "remark", "server_description", "address", "port", "path", "sni", "host", "security", "alpn",
     "fingerprint", "allowinsecure", "is_disabled", "mux_enable",
     "fragment_setting", "noise_setting", "random_user_agent", "use_sni_as_host",
     "auto_select",

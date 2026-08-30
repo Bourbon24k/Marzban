@@ -78,6 +78,12 @@ const hostsSchema = z.record(
   z.array(
     z.object({
       remark: z.string().min(1, "Remark is required"),
+      server_description: z
+        .string()
+        .max(30, "Максимум 30 символов")
+        .nullable()
+        .optional()
+        .transform((value) => value?.trim() || null),
       address: z.string().min(1, "Address is required"),
       port: z
         .string()
@@ -126,6 +132,7 @@ const EMPTY_HOST = {
   path: null,
   address: "",
   remark: "",
+  server_description: "",
   mux_enable: false,
   allowinsecure: false,
   is_disabled: false,
@@ -252,9 +259,9 @@ const HostRow: FC<HostRowProps> = ({
             {value?.remark || t("hostsDialog.addHost")}
           </Text>
           <Text fontSize="xs" color="ui.textMuted" noOfLines={1}>
-            {value?.address || "—"}
-            {value?.port ? `:${value.port}` : ""}
-            {value?.sni ? ` · ${value.sni}` : ""}
+            {value?.server_description || value?.address || "—"}
+            {!value?.server_description && value?.port ? `:${value.port}` : ""}
+            {!value?.server_description && value?.sni ? ` · ${value.sni}` : ""}
           </Text>
         </Box>
 
@@ -342,6 +349,19 @@ const HostRow: FC<HostRowProps> = ({
                 bg="ui.surface"
                 placeholder="example.com"
                 {...form.register(name("address"))}
+              />
+            </Field>
+            <Field
+              label="Подпись под сервером"
+              helper="Показывается в INCY/Happ под названием сервера. До 30 символов."
+              error={errors?.server_description?.message}
+            >
+              <Input
+                size="sm"
+                bg="ui.surface"
+                maxLength={30}
+                placeholder="Для белых списков"
+                {...form.register(name("server_description"))}
               />
             </Field>
             <Field label={t("hostsDialog.port")} hint={t("hostsDialog.port.info")}>

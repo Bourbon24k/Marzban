@@ -33,6 +33,7 @@ export type Settings = {
 
 export type AutoSelectGroup = {
   remark: string;
+  server_description: string;
   strategy: string;
   interval: string;
   destination: string;
@@ -40,6 +41,7 @@ export type AutoSelectGroup = {
 
 export const EMPTY_GROUP: AutoSelectGroup = {
   remark: "",
+  server_description: "",
   strategy: "leastLoad",
   interval: "1m",
   destination: "",
@@ -88,6 +90,7 @@ export const readGroups = (settings: Settings): AutoSelectGroup[] => {
   if (groups.length === 0) {
     groups.push({
       remark: settings.auto_select_remark || "",
+      server_description: "",
       strategy: settings.auto_select_strategy || EMPTY_GROUP.strategy,
       interval: settings.auto_select_interval || EMPTY_GROUP.interval,
       destination: settings.auto_select_destination || "",

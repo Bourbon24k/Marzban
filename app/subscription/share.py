@@ -102,7 +102,9 @@ def subscription_routing_profile() -> Union[str, None]:
     return None if value in ("", "off") else value
 
 
-AUTO_SELECT_FIELDS = ("remark", "strategy", "interval", "destination")
+AUTO_SELECT_FIELDS = (
+    "remark", "server_description", "strategy", "interval", "destination"
+)
 
 
 def subscription_auto_select() -> list:
@@ -150,13 +152,14 @@ def generate_v2ray_json_subscription(
 
     format_variables = setup_format_variables(extra_data)
     for group in auto_select:
-        remark = group.get("remark")
-        if not remark:
-            continue
-        try:
-            group["remark"] = remark.format_map(format_variables)
-        except Exception:
-            pass  # a malformed remark must not break the subscription
+        for field in ("remark", "server_description"):
+            value = group.get(field)
+            if not value:
+                continue
+            try:
+                group[field] = value.format_map(format_variables)
+            except Exception:
+                pass  # malformed display text must not break the subscription
     return process_inbounds_and_tags(
         inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
     )
@@ -778,12 +781,15 @@ def process_inbounds_and_tags(
                         )
                 else:
                     resolved_address = address.format_map(format_variables)
-                    conf.add(
+                    add_kwargs = dict(
                         remark=host["remark"].format_map(format_variables) + group_label,
                         address=resolved_address,
                         inbound=host_inbound,
-                        settings=settings.model_dump()
+                        settings=settings.model_dump(),
                     )
+                    if isinstance(conf, (V2rayShareLink, V2rayJsonConfig)):
+                        add_kwargs["server_description"] = host.get("server_description")
+                    conf.add(**add_kwargs)
                     # auto-select candidates: v2ray-json only (no other format
                     # can express an Xray balancer), and never a cut-off host
                     if host.get("auto_select") and hasattr(conf, "add_auto_member"):

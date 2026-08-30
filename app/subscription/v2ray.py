@@ -22,6 +22,15 @@ from config import (
 )
 
 
+def _server_fragment(remark: str, server_description: str = None) -> str:
+    """INCY/Happ parse description metadata after the encoded server title."""
+    fragment = urlparse.quote(remark)
+    if server_description:
+        encoded = base64.b64encode(server_description.encode("utf-8")).decode()
+        fragment += f"?serverDescription={encoded}"
+    return fragment
+
+
 class V2rayShareLink(str):
     def __init__(self):
         self.links = []
@@ -36,7 +45,8 @@ class V2rayShareLink(str):
             self.links.reverse()
         return self.links
 
-    def add(self, remark: str, address: str, inbound: dict, settings: dict):
+    def add(self, remark: str, address: str, inbound: dict, settings: dict,
+            server_description: str = None):
         net = inbound["network"]
         multi_mode = inbound.get("multiMode", False)
         old_path: str = inbound["path"]
@@ -55,6 +65,7 @@ class V2rayShareLink(str):
         if inbound["protocol"] == "vmess":
             link = self.vmess(
                 remark=remark,
+                server_description=server_description,
                 address=address,
                 port=inbound["port"],
                 id=settings["id"],
@@ -92,6 +103,7 @@ class V2rayShareLink(str):
         elif inbound["protocol"] == "vless":
             link = self.vless(
                 remark=remark,
+                server_description=server_description,
                 address=address,
                 port=inbound["port"],
                 id=settings["id"],
@@ -130,6 +142,7 @@ class V2rayShareLink(str):
         elif inbound["protocol"] == "trojan":
             link = self.trojan(
                 remark=remark,
+                server_description=server_description,
                 address=address,
                 port=inbound["port"],
                 password=settings["password"],
@@ -168,6 +181,7 @@ class V2rayShareLink(str):
         elif inbound["protocol"] == "shadowsocks":
             link = self.shadowsocks(
                 remark=remark,
+                server_description=server_description,
                 address=address,
                 port=inbound["port"],
                 password=settings["password"],
@@ -185,6 +199,7 @@ class V2rayShareLink(str):
             address: str,
             port: int,
             id: Union[str, UUID],
+            server_description: str = None,
             host="",
             net="tcp",
             path="",
@@ -229,6 +244,9 @@ class V2rayShareLink(str):
             "type": type,
             "v": "2",
         }
+
+        if server_description:
+            payload["meta"] = {"serverDescription": server_description}
 
         if fs:
             payload["fragment"] = fs
@@ -301,6 +319,7 @@ class V2rayShareLink(str):
               address: str,
               port: int,
               id: Union[str, UUID],
+              server_description: str = None,
               net='ws',
               path='',
               host='',
@@ -418,7 +437,7 @@ class V2rayShareLink(str):
             "vless://"
             + f"{id}@{address}:{port}?"
             + urlparse.urlencode(payload)
-            + f"#{(urlparse.quote(remark))}"
+            + f"#{_server_fragment(remark, server_description)}"
         )
 
     @classmethod
@@ -427,6 +446,7 @@ class V2rayShareLink(str):
                address: str,
                port: int,
                password: str,
+               server_description: str = None,
                net='tcp',
                path='',
                host='',
@@ -543,17 +563,18 @@ class V2rayShareLink(str):
             "trojan://"
             + f"{urlparse.quote(password, safe=':')}@{address}:{port}?"
             + urlparse.urlencode(payload)
-            + f"#{urlparse.quote(remark)}"
+            + f"#{_server_fragment(remark, server_description)}"
         )
 
     @classmethod
     def shadowsocks(
-            cls, remark: str, address: str, port: int, password: str, method: str
+            cls, remark: str, address: str, port: int, password: str, method: str,
+            server_description: str = None,
     ):
         return (
             "ss://"
             + base64.b64encode(f"{method}:{password}".encode()).decode()
-            + f"@{address}:{port}#{urlparse.quote(remark)}"
+            + f"@{address}:{port}#{_server_fragment(remark, server_description)}"
         )
 
 
@@ -579,6 +600,7 @@ AUTO_SELECT_STRATEGIES = {
 
 DEFAULT_AUTO_SELECT = {
     "remark": "🌍 Автовыбор",
+    "server_description": "",
     "strategy": "leastLoad",
     "interval": "1m",
     "destination": "http://www.gstatic.com/generate_204",
@@ -670,10 +692,12 @@ class V2rayJsonConfig(str):
                 if sniffing and sniffing.get("enabled"):
                     sniffing["destOverride"] = list(dest_override)
 
-    def add_config(self, remarks, outbounds):
+    def add_config(self, remarks, outbounds, server_description: str = None):
         config = dict(self.base)
         config["remarks"] = remarks
         config["outbounds"] = outbounds + self.base_outbounds + self.profile_outbounds
+        if server_description:
+            config["meta"] = {"serverDescription": server_description}
         self.config.append(config)
 
     def render(self, reverse=False):
@@ -1292,10 +1316,12 @@ class V2rayJsonConfig(str):
 
         return outbounds
 
-    def add(self, remark: str, address: str, inbound: dict, settings: dict):
+    def add(self, remark: str, address: str, inbound: dict, settings: dict,
+            server_description: str = None):
         self.add_config(
             remarks=remark,
             outbounds=self.make_outbounds(address, inbound, settings),
+            server_description=server_description,
         )
 
     def add_auto_member(self, address: str, inbound: dict, settings: dict,
@@ -1389,6 +1415,10 @@ class V2rayJsonConfig(str):
 
         config = dict(self.base)
         config["remarks"] = settings["remark"]
+        if settings.get("server_description"):
+            config["meta"] = {
+                "serverDescription": settings["server_description"]
+            }
 
         routing = copy.deepcopy(self.base.get("routing") or {})
         rules = routing.get("rules") or []

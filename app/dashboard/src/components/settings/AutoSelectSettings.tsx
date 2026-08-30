@@ -89,6 +89,24 @@ export const AutoSelectSettings: FC = () => {
                 )}
               </HStack>
 
+              <Box mb="3">
+                <Field
+                  label="Подпись под автовыбором"
+                  hint="Показывается в INCY/Happ под названием. До 30 символов."
+                >
+                  <Input
+                    size="sm"
+                    bg="ui.surface"
+                    maxLength={30}
+                    placeholder="Самый быстрый сервер"
+                    value={group.server_description}
+                    onChange={(e) =>
+                      patchGroup(index, { server_description: e.target.value })
+                    }
+                  />
+                </Field>
+              </Box>
+
               <HStack
                 align="flex-start"
                 spacing="3"

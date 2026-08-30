@@ -46,6 +46,7 @@ def hosts(storage: dict):
                 {
                     "id": host.id,
                     "remark": host.remark,
+                    "server_description": host.server_description,
                     "address": [i.strip() for i in host.address.split(',')] if host.address else [],
                     "port": host.port,
                     "path": host.path if host.path else None,

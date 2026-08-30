@@ -119,9 +119,17 @@ def _validate_auto_select_groups(db: Session, value) -> str:
                 status_code=400,
                 detail=f"Group {i}: unknown strategy. Available: {', '.join(AUTO_SELECT_STRATEGIES)}",
             )
+        server_description = str(group.get("server_description") or "").strip()
+        if len(server_description) > 30:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Group {i}: server description must be at most 30 characters",
+            )
         cleaned.append({
             key: str(group.get(key) or "").strip()
-            for key in ("remark", "strategy", "interval", "destination")
+            for key in (
+                "remark", "server_description", "strategy", "interval", "destination"
+            )
         })
 
     # A host pointing at a group that no longer exists would quietly vanish from
