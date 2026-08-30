@@ -19,6 +19,12 @@ from app.xray.config import XRayConfig
 from xray_api import XRay as XRayAPI
 
 
+RPYC_PING_TIMEOUT = 10
+RPYC_REQUEST_TIMEOUT = 120
+RPYC_CONNECT_ATTEMPTS = 3
+NODE_TYPE_DETECTION_TIMEOUT = 5
+
+
 def string_to_temp_file(content: str):
     file = tempfile.NamedTemporaryFile(mode='w+t')
     file.write(content)
@@ -346,22 +352,29 @@ class RPyCXRayNode:
                                     keyfile=self._keyfile.name,
                                     certfile=self._certfile.name,
                                     ca_certs=self._node_certfile.name,
+                                    config={"sync_request_timeout": RPYC_REQUEST_TIMEOUT},
                                     keepalive=True)
             try:
-                conn.ping()
+                conn.ping(timeout=RPYC_PING_TIMEOUT)
                 self.connection = conn
                 break
-            except EOFError as exc:
-                if tries <= 3:
+            except (EOFError, TimeoutError) as exc:
+                conn.close()
+                if tries < RPYC_CONNECT_ATTEMPTS:
                     continue
                 raise exc
 
     @property
     def connected(self):
         try:
-            self.connection.ping()
+            self.connection.ping(timeout=RPYC_PING_TIMEOUT)
             return (not self.connection.closed)
-        except (AttributeError, EOFError, TimeoutError):
+        except TimeoutError:
+            # A slow ping does not prove the persistent RPyC socket is dead.
+            # The health checker requires consecutive failures before it
+            # replaces the connection, so keep it available for the next probe.
+            return False
+        except (AttributeError, EOFError):
             self.disconnect()
             return False
 
@@ -508,7 +521,10 @@ class XRayNode:
         # trying to detect what's the server of node
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
+            # Distant REST agents can take more than one second to close this
+            # plaintext probe. A premature timeout misclassifies them as legacy
+            # RPyC nodes, whose handshake then fails with "closed by peer".
+            s.settimeout(NODE_TYPE_DETECTION_TIMEOUT)
             s.connect((address, port))
             s.send(b'HEAD / HTTP/1.0\r\n\r\n')
             s.recv(1024)

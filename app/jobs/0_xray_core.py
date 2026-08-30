@@ -8,6 +8,27 @@ from config import JOB_CORE_HEALTH_CHECK_INTERVAL
 from xray_api import exc as xray_exc
 
 
+# A single two-second gRPC miss is common on a busy or distant node. Requiring
+# consecutive misses prevents the health checker itself from flapping Xray.
+NODE_HEALTH_FAILURE_THRESHOLD = 3
+_node_health_failures = {}
+
+
+def _record_node_health(node_id: int, healthy: bool) -> bool:
+    """Return True only when a node has reached the recovery threshold."""
+    if healthy:
+        _node_health_failures.pop(node_id, None)
+        return False
+
+    failures = _node_health_failures.get(node_id, 0) + 1
+    if failures < NODE_HEALTH_FAILURE_THRESHOLD:
+        _node_health_failures[node_id] = failures
+        return False
+
+    _node_health_failures.pop(node_id, None)
+    return True
+
+
 def core_health_check():
     config = None
 
@@ -19,19 +40,23 @@ def core_health_check():
 
     # nodes' core
     for node_id, node in list(xray.nodes.items()):
-        if node.connected:
+        is_connected = node.connected
+        if is_connected:
             try:
                 assert node.started
                 node.api.get_sys_stats(timeout=2)
+                _record_node_health(node_id, healthy=True)
             except (ConnectionError, xray_exc.XrayError, AssertionError):
+                if _record_node_health(node_id, healthy=False):
+                    if not config:
+                        config = xray.config.include_db_users()
+                    xray.operations.restart_node(node_id, config)
+
+        if not is_connected:
+            if _record_node_health(node_id, healthy=False):
                 if not config:
                     config = xray.config.include_db_users()
-                xray.operations.restart_node(node_id, config)
-
-        if not node.connected:
-            if not config:
-                config = xray.config.include_db_users()
-            xray.operations.connect_node(node_id, config)
+                xray.operations.connect_node(node_id, config)
 
 
 @app.on_event("startup")
