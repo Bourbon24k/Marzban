@@ -340,6 +340,21 @@ class XRayConfig(dict):
                     elif host and isinstance(host, list):
                         settings['host'] = host[0]
 
+            if inbound['protocol'] == 'hysteria':
+                if inbound['settings'].get('version') != 2:
+                    raise ValueError("Hysteria inbound must use version 2")
+                if settings['network'] != 'hysteria' or settings['tls'] != 'tls':
+                    raise ValueError("Hysteria2 requires hysteria transport and TLS")
+                transport = inbound.get('streamSettings', {})
+                settings['master_only'] = bool(inbound.get('yukuMasterOnly', False))
+                settings['hysteria_settings'] = deepcopy(transport.get('hysteriaSettings', {}))
+                settings['hysteria_settings'].pop('auth', None)
+                settings['finalmask'] = deepcopy(transport.get('finalmask', {}))
+                settings['obfs_password'] = ''
+                for mask in settings['finalmask'].get('udp', []):
+                    if mask.get('type') == 'salamander':
+                        settings['obfs_password'] = mask.get('settings', {}).get('password', '')
+
             self.inbounds.append(settings)
             self.inbounds_by_tag[inbound['tag']] = settings
 

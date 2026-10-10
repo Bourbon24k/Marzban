@@ -38,6 +38,57 @@ client_config = {
                    "reverse": False}
 }
 
+_APP_VERSION_RE = re.compile(r"(\d+)(?:\.(\d+))?(?:\.(\d+))?")
+_HAPP_MIN_VERSIONS = {
+    "ios": (5, 1, 0),
+    "android": (4, 3, 0),
+}
+
+
+def _version_tuple(value: str):
+    """Parse the numeric part of an app version, ignoring build metadata."""
+    match = _APP_VERSION_RE.search(value or "")
+    if not match:
+        return None
+    return tuple(int(part or 0) for part in match.groups())
+
+
+def _should_skip_client_notice(user_agent: str):
+    """Return True only for clients that should skip the compatibility notice."""
+    if re.match(r"^(?:INCY|Yuku)/", user_agent or "", re.IGNORECASE):
+        return True
+    if not re.match(r"^Happ/", user_agent or "", re.IGNORECASE):
+        return False
+
+    version = _version_tuple(user_agent)
+    platform = "ios" if re.search(r"/(?:ios|iphone|ipad)(?:/|$)", user_agent, re.IGNORECASE) else None
+    if platform is None and re.search(r"/android(?:/|$)", user_agent, re.IGNORECASE):
+        platform = "android"
+    minimum = _HAPP_MIN_VERSIONS.get(platform)
+    return bool(version and minimum and version >= minimum)
+
+
+def _supports_server_description(user_agent: str) -> bool:
+    """Only current Happ builds and INCY understand server-description metadata."""
+    if re.match(r"^INCY/", user_agent or "", re.IGNORECASE):
+        return True
+    return _should_skip_client_notice(user_agent)
+
+
+def _announce_header(user, user_agent: str, app_version: str = "") -> str:
+    """Build the regular announcement header; client notices are subscription entries."""
+    message = get_announce_text(user)
+    return f"base64:{base64.b64encode(message.encode('utf-8')).decode('utf-8')}"
+
+
+def _client_notice_lines(user_agent: str):
+    if _should_skip_client_notice(user_agent):
+        return None
+    return [
+        "⚠️ Обновите Happ (iOS 5.1.0+ / Android 4.3.0+)",
+        "⬇️ Или скачайте INCY — incy.cc",
+    ]
+
 router = APIRouter(tags=['Subscription'], prefix=f'/{XRAY_SUBSCRIPTION_PATH}')
 
 
@@ -99,6 +150,10 @@ def resolve_format(user_agent: str):
             return "v2ray", "text/plain", True, False
 
     elif re.match(r'^(?:INCY|Yuku)/', user_agent, re.IGNORECASE):
+        return "v2ray-json", "application/json", False, False
+
+    elif re.match(r'^v2raytun/', user_agent or "" , re.IGNORECASE):
+        # V2rayTun can parse Xray JSON; this is required for the configured balancers.
         return "v2ray-json", "application/json", False, False
 
     else:
@@ -171,7 +226,9 @@ def user_subscription(
             for key, val in get_subscription_user_info(user).items()
         ),
         "hide-settings": "1",
-        "announce": f"base64:{base64.b64encode(get_announce_text(user).encode('utf-8')).decode('utf-8')}"
+        "announce": _announce_header(
+            user, user_agent, request.headers.get("x-app-version", "")
+        )
     }
 
     config_format, media_type, as_base64, reverse = resolve_format(user_agent)
@@ -182,6 +239,8 @@ def user_subscription(
         as_base64=as_base64,
         reverse=reverse,
         notice_lines=notice_lines,
+        prefix_notice_lines=_client_notice_lines(user_agent),
+        include_server_description=_supports_server_description(user_agent),
         include_yuku_metadata=bool(re.match(r"^Yuku/", user_agent or "", re.IGNORECASE)),
     )
     return Response(content=conf, media_type=media_type, headers=response_headers)
@@ -230,13 +289,15 @@ def user_subscription_with_client_type(
         "subscription-userinfo": "; ".join(
             f"{key}={val}"
             for key, val in get_subscription_user_info(user).items()
-        )
+        ),
     }
 
     config = client_config.get(client_type)
     conf = generate_subscription(user=user,
                                  config_format=config["config_format"],
                                  as_base64=config["as_base64"],
-                                 reverse=config["reverse"])
+                                 reverse=config["reverse"],
+                                 prefix_notice_lines=_client_notice_lines(user_agent),
+                                 include_server_description=_supports_server_description(user_agent))
 
     return Response(content=conf, media_type=config["media_type"], headers=response_headers)

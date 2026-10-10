@@ -26,6 +26,9 @@ class YukuClientTests(unittest.TestCase):
         scope = dict(re=re, base64=base64)
         for flag in ('USE_CUSTOM_JSON_DEFAULT', 'USE_CUSTOM_JSON_FOR_V2RAYN', 'USE_CUSTOM_JSON_FOR_V2RAYNG', 'USE_CUSTOM_JSON_FOR_STREISAND', 'USE_CUSTOM_JSON_FOR_HAPP'): scope[flag] = False
         resolve = load_function('app/routers/subscription.py', 'resolve_format', scope)
+        scope.update(_APP_VERSION_RE=re.compile(r'(\d+)(?:\.(\d+))?(?:\.(\d+))?'), _HAPP_MIN_VERSIONS={'ios': (5, 1, 0), 'android': (4, 3, 0)})
+        for name in ('_version_tuple', '_should_skip_client_notice', '_supports_server_description', '_announce_header', '_client_notice_lines'):
+            load_function('app/routers/subscription.py', name, scope)
         enforce = Mock(return_value=True); generate = Mock(return_value='blocked-notice')
         scope.update(UserResponse=SimpleNamespace(model_validate=lambda u: u), crud=SimpleNamespace(update_user_sub=Mock()), enforce_device_limit=enforce, generate_subscription=generate, device_limit_notice_lines=lambda: ['Device limit'], SUB_SUPPORT_URL='', SUB_PROFILE_TITLE='', SUB_UPDATE_INTERVAL=12, encode_title=lambda x: x, get_subscription_user_info=lambda u: {}, get_announce_text=lambda u: '', Response=lambda **kw: kw)
         route = load_function('app/routers/subscription.py', 'user_subscription', scope)

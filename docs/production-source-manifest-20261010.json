@@ -1,0 +1,1908 @@
+{
+  "date": "2026-10-10",
+  "scope": "Marzban source only; runtime secrets/data excluded",
+  "source_files": [
+    {
+      "path": "build_dashboard.sh",
+      "sha256": "100ba652ad95ab9301b06260b9de35cdc283ab0e309c873a4191076239701f9a"
+    },
+    {
+      "path": "config.py",
+      "sha256": "e9fbf47cf9f552f86165be5148071b244aa0e6be90dd1861b84e4fdfc5d9d208"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "107d7521edeecec5d0fa4c9e8fc356d3d5f60d194c8dcfebff819c315b91e232"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "61ecb9f6ff098b95eea5a52f13cbc0b50333c16376d6bd7ea5c445c8ad2a9bc6"
+    },
+    {
+      "path": "alembic.ini",
+      "sha256": "e42b9ef431bf201fd99a6cf2173a5c12edfd9e2186885024fd1579ce933b102b"
+    },
+    {
+      "path": "install_service.sh",
+      "sha256": "875d59fd602743fedaf3029e3f6644634405afdf7ca887ae86bf6e8e4f8e1c7d"
+    },
+    {
+      "path": "main.py",
+      "sha256": "bb9d362f3accbacf6fc0163b801aa67f0ae6dd947de657575d354eb531d2f531"
+    },
+    {
+      "path": "marzban-cli.py",
+      "sha256": "448c520d4ab7708e42d6793069ce239a45eb78bcb22c1a9a9bfbdb5f2cf300e4"
+    },
+    {
+      "path": "app/__init__.py",
+      "sha256": "d898f6be12bf2990526f08733d55c76e4d7ce82e26fc41b078516c32a184a47b"
+    },
+    {
+      "path": "app/dependencies.py",
+      "sha256": "20cd4138d2d4ab442f3cddaf789e217d7da1c99cc069b6d0a2bc21b918c61805"
+    },
+    {
+      "path": "app/routers/user_template.py",
+      "sha256": "6d3dd1a7a1854d9bf9ae28186c56a26bbc03d321ccdcceede191877c47ae3117"
+    },
+    {
+      "path": "app/routers/user.py",
+      "sha256": "858d66b685b532f41491904d8532533a88ed989565aa8719941c95fc554f149f"
+    },
+    {
+      "path": "app/routers/system.py",
+      "sha256": "7c59cdab41bb68b558ae907d408f9b2ae7849d9eaa25ac97249436a064ba77ff"
+    },
+    {
+      "path": "app/routers/host_group.py",
+      "sha256": "10140d71351169d64cf61b4a23ba2fd6c9b68b2f6c6dda6853b94a982f28052a"
+    },
+    {
+      "path": "app/routers/audit.py",
+      "sha256": "c137568820dece6478d90baae3c27e8edd539666014ffc546d505538bd0ab3f6"
+    },
+    {
+      "path": "app/routers/home.py",
+      "sha256": "3937fab8709e053f766d8c833960ad3e7bad5b68bceb092c4f93369c0b94337f"
+    },
+    {
+      "path": "app/routers/subscription.py",
+      "sha256": "28e5d57d8af7c47eee4c79e63ff760f4807ac4ca476448fa2739f06c1d5451d6"
+    },
+    {
+      "path": "app/routers/__init__.py",
+      "sha256": "1f78e980d8aeb7f7234fd4d0e2510a4ed6aed5484734851f8235a4afb0d2fee8"
+    },
+    {
+      "path": "app/routers/core.py",
+      "sha256": "e05142af5d2a03294c642b2e0ef0537141694baec10580a15e5abd10bc9f1709"
+    },
+    {
+      "path": "app/routers/admin.py",
+      "sha256": "608c8a986041dbce74db1cbc6c21813ed6da21e95134ecd3207e183b3526a734"
+    },
+    {
+      "path": "app/routers/yuku.py",
+      "sha256": "1853a947ff1f5b785aad9f04265b9109a0c9a82d3c51264f3470afb3b3c4c510"
+    },
+    {
+      "path": "app/routers/node.py",
+      "sha256": "6a92338125698b1e160ab95174095a3daf7444c5d1d4bafa1fa9b75c926a6aaf"
+    },
+    {
+      "path": "app/discord/__init__.py",
+      "sha256": "44f5c3769af521041a446a12605d4b86b3dbd4acf96e85a9500d856387d196d2"
+    },
+    {
+      "path": "app/discord/handlers/report.py",
+      "sha256": "7e08090cf9aaeaff26f3864b21e44b7e756ba64de1b166048565fa40c23a6460"
+    },
+    {
+      "path": "app/utils/store.py",
+      "sha256": "6ba8f1ef3c73b941a3267afccc639fcc06e4700f32aceaa282c09fa8a64f246a"
+    },
+    {
+      "path": "app/utils/system.py",
+      "sha256": "88d3bb8a76d994ed65d7245f754db363e1431ea8df61efabead61410b305d5f9"
+    },
+    {
+      "path": "app/utils/responses.py",
+      "sha256": "140b1afabf1139c32ce6a5e4637c120deee8b3e72db76b6f4f59fc38897898e8"
+    },
+    {
+      "path": "app/utils/audit.py",
+      "sha256": "7b9cf7cc08f8483870b917794929c86eab87b5dfb94ddd3c7d882c0b47f06777"
+    },
+    {
+      "path": "app/utils/notification.py",
+      "sha256": "2824d4fcf4fe0385f89fc194f45e3995ee0e50501d4df7b5c0c6fe6f18db3671"
+    },
+    {
+      "path": "app/utils/concurrency.py",
+      "sha256": "38f6c89def1abfc3696029e9209afa53b0ee3d5836c366c39be3aad7ad95f296"
+    },
+    {
+      "path": "app/utils/crypto.py",
+      "sha256": "3c37eb10aabfc9053ba33b8418a0badba22a81fb27f793033047bcc92fea1d8c"
+    },
+    {
+      "path": "app/utils/helpers.py",
+      "sha256": "fecc9e8b51289b52b4c3d792744a267a48f5f2b386487b3796bb04635b98a825"
+    },
+    {
+      "path": "app/utils/report.py",
+      "sha256": "8daab67b7fda537f01d267ee08e2884edba71a93ecbefae559cd255783a32df9"
+    },
+    {
+      "path": "app/utils/jwt.py",
+      "sha256": "ef3fa37a6ab10d3c96ca6f94e6ef708b77cff57860ca9eab1698506c11bcbe81"
+    },
+    {
+      "path": "app/models/user_template.py",
+      "sha256": "fe1448af4dfe429a412efe7eaa0ec0eae8a6cb288799c5f037419d74d288213b"
+    },
+    {
+      "path": "app/models/user.py",
+      "sha256": "1fe7d2ad8a32313d8ae7c07be28b87c324711561d2107363b1de6d4036cd5a3a"
+    },
+    {
+      "path": "app/models/system.py",
+      "sha256": "03d054b36a4ec5b4a09b48636e534c17d6c2f0c41976f19665acb3383905220d"
+    },
+    {
+      "path": "app/models/host_group.py",
+      "sha256": "03d84fef8bbae1c7567c58206529b3c1468ef5ddb54afc5ebb01d47615428831"
+    },
+    {
+      "path": "app/models/audit.py",
+      "sha256": "db5015130e7b9ac014bf243aa30f189c3bdfa0e90a578c0b8384ada2533ee05f"
+    },
+    {
+      "path": "app/models/proxy.py",
+      "sha256": "9a396804b3126ceea35129803305f9605588bd909474d92a640bfef9c3defc39"
+    },
+    {
+      "path": "app/models/core.py",
+      "sha256": "c9ae89381dc6f5c0f37782e4db67acb1b665a2f924d60dafcb9b9ef6f9965d2f"
+    },
+    {
+      "path": "app/models/admin.py",
+      "sha256": "76f6b86b31ecb93213a0eb5219d3f78a0b4abdaa2255b0719173771f3bde42f5"
+    },
+    {
+      "path": "app/models/node.py",
+      "sha256": "b351884b43c8e3171ce34204406a01c80e425b4d13c5896cdae19c1d15da0a02"
+    },
+    {
+      "path": "app/subscription/v2ray.py",
+      "sha256": "87465e19f1ac48c37509b19e8faa8b86ae764764be91d9316f835bcd0f6b7890"
+    },
+    {
+      "path": "app/subscription/clash.py",
+      "sha256": "96a0b6a7c9afe9c619964df35011fc556a62434c4d89e0274b1fffc031cc026f"
+    },
+    {
+      "path": "app/subscription/native_metadata.py",
+      "sha256": "c40e3984321e569d6f68fe15c486d0cd40ce854180fcc07a68c2ea129cdc7f31"
+    },
+    {
+      "path": "app/subscription/__init__.py",
+      "sha256": "92bb70980537892333ff8e9b3b916a2997394e817d8b9a76039cfeb44a084ab4"
+    },
+    {
+      "path": "app/subscription/funcs.py",
+      "sha256": "837c495ea06d00f7c3a66ea276411ba1af9867886cf4242bae67f65b463878c6"
+    },
+    {
+      "path": "app/subscription/hysteria.py",
+      "sha256": "9586bae9994a04f099ed566ecc4b0ae2ca55fa374aa8b1e99edc61c96bd1e7ff"
+    },
+    {
+      "path": "app/subscription/outline.py",
+      "sha256": "740e06e54070523e3dd28e9f420f10b242d7f5387f330d9bba4de42924f3d0a9"
+    },
+    {
+      "path": "app/subscription/share.py",
+      "sha256": "ba889e2b983916bee5845019d53a078a5cceeddd0bcf7259d014320d1d547393"
+    },
+    {
+      "path": "app/subscription/singbox.py",
+      "sha256": "409796b5f2147328661aa73172aae45a67fb84c643b7b7611881c671e7aa354e"
+    },
+    {
+      "path": "app/dashboard/example.env",
+      "sha256": "974780a4abfc1c48f1eee69f5758e2ac0cc16a15ba76712ca5765371e8f13b29"
+    },
+    {
+      "path": "app/dashboard/pnpm-lock.yaml",
+      "sha256": "01a2337cd5a589e58842897a4a8af8149a82a4b0b0ba44fb26c96f50b23497cd"
+    },
+    {
+      "path": "app/dashboard/tsconfig.node.json",
+      "sha256": "c40d0614fda5b8a746a1ba2e3be8e2370140c0167851ac77881cd53bb5647cdd"
+    },
+    {
+      "path": "app/dashboard/index.html",
+      "sha256": "9c7369730a6c3711e95e98fb286384e86187ea7b8e7087ea5226c28a7bef2ed3"
+    },
+    {
+      "path": "app/dashboard/__init__.py",
+      "sha256": "eab3cf5b6187db05df39ec9eefe027704f849bb9d09941bb8f9435eaf97a1b60"
+    },
+    {
+      "path": "app/dashboard/README.md",
+      "sha256": "daf53542cc8613fe6ed7038db0d468bbdffbc5f6f0674a30a8dee2408e2d6187"
+    },
+    {
+      "path": "app/dashboard/.prettierrc.json",
+      "sha256": "7de6d6337d3808d5db9210d3a2d3796d7366488789220bc03ae319dd9f4202d7"
+    },
+    {
+      "path": "app/dashboard/.gitignore",
+      "sha256": "cbe9f527c605168dd561f04ca65767c7f051ec6bb46e5d2d2e91b99399932938"
+    },
+    {
+      "path": "app/dashboard/package-lock.json",
+      "sha256": "8c3b8bb63b4adafddbc4859d9e99bfb194029db9f3daf0c7dfd30944ac8738b7"
+    },
+    {
+      "path": "app/dashboard/package.json",
+      "sha256": "5e4546c46fe53f9d1971a89fb5acdeb189933c2532a1527415740396a164838d"
+    },
+    {
+      "path": "app/dashboard/tsconfig.json",
+      "sha256": "f81f65a22ac257f4dafac576c81df7f7c6307eefa4d84a74ff3d79397b6b0ee0"
+    },
+    {
+      "path": "app/dashboard/.env.example",
+      "sha256": "974780a4abfc1c48f1eee69f5758e2ac0cc16a15ba76712ca5765371e8f13b29"
+    },
+    {
+      "path": "app/dashboard/vite.config.ts",
+      "sha256": "ad87acc25fb5e42c0882ca7aebf245420724e896492444960efffcb4df5bb895"
+    },
+    {
+      "path": "app/dashboard/chakra.config.ts",
+      "sha256": "abcbc482beb50c4bc712607a86721c6726e66680c49cb00ace4053dc0a23ee70"
+    },
+    {
+      "path": "app/dashboard/public/statics/locales/zh.json",
+      "sha256": "c57cc99e4d54486fd96d1499d2da8b665834356cbfbf58f82c65c687c9bb029e"
+    },
+    {
+      "path": "app/dashboard/public/statics/locales/ru.json",
+      "sha256": "4cd42225a89308a5b35aa128b56c1fc0e8ba174863d5c72d788961339c12587c"
+    },
+    {
+      "path": "app/dashboard/public/statics/locales/en.json",
+      "sha256": "f787dfcffdb12d3cbaf91b23a6a3c83c733c28eca84e54d0300eb804e4e922c2"
+    },
+    {
+      "path": "app/dashboard/public/statics/locales/fa.json",
+      "sha256": "d1d85f17c4129dd9f6a4d5f50b12967f5de8dc18d1564eea1adceff5a253a4ba"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/favicon-16x16.png",
+      "sha256": "4b9c2ff36bbd6d0ba0471928f16dbfa412dc70beddda7405bbaaf9df75198abe"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/safari-pinned-tab.svg",
+      "sha256": "8ee578eab9c0598b56b116f8973671643db5128d3d3149d07222618f7c2b8411"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/favicon.ico",
+      "sha256": "6793b582c55933b46dad256c7658b4dc0236e55463270d46799c97b29b1780de"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/android-chrome-192x192.png",
+      "sha256": "445d5b725a80c0c664f45116e555f07fcd51a89b9b05e9972ceb5e80f8f7c213"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/apple-touch-icon.png",
+      "sha256": "c78cfe3f2b88eeb76b0ee4c3f09b6f6dd7ed9aabb7b5f97e427afbf339e1769d"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/android-chrome-512x512.png",
+      "sha256": "5b7ce0861ee8b5b8352d80ef3128238ced8739b834c301666dc76bc3ea24a074"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/site.webmanifest",
+      "sha256": "6fb02537b842f0b675662831031cc9d9a6c150d711706511158a52be0fd94078"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/mstile-150x150.png",
+      "sha256": "b8100a7ca8cfe8d6a6d3de2eee4d6e20bb0e58b8d0c437997178e3a9278a3685"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/browserconfig.xml",
+      "sha256": "139cfdd55d21e5fd594b10941888d080298458405698b3f330812f6b2cd929a0"
+    },
+    {
+      "path": "app/dashboard/public/statics/favicon/favicon-32x32.png",
+      "sha256": "2604acc9050a18e5f6db1289e0b1f3aa62fb046fb012fd4e6107f0d9f0ef6335"
+    },
+    {
+      "path": "app/dashboard/src/index.tsx",
+      "sha256": "aecb57a28780804cea83f9a901130a941101757af8217ca3449356a9b20f774c"
+    },
+    {
+      "path": "app/dashboard/src/App.tsx",
+      "sha256": "ae7c852b76153ebde8cb08197be018692db4f2e22e79ea36c96a7943432d7b8b"
+    },
+    {
+      "path": "app/dashboard/src/index.scss",
+      "sha256": "ec1c096962fceaa76ff63d36dfb3421a9e2d2d0928e2b4e8e1cf450e7b37550a"
+    },
+    {
+      "path": "app/dashboard/src/vite-env.d.ts",
+      "sha256": "8660d3513ea792c92da1a803056cd567fdb1eced8cab1f101c8c59ca8312d22b"
+    },
+    {
+      "path": "app/dashboard/src/types/ProxyHosts.ts",
+      "sha256": "248abac4c896bab1159ac41aa5004be8c9b2fdfeccba8a3a379781f98ca816e7"
+    },
+    {
+      "path": "app/dashboard/src/types/User.ts",
+      "sha256": "ce508dcd613fa58cbc4f549816891c5b6d74feb454303c75b6b7d5cab5d5fb6c"
+    },
+    {
+      "path": "app/dashboard/src/contexts/CoreSettingsContext.tsx",
+      "sha256": "edc54e95130afdbe4dcbf2921a3a903cfe2871d35e546e050c2b164bf5205ae4"
+    },
+    {
+      "path": "app/dashboard/src/contexts/HostsContext.tsx",
+      "sha256": "3c51b0a9f0ce898d1825b846e73809e41a833cdcd0578818c904af3d42abbc32"
+    },
+    {
+      "path": "app/dashboard/src/contexts/DashboardContext.tsx",
+      "sha256": "471fcea055c933cb1f1d45cd759c92f12055c7fb9cf344791efcf896db49f91c"
+    },
+    {
+      "path": "app/dashboard/src/contexts/NodesContext.tsx",
+      "sha256": "c45a0db5f5f4310e6718ec8a9ade0cbcf5ced4a63d5218e28cbe37502bb6fe9a"
+    },
+    {
+      "path": "app/dashboard/src/locales/i18n.ts",
+      "sha256": "d8094da33e571f28aaccfd04521ad0b43730c4191a9ac09fd8f4a6e2382d08bd"
+    },
+    {
+      "path": "app/dashboard/src/constants/Project.ts",
+      "sha256": "fba9dd823860f34c806bde096a4d99be8309eafc7499c860ee9b8349a7f612f0"
+    },
+    {
+      "path": "app/dashboard/src/constants/NodesSettings.tsx",
+      "sha256": "6ad6ba5497c132780bda39e9c532199741d3b51909a63c09aa7f3c558bee9f19"
+    },
+    {
+      "path": "app/dashboard/src/constants/Proxies.tsx",
+      "sha256": "a7e3cba8695bf843c0fd974d7e76eb07d6460595866b439f6eca938051f5bcbf"
+    },
+    {
+      "path": "app/dashboard/src/constants/UserSettings.tsx",
+      "sha256": "401efb05393c5ff3ccad1dd77b82979ad07619099970e1fecdde3bd5005b2106"
+    },
+    {
+      "path": "app/dashboard/src/utils/formatByte.tsx",
+      "sha256": "bb2165af17d9230167248a3a7cfbd3ab260bcb29759862a4b7f2ddf57af79518"
+    },
+    {
+      "path": "app/dashboard/src/utils/toastHandler.ts",
+      "sha256": "d2b32b5892fb22294d3f9ed442cd760e61b3cb845e02b03eb2881c7bfa2ba280"
+    },
+    {
+      "path": "app/dashboard/src/utils/themeColor.ts",
+      "sha256": "6dae227abf436e58b8edc6181068bf9cc7f3dc335a44139a3d9ca013ece02634"
+    },
+    {
+      "path": "app/dashboard/src/utils/userPreferenceStorage.ts",
+      "sha256": "1fbcd927653b9e4c97d197a5d2a708aeb7583a4910167f645ab6e17eabf5846b"
+    },
+    {
+      "path": "app/dashboard/src/utils/authStorage.ts",
+      "sha256": "1b0a4a3d08f96aa6c8b7aebb7b1cd5c6380ad8958a01c62e649d76be661a395c"
+    },
+    {
+      "path": "app/dashboard/src/utils/color.ts",
+      "sha256": "63dcdf892f776cc18ccbfc941df8f43c2d66eb5e797eced7d16844318363e5b0"
+    },
+    {
+      "path": "app/dashboard/src/utils/dateFormatter.ts",
+      "sha256": "4b7ddff1ed2a03efc10087c6a3ef76cc1693e7861afc84172107e55e22fcd443"
+    },
+    {
+      "path": "app/dashboard/src/utils/react-query.ts",
+      "sha256": "340e39f851911f8a3f8c1b353bcfd8d0d37c320990389df11e97ab890192dd2a"
+    },
+    {
+      "path": "app/dashboard/src/components/RouteError.tsx",
+      "sha256": "9b1f59aef383b4d4abf7ef2d808d79496c7f6d3843c2a8e0e89e9bd32259a456"
+    },
+    {
+      "path": "app/dashboard/src/components/OnlineStatus.tsx",
+      "sha256": "e7a5049a340f70a7888c690e09cb33575491126c0c1d5120806fec5205c89b6b"
+    },
+    {
+      "path": "app/dashboard/src/components/ResetAllUsageModal.tsx",
+      "sha256": "92d7739c9d12baa87c424fb4be53563c73894cd3333307296f98aeeaf543f9bf"
+    },
+    {
+      "path": "app/dashboard/src/components/Pagination.tsx",
+      "sha256": "8227e7ebefc137a05f106eab377d1c9f92d092a2ec3adf3730049d1d9f17c89d"
+    },
+    {
+      "path": "app/dashboard/src/components/OnlineBadge.tsx",
+      "sha256": "5ac0fb682fb36ce3f2da826ca4eb801c9f7f97d968d2290bc3471bcb506c2cf4"
+    },
+    {
+      "path": "app/dashboard/src/components/UsageFilter.tsx",
+      "sha256": "657b2c36b430212874f61fa27e8effa90edab2c827958051efb0f1d363e4b571"
+    },
+    {
+      "path": "app/dashboard/src/components/Filters.tsx",
+      "sha256": "95f45df8cdfc726b726b0ab99012cc2249c95f6772bb399e6e128aadd485623f"
+    },
+    {
+      "path": "app/dashboard/src/components/Icon.tsx",
+      "sha256": "6c003f99dd6926b08fe4f81da13ed919707272d782f91ecbcf440fb16d564bf9"
+    },
+    {
+      "path": "app/dashboard/src/components/AuditLogModal.tsx",
+      "sha256": "eb1bfaa0dd9394cfec3ef8bc450222319827b3c7f630837b6bd0adb99187dac9"
+    },
+    {
+      "path": "app/dashboard/src/components/RevokeSubscriptionModal.tsx",
+      "sha256": "73d1e9814cea59ff2ad5feffaa349a2e880e99a8e5ead3adf72e0451708e4379"
+    },
+    {
+      "path": "app/dashboard/src/components/PageOrModal.tsx",
+      "sha256": "cc307bb69df230a3ed3defbb9da4dd9e18f9db3efe8f1321797f79d2cd85a11c"
+    },
+    {
+      "path": "app/dashboard/src/components/UsersTable.tsx",
+      "sha256": "166d19f9b252f5c92ab777d858d5151d85c3d286108c929392b55ce4ae271887"
+    },
+    {
+      "path": "app/dashboard/src/components/QRCodeDialog.tsx",
+      "sha256": "ba0ff8195945046e6e67cc8e979b82b5429ef5c0d4cd4300e45ab1a049d53c1f"
+    },
+    {
+      "path": "app/dashboard/src/components/Footer.tsx",
+      "sha256": "728b8dcfdc64f43542c6e01f4cf51ad9414fcf0c1a8c997c55de001df14238ce"
+    },
+    {
+      "path": "app/dashboard/src/components/StatusBadge.tsx",
+      "sha256": "339d86d51d6ebf38621a01433c99590c052908c7637d5ad0279a3dab1732d6f5"
+    },
+    {
+      "path": "app/dashboard/src/components/Language.tsx",
+      "sha256": "8679dedbe47ff27d0a5e1ac943b08290d8d3f1626b2b420545db8a16b909c76d"
+    },
+    {
+      "path": "app/dashboard/src/components/DeviceStats.tsx",
+      "sha256": "3c793034e7f8d4565f3b8a8aa0c1fa4e34319c232576b79a0c8f3c150f7cad6a"
+    },
+    {
+      "path": "app/dashboard/src/components/NodesUsage.tsx",
+      "sha256": "abf6c96abecf49eb4f1d37f0f2cf51a48820b04171701c8fd4fb68930838ad6c"
+    },
+    {
+      "path": "app/dashboard/src/components/Statistics.tsx",
+      "sha256": "bad731fd2a367da83b69b76d8265ed67a2102eab05ba2c00fe808c7482cc32da"
+    },
+    {
+      "path": "app/dashboard/src/components/Layout.tsx",
+      "sha256": "eb76fc76d92ffc7586c5fa84016a731c98326a24eda356eb6c3b50d973145d3c"
+    },
+    {
+      "path": "app/dashboard/src/components/ResetUserUsageModal.tsx",
+      "sha256": "1d08b07c258b44ebfcee0bf0f8957b1b1214aea2bec81185cb5ae61e6d4c0503"
+    },
+    {
+      "path": "app/dashboard/src/components/Header.tsx",
+      "sha256": "71a4c621ae56ec98e9a587d45397154d1982c1c1e55478c6e992aa76441e77e4"
+    },
+    {
+      "path": "app/dashboard/src/components/Sidebar.tsx",
+      "sha256": "fe66a0cb7384486b377333294eb459a7d5f00f899851723ae16dc7b0c030bc14"
+    },
+    {
+      "path": "app/dashboard/src/components/DeleteUserModal.tsx",
+      "sha256": "47e066374d9a7d35cf58bf89f88d910baa3de95abd21217401654057a6fd439c"
+    },
+    {
+      "path": "app/dashboard/src/components/DeleteNodeModal.tsx",
+      "sha256": "2c7eef2ecbc85341aafd7ca1cff8d1304b7e1c93d8c170caffec92f990bf3775"
+    },
+    {
+      "path": "app/dashboard/src/components/RadioGroup.tsx",
+      "sha256": "9bede500c98123030782e55f6a5142ed112a9ec6203654af3aaa989e1d4b6167"
+    },
+    {
+      "path": "app/dashboard/src/components/Textarea.tsx",
+      "sha256": "d54be7ac789c5cf94a7d4edbc405e33e6a742752d5ea20284bd2cf8d7fb3fed9"
+    },
+    {
+      "path": "app/dashboard/src/components/Input.tsx",
+      "sha256": "55a09c9272b09ec4d10c0622ee1f9b8f3a8a909811653cfe154834ef50b7d34d"
+    },
+    {
+      "path": "app/dashboard/src/components/UserDialog.tsx",
+      "sha256": "cb5c84688c412e14b5b883beb2a186c376b6435511d52cf28c671fd6c0986728"
+    },
+    {
+      "path": "app/dashboard/src/components/CoreSettingsModal.tsx",
+      "sha256": "2845d9257e4cb731aba0747a67571ca27fc2061570a012d075cd931981cbcf73"
+    },
+    {
+      "path": "app/dashboard/src/components/ui.tsx",
+      "sha256": "1a87607a9ae2d46b911455a2c1fcdc31e32b9d278bb14b438c6b20ea6c4403f2"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/Maintenance.tsx",
+      "sha256": "88bf6a1065b868668d6dc320fac35f1bb5e77956a480f9383a9de0b3e483c030"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/SubscriptionSettings.tsx",
+      "sha256": "379b6154a16d8c1b0825ff0ba89495c65d587cda55aa50465ae95e8b6618d95d"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/yukuSettings.tsx",
+      "sha256": "8e72f3756309fc16c43a2af585fd923f9b654eb272495b4ef40ce82d9d14b7e3"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/TrafficGroups.tsx",
+      "sha256": "9415cdffcfd82fcb5974cd3ccf90364c01e06c1197d46aabd6ceb15553294f66"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/DeviceSettings.tsx",
+      "sha256": "f46f684a71a51884a6e212a28534dfa38afa363f2efa9960aa6af8d874af105d"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/autoSelectInterval.ts",
+      "sha256": "0570bbe1ad2b6b170fa845eb3573d58a0936ffc4929d4751cbf9b07f9e29c792"
+    },
+    {
+      "path": "app/dashboard/src/components/settings/AutoSelectSettings.tsx",
+      "sha256": "3bc13b60b9ceaed0487e9a036550aade768a1bc9c3fb1c7439af1fde5c92825f"
+    },
+    {
+      "path": "app/dashboard/src/components/JsonEditor/index.tsx",
+      "sha256": "3d3fd564f02442766d9f508cce191d562f41fb489d41010dbd85bf292308f585"
+    },
+    {
+      "path": "app/dashboard/src/components/JsonEditor/styles.css",
+      "sha256": "730e1d36323578a40de0b6f2c56f99d7cf168095bdc58b9bf45ea955a32449c6"
+    },
+    {
+      "path": "app/dashboard/src/components/JsonEditor/themes.js",
+      "sha256": "5e88bc215baf59b3522e9aab8981bf5cba947e1e656780eacf9bdf595a80eeb1"
+    },
+    {
+      "path": "app/dashboard/src/hooks/useGetUser.tsx",
+      "sha256": "eda0a8c5416db062b7678d6e37521a642e5cc6dd4cfb078458b9d8befc8a744c"
+    },
+    {
+      "path": "app/dashboard/src/service/http.ts",
+      "sha256": "305313b07766bcd49b699187b8c2b18c39650fa82d2648ea8593bb55737a0a28"
+    },
+    {
+      "path": "app/dashboard/src/assets/add_file.svg",
+      "sha256": "2cd9a8513d2f453dc6b446dc56c911115b214eb0b7ffddc4adc386dbd66ab3a9"
+    },
+    {
+      "path": "app/dashboard/src/assets/logo.svg",
+      "sha256": "2507bd68378f7b1064195a445ead93f70d6ed6f493af260f208fb73791ee148a"
+    },
+    {
+      "path": "app/dashboard/src/pages/Settings.tsx",
+      "sha256": "a0a1154fe9fc244eec3e3791e8aec4ecfa9e7820ae4552613348a5024ee7a77a"
+    },
+    {
+      "path": "app/dashboard/src/pages/Hosts.tsx",
+      "sha256": "02f8aa5f7f9425f1f6f28c876e82753bf1e8028418c11fe3d9374ae3b80e3b41"
+    },
+    {
+      "path": "app/dashboard/src/pages/Screens.tsx",
+      "sha256": "f279057e9af6c17cb1cae65600335c8a055c180bee6865a7f2187dc61843428f"
+    },
+    {
+      "path": "app/dashboard/src/pages/Login.tsx",
+      "sha256": "1a374b16ee738e0188a08acad2ef7692e684856cb5f00c00d7ad9e65bfc8d8f0"
+    },
+    {
+      "path": "app/dashboard/src/pages/Dashboard.tsx",
+      "sha256": "eff0177e951e3568a8c316fa58141a97adf8d610073ed8c69059456046ec9e84"
+    },
+    {
+      "path": "app/dashboard/src/pages/Router.tsx",
+      "sha256": "7f2b58aa51884a03cf79bd0731ae1ffbc9d93ffef4355c11b3cedb7ac7499d1a"
+    },
+    {
+      "path": "app/dashboard/src/pages/Nodes.tsx",
+      "sha256": "6d966d31b3906dc059733e256fbe7cc6455054fd615cdcdd38a637b2d28630a8"
+    },
+    {
+      "path": "app/telegram/__init__.py",
+      "sha256": "582ef6b33003f06fa3c7fab0f50e88659c61a90f683d99f0e9ca23ad520ac0c0"
+    },
+    {
+      "path": "app/telegram/utils/custom_filters.py",
+      "sha256": "8f2a6d1299e815a0f134f32d0f3d0f923adf1bd853aeac22fb4fd36f032ddca3"
+    },
+    {
+      "path": "app/telegram/utils/__init__.py",
+      "sha256": "2bfa85994aa78dbc99106806ad626a8c1a3e1ebba3183d904411f08a8036316b"
+    },
+    {
+      "path": "app/telegram/utils/shared.py",
+      "sha256": "53e83ade5f724cbc17f3fd11f00822854117ef079067c1fb1c9be3464a773f6c"
+    },
+    {
+      "path": "app/telegram/utils/keyboard.py",
+      "sha256": "57134d88641ba8f14263f6e0192ef20b0526fa83de11f39026bc269396da97eb"
+    },
+    {
+      "path": "app/telegram/handlers/user.py",
+      "sha256": "14dbef35e0faaa83bb1fd0c835132d944c904b8a642490b6a3fc5972df8bf071"
+    },
+    {
+      "path": "app/telegram/handlers/admin.py",
+      "sha256": "37d2a06e631151580e525757cbf7815d9c21761cdc68df92d2983616930a89a4"
+    },
+    {
+      "path": "app/telegram/handlers/report.py",
+      "sha256": "45a05e85f15c21810a624b286270bf58a7794e672914c33eb91fdf38d7821374"
+    },
+    {
+      "path": "app/db/models.py",
+      "sha256": "688dc6f2db7fdbcb5a967b71cc2dacc01c835d2b06afd130f0cc8fc200816d83"
+    },
+    {
+      "path": "app/db/__init__.py",
+      "sha256": "179bd139c43cbbafb5fb18c4eeea50d0926ec7cceba8515e0e44683fc7447794"
+    },
+    {
+      "path": "app/db/base.py",
+      "sha256": "43eb880b62be0e72ff7eef54a1861e997d1b315780b623b3df9475ff687adf9c"
+    },
+    {
+      "path": "app/db/crud.py",
+      "sha256": "54ffa294536f4ec51c8739527aa63144f77997e5558f3ee61a35ea3f4b97eb39"
+    },
+    {
+      "path": "app/db/migrations/script.py.mako",
+      "sha256": "1cd95fdba048d71bd02a3894a239e3d7904fad551f555afcd483a096225ff377"
+    },
+    {
+      "path": "app/db/migrations/env.py",
+      "sha256": "b642ca25bd4523c85d3fbd8f1d578d67925098e9dc06bf295fe8d504c723af01"
+    },
+    {
+      "path": "app/db/migrations/README",
+      "sha256": "31595cf53626af9ed16e15c44fa43183209cc163fbc3ebcb904b22ac436a8884"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0006_group_membership.py",
+      "sha256": "b879e334a82115058c3a5e5b0496a9b50225b207db1091be630182f82622e4de"
+    },
+    {
+      "path": "app/db/migrations/versions/9d5a518ae432_init_jwt_table.py",
+      "sha256": "430d33e36c4867a92e1161671598128fdb97fc3e881e3a795c6e82d81a272138"
+    },
+    {
+      "path": "app/db/migrations/versions/5b84d88804a1_fix.py",
+      "sha256": "791dd46424217dc48d311e753bc40e4ac39bf03f4fbf62a2103b70af18e386ec"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0013_host_position.py",
+      "sha256": "0975865d943193e2d690b8ad0ea1a76dbb2fc2304ea150e45fa2ffdfeccf7638"
+    },
+    {
+      "path": "app/db/migrations/versions/470465472326_add_path_to_hosts.py",
+      "sha256": "e2137c8415d532b70cf631fc84a9e012acee85367bb2c0dfefecee346e3ddc76"
+    },
+    {
+      "path": "app/db/migrations/versions/c106bb40c861_alpn_fingerprint_hosts.py",
+      "sha256": "a736638596b3b15335515a3070006fd50d20adb3034dc98404c5982842b90d4b"
+    },
+    {
+      "path": "app/db/migrations/versions/d0a3960f5dad_usagelog_table_for_admin.py",
+      "sha256": "82ef77ef29cf8778b90cfcdc33103302d5ce86a50666b4607a716f1f429f8c52"
+    },
+    {
+      "path": "app/db/migrations/versions/e410e5f15c3f_merge_fad8b1997c3a_a0d3d400ea75.py",
+      "sha256": "28834f9b733d660455d505887e7b934c217af7e4357f7276d39c30c24e8c9749"
+    },
+    {
+      "path": "app/db/migrations/versions/e91236993f1a_inbounds_table_excluded_inbounds.py",
+      "sha256": "f488abc6c07ef1bd2bb80e72e3669043e61fa69162af49b0cb534c441f8b16e5"
+    },
+    {
+      "path": "app/db/migrations/versions/37692c1c9715_nodes.py",
+      "sha256": "aad32f9121b17ebeb6bf514ae04381053848a6d3a3275a83ee97a01c700e021a"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0010_host_auto_select.py",
+      "sha256": "bc9c7bdbee61c29b9ea1f97858c8530409dc6c3c2c67591ddb612b443fc3ef21"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0002_settings.py",
+      "sha256": "550c4e3e99823c7fa1037241899314c9b5111be06bb4ef40281919b96e55267d"
+    },
+    {
+      "path": "app/db/migrations/versions/fe7796f840a4_remove_certficiate_from_nodes.py",
+      "sha256": "6c12875b65b90bfb5661da63bb143a5cdcea23d22cd659feaf1d59ec468deb2e"
+    },
+    {
+      "path": "app/db/migrations/versions/d02dcfbf1517_add_userusageresetlogs_model_and_data_.py",
+      "sha256": "83e047ae732c46d97ea0d3c55d243961b9e89cdfef558ec3f107b328f24c136c"
+    },
+    {
+      "path": "app/db/migrations/versions/9b60be6cd0a2_add_created_at_field_to_users_table.py",
+      "sha256": "1e8c8a701f614ed19b1269e4bd630370b1d375d474855a57b5a30ae8bbc3a67e"
+    },
+    {
+      "path": "app/db/migrations/versions/e3f0e888a563_rename_deactive_status_to_disabled.py",
+      "sha256": "3bb1c064b09d3cecc184d2f995de673e05c067efe807a468fbb22b2b977987a3"
+    },
+    {
+      "path": "app/db/migrations/versions/a0715c2615f0_add_allow_in_secure_and_disable_host.py",
+      "sha256": "7d1db86f16b8eab0ceeec0c1ef2a10a7c0ae3a93c9dc3a534bc61a637b3cd479"
+    },
+    {
+      "path": "app/db/migrations/versions/671621870b02_init_admin.py",
+      "sha256": "f2c0d8751bea583f64ba52176fe6e172e5a883af77395585d853150ae87a7e55"
+    },
+    {
+      "path": "app/db/migrations/versions/e7b869e999b4_increase_length_of_the_host_and_sni_.py",
+      "sha256": "2acce750198df4c558295373a4e3ff64e7119a1cbec995f65e11e4bb682f5a4d"
+    },
+    {
+      "path": "app/db/migrations/versions/2ea33513efc0_noise_for_sqlite.py",
+      "sha256": "394e1f2beae6e262fe0e6275b259f43edd4d4e2d4e491771836cedf50d0496b7"
+    },
+    {
+      "path": "app/db/migrations/versions/5575fe410515_add_telegram_id_to_admin.py",
+      "sha256": "a8f4d8bc7e81e7a7d6f54e905a79ac20ecdf2e0a235f90c99f9edb11380af747"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0005_user_group_limit.py",
+      "sha256": "863e511f6c3c91e1b3685abcf23d1b286677288427ff71e7a47408431482a690"
+    },
+    {
+      "path": "app/db/migrations/versions/4f045f53bef8_drop_proxy_outbound_and_sockopt_from_.py",
+      "sha256": "01fcff568d66a324fc3ee5187e1eb57f2b22a3adde0edb95c135e969c11f17d9"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0011_auto_select_groups.py",
+      "sha256": "1486ad2e4a53d6b1f4abb5c39c6213f2be62cd70ee27aed6713092a878cb7145"
+    },
+    {
+      "path": "app/db/migrations/versions/a0d3d400ea75_admin_is_sudo_field.py",
+      "sha256": "2a91893cff7083692a053555bacd561db8996d81c8e96049053f25532c1f1336"
+    },
+    {
+      "path": "app/db/migrations/versions/3cf36a5fde73_init_system_table.py",
+      "sha256": "493bfc3e6a0a44170c29ba1de97bdadacb4355941cc593dfc3ed57506d247259"
+    },
+    {
+      "path": "app/db/migrations/versions/714f227201a7_fix_user_template.py",
+      "sha256": "f5a1578a6af97c589533a9521f9f089eb443c43df9267f30e69d4aa14dd27ca9"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0014_hysteria.py",
+      "sha256": "0e3bccdb24af2b715b8f11597dd3a69c725c622a0d774b74c4f0cf97ce68723f"
+    },
+    {
+      "path": "app/db/migrations/versions/77c86a261126_nodes_coefficient.py",
+      "sha256": "95c17a262ad208bbe5e8e736a693fc01978d9d06bfe7acf2e09bb5e8aee50bb8"
+    },
+    {
+      "path": "app/db/migrations/versions/a9cfd5611a82_add_noise_settings.py",
+      "sha256": "3e04383290ebc717056f1e1d561a952c51d62a30e742ead87c478c4a940c9f71"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0007_group_enforced.py",
+      "sha256": "adc1f4a19d8eef995db5ee1acdb6ffb0faf3f2f33eda718e34a278ce78307ca9"
+    },
+    {
+      "path": "app/db/migrations/versions/947ebbd8debe_add_on_hold.py",
+      "sha256": "334cfb3c81b01649050d26904b100c9976ef8499d1897ec9d06ffa94660b86c8"
+    },
+    {
+      "path": "app/db/migrations/versions/54c4b8c525fc_last_status_change_for_expired_users.py",
+      "sha256": "0aea233aaa87fe09987d906f30054c819dce8c3700dbc59415998165880ea38c"
+    },
+    {
+      "path": "app/db/migrations/versions/305943d779c4_add_h3_to_alpn_enum.py",
+      "sha256": "0d9d95b882b8b67fd56af5ce4f6d6383f6d312d417b595e507b6da094cc6be12"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0012_server_description.py",
+      "sha256": "83a574980f87f1f876d44213227a4b0105b23e2002f9dc9d261c68291a1b9bc1"
+    },
+    {
+      "path": "app/db/migrations/versions/fad8b1997c3a_case_insensitive_username.py",
+      "sha256": "80eab1a03ba98de0568e825f0623a8cff923982b8ead01f2bdeebb354d742468"
+    },
+    {
+      "path": "app/db/migrations/versions/0f720f5c54dd_.py",
+      "sha256": "686e485ff1de22d554228324c9569e8c3823a8639f08c2be0d3d0756d4c43969"
+    },
+    {
+      "path": "app/db/migrations/versions/ccbf9d322ae3_user_auto_delete_in_days.py",
+      "sha256": "a7a5791b68260044fcc13b928b184dc33f6f65da82cb3332d96c41ad16a520d4"
+    },
+    {
+      "path": "app/db/migrations/versions/b3378dc6de01_hosts.py",
+      "sha256": "526b153ae2c172cc88412e99787389e2650b7e455767c6019dbf125724caca11"
+    },
+    {
+      "path": "app/db/migrations/versions/51e941ed9018_deactive_user_status.py",
+      "sha256": "67b2ac93db0854d95a6f8147c15abf62d6c3ee9577b31b3e0670369e3b0622ec"
+    },
+    {
+      "path": "app/db/migrations/versions/21226bc711ac_add_threshold_to_notificationreminder.py",
+      "sha256": "4cc0a698dee861d534c1dd75e38660cd235b3d91c06b50d74860973a8053f726"
+    },
+    {
+      "path": "app/db/migrations/versions/c3cd674b9bcd_added_next_plan_for_user.py",
+      "sha256": "af8c10aeeab4f35adbfa6e3b7017320f09f3315d9c3cea11ef8791d4941d344b"
+    },
+    {
+      "path": "app/db/migrations/versions/fc01b1520e72_add_node_usages.py",
+      "sha256": "ad217963afc04a0678b466df71703031446a48d90da61524ed5ccf2974627f4a"
+    },
+    {
+      "path": "app/db/migrations/versions/57fda18cd9e6_add_xray_version.py",
+      "sha256": "310231f338408b4846158f05924e76b7f364e3a3013a0cad13dee3bda876ba79"
+    },
+    {
+      "path": "app/db/migrations/versions/852d951c9c08_drop_extra_index.py",
+      "sha256": "43a9563a2c9ae37f8d7dbdabf1e933173a2832622d37f2b7bf295a414f4e42f8"
+    },
+    {
+      "path": "app/db/migrations/versions/b15eba6e5867_add_host_sni.py",
+      "sha256": "605453ed2b2146b0b61f3999cea50c489c11220aebaf79b0bed565d1a7a61920"
+    },
+    {
+      "path": "app/db/migrations/versions/be0c5f840473_fix_multiple_heads_error.py",
+      "sha256": "6daefa71b376c4a1761dd8957fff77d49b989c29e28e63ffed956c92b9adf48f"
+    },
+    {
+      "path": "app/db/migrations/versions/08b381fc1bc7_update_shadowsocks_method.py",
+      "sha256": "691d48c10621c5a581108e8c9861a8d7ad54b6f799553ee4c3543c718fe3aaa5"
+    },
+    {
+      "path": "app/db/migrations/versions/07f9bbb3db4e_user_last_status_change.py",
+      "sha256": "471f33119729173235ab48f63e3fcd5c6b96c2bc81f253b3fe39f85346214d35"
+    },
+    {
+      "path": "app/db/migrations/versions/1cf7d159fdbb_add_online_at.py",
+      "sha256": "b7e9a4821cc73581e66af14da424cf25e37b3dd0f11a3e61b092830d3a5021a6"
+    },
+    {
+      "path": "app/db/migrations/versions/97dd9311ab93_add_user_templates.py",
+      "sha256": "5c3f891fb88366b6ba45116cba6a00ae596cf602d2ab8550219ed72bb148491e"
+    },
+    {
+      "path": "app/db/migrations/versions/adda2dd4a741_add_sockopt_proxy_outbound_mux_enable_fragment_setting_to_hosts.py",
+      "sha256": "4e6456b51f535cc1d4c93eaa6e57aab96a1005d788f823763e93afcda21ceea4"
+    },
+    {
+      "path": "app/db/migrations/versions/a6e3fff39291_add_notification_reminders.py",
+      "sha256": "4826af6b650dbadcbc7799d2fc192a7ace9505d3710a80c16c708c52167b1533"
+    },
+    {
+      "path": "app/db/migrations/versions/e4a86bc8ec7b_node_user_usages.py",
+      "sha256": "a6786092eaf925f5994fb5e3a1b0b01f70b89792a9d24079984aaf90a3c1a30f"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0009_hwid_index.py",
+      "sha256": "29ffa616a7c60f8c13a97b7707822a1819d75e5763ab6ee0ab87d1094a69a014"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0004_host_groups.py",
+      "sha256": "c814dad40a633f0370e1467be5c798527860a37008080e2e2a4ee1862c43988f"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0003_device_status.py",
+      "sha256": "f8d5d3e52cf376194bd51d7c32636d15e8509663b2f2469c3beb5682a30006b6"
+    },
+    {
+      "path": "app/db/migrations/versions/b25e7e6be241_added_users_usage_to_admin.py",
+      "sha256": "06197acaf0ac240a03d7d81dab919b4484f29bb338ae6dd06fb86d6b9a3a89df"
+    },
+    {
+      "path": "app/db/migrations/versions/5a4446e7b165_add_password_reset_at_to_admins.py",
+      "sha256": "42dcc818bf28f9b1b211daa63aa60dac07aa5091e6e82a6f365acc052d700e6d"
+    },
+    {
+      "path": "app/db/migrations/versions/8e849e06f131_proxy_table.py",
+      "sha256": "9de6549b8755140828441dec09e095b87370a1f3f668f5e060a5c3e49667ecc9"
+    },
+    {
+      "path": "app/db/migrations/versions/025d427831dd_sub_last_user_agent_length.py",
+      "sha256": "c62a16c3db89131735744791acf35ff0cabb4fedf9bf428e8df178244a36aaa7"
+    },
+    {
+      "path": "app/db/migrations/versions/2b231de97dc3_add_use_sni_as_host_to_hosts.py",
+      "sha256": "25a95c7d871b58e9a224b1370a41e6c06b52208b3911d7dbcd2832a29f0843ee"
+    },
+    {
+      "path": "app/db/migrations/versions/e56f1c781e46_fix_on_hold.py",
+      "sha256": "4bf0206520135914e01b0c2999a834071949a64f8cf7644c241aee1f2ee59335"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0001_device_limit.py",
+      "sha256": "286df3f9ecc9fa0e2b62c3bad38363d30bd4ca9c9bba35fd5dca9f20991964c3"
+    },
+    {
+      "path": "app/db/migrations/versions/1ad79b97fdcf_.py",
+      "sha256": "fef7680cdfb9335290aa6c8da3befb03fd0ee1f27b505ef4aa3458cc8b90f361"
+    },
+    {
+      "path": "app/db/migrations/versions/ece13c4c6f65_.py",
+      "sha256": "9b168399c880ecdff1434f3f1d54f4135d3dfc8054bb43061af3348fcb11b1fe"
+    },
+    {
+      "path": "app/db/migrations/versions/94a5cc12c0d6_init_user_table.py",
+      "sha256": "1b021e965b187207afceaa80ca8dc1caaaca370b54bd29bad4ed7bc1af9ef067"
+    },
+    {
+      "path": "app/db/migrations/versions/c47250b790eb_add_user_note.py",
+      "sha256": "a7167af406e3552bf4695d2bc3b286597662707b021c9cc7ae3a8252367a3196"
+    },
+    {
+      "path": "app/db/migrations/versions/dd725e4d3628_fix_mysql_collations.py",
+      "sha256": "7d144765cca1eafe9132053bc2c169206e1c9c6fe4837cd4b05795dc8060d7a6"
+    },
+    {
+      "path": "app/db/migrations/versions/015cf1dc6eca_sub_updated_at_and_sub_last_user_agent.py",
+      "sha256": "9e70f23f4ce134520a13d167e62a0afd68e9d0aa31decbca7f1bb8f1378e849b"
+    },
+    {
+      "path": "app/db/migrations/versions/31f92220c0d0_add_support_random_user_agent.py",
+      "sha256": "ea6a797ca9b22c0647ec38268f0bbf7940e870c28b1e94a9c332c7b41c1a4c2c"
+    },
+    {
+      "path": "app/db/migrations/versions/2313cdc30da3_.py",
+      "sha256": "68faee5892fe3fc44e86c9e098d84854c0316d0acfacde4ee9dc809b5b2f1504"
+    },
+    {
+      "path": "app/db/migrations/versions/7a0dbb8a2f65_init_tls_table.py",
+      "sha256": "a937055590f5220e3f31bba542706e8dd66fc10770b7aebabb1145026cd23172"
+    },
+    {
+      "path": "app/db/migrations/versions/35f7f8fa9cf2_add_sub_revoked_at_to_users.py",
+      "sha256": "a6869ed516fad83346a5a93196ed958a8a5496bca3abc488fa290c175ca6a8ed"
+    },
+    {
+      "path": "app/db/migrations/versions/yuku0008_admin_audit.py",
+      "sha256": "ed70ff2568ec2e80c27f095fe79cbf0a486a0b9e859caf8670d288c4be09ed76"
+    },
+    {
+      "path": "app/db/migrations/versions/7cbe9d91ac11_proxyhost_security_added.py",
+      "sha256": "229679c3d79f9e465041b9af5e996c2667206787450d37f38469a8e36e99737b"
+    },
+    {
+      "path": "app/templates/__init__.py",
+      "sha256": "149f5786186e85ed80c88946f40b2b44ff2b1eb8720677f5876f4884ae6850e2"
+    },
+    {
+      "path": "app/templates/filters.py",
+      "sha256": "b33792391fbe26dd90aeef584f0dbfaae60b9f9c1e93f5dbfac7188547a2735a"
+    },
+    {
+      "path": "app/templates/home/index.html",
+      "sha256": "1f05352862e2bf3a48d86433f86441ce2c05d9f79e9a6ad20743a30145009fc2"
+    },
+    {
+      "path": "app/templates/user_agent/default.json",
+      "sha256": "b7b425abcb4492b0d09d69687da4d5e495ea199d371c78934ceff79464a4717d"
+    },
+    {
+      "path": "app/templates/user_agent/grpc.json",
+      "sha256": "b7c2c0699991221f8b1300f802210bbed1aede5c4b5c98f6f50a6e9ac0f520df"
+    },
+    {
+      "path": "app/templates/mux/default.json",
+      "sha256": "0d87ba4b0d34f50633d18cd651eb34fa3a0ee2745a8ebe20f2e35ff6fa9d27b8"
+    },
+    {
+      "path": "app/templates/v2ray/settings.json",
+      "sha256": "b5355bf384a36c9e06671738e618c5fa493d30b559c87d3059be3b23704fb007"
+    },
+    {
+      "path": "app/templates/v2ray/yuku_routing.json",
+      "sha256": "5e47354bf41723d29468da9bf1568cda6d6fe3e36ff0f1e8a7801adc4313585c"
+    },
+    {
+      "path": "app/templates/v2ray/README.md",
+      "sha256": "ca77eed70bce5e5d4d94e0dd15cb1e43c339c5d27c6b797b0f9f3402a88aa7f4"
+    },
+    {
+      "path": "app/templates/v2ray/default.json",
+      "sha256": "6cb6e17fa0d8073df70843b146e1a983694e67d2ebcc73b049e7f1444c5a303a"
+    },
+    {
+      "path": "app/templates/subscription/index.html",
+      "sha256": "4ab7175514dfc724b2a0244ec3d41be7961200ed76f2c9e5069b17c5de541fea"
+    },
+    {
+      "path": "app/templates/clash/default.yml",
+      "sha256": "deee46e1098c817548d02ac81ba52f1c10b789682c5e100bf5891aa7a954ba8d"
+    },
+    {
+      "path": "app/templates/clash/README.md",
+      "sha256": "957623a9795e5cd8cf0b6b98206370262dbebb36bd42fd80443c8ddd1ae2c307"
+    },
+    {
+      "path": "app/templates/clash/settings.yml",
+      "sha256": "a7bdeac791d265b0fe472c7314a64d0cbb003544b4700524177d2d0fbbb35364"
+    },
+    {
+      "path": "app/templates/singbox/settings.json",
+      "sha256": "f9322c1d9bf9f5cd506c330e86245601586847b3a94de1a6d67c4c5798fa2ccb"
+    },
+    {
+      "path": "app/templates/singbox/README.md",
+      "sha256": "05706f44205cf6da3f32bb052ed0376eeabe1856da864c4aa2e74110534ee8a4"
+    },
+    {
+      "path": "app/templates/singbox/default.json",
+      "sha256": "963725e6b447f31fad68f37343eae9a25446ed1bed159b14881625dfb3b9f121"
+    },
+    {
+      "path": "app/jobs/0_xray_core.py",
+      "sha256": "efaa43edf824c0acd36227b435e19addd114e556a89cb3f623ab681e957e0fd6"
+    },
+    {
+      "path": "app/jobs/record_usages.py",
+      "sha256": "1857447a7535935c7324fa98c3e63d723617aab9a478c852fa6f5ddf2b64d8a7"
+    },
+    {
+      "path": "app/jobs/review_users.py",
+      "sha256": "386f1e1195f5cf3f9e2780baa98386dfa782a8849f1efe6075b8659090afe449"
+    },
+    {
+      "path": "app/jobs/purge_audit_logs.py",
+      "sha256": "40ee424a2bb5257d4dedcafaa99aa7948c30d95b328b9d7f1f87d540edbe72d7"
+    },
+    {
+      "path": "app/jobs/reset_group_usage.py",
+      "sha256": "21d959ea669ef062c4b6d1b1ae79180d4d5bebb7506d11a721abf5dd58f03479"
+    },
+    {
+      "path": "app/jobs/remove_expired_users.py",
+      "sha256": "67d7a50ed6ea28011860c942dd0975f38935bcd2caae35ce283ca239e60379d0"
+    },
+    {
+      "path": "app/jobs/__init__.py",
+      "sha256": "a23061cd49e432cc028a6d657a7c3b8688aa6d97d71c25a8f9ada89430ad6ae5"
+    },
+    {
+      "path": "app/jobs/reset_user_data_usage.py",
+      "sha256": "5b751accf0bf39b6e6e2cd69884fcb50fe9990ebc02968277614970775012d8e"
+    },
+    {
+      "path": "app/jobs/send_notifications.py",
+      "sha256": "2dfb62f616537c1f2767285f690c28f804a60af910e8c70237d5095cc994bcde"
+    },
+    {
+      "path": "app/xray/config.py",
+      "sha256": "b9c099499bfc15943688eca852e40e22fb4be60dfc62597750a8e40832ce9859"
+    },
+    {
+      "path": "app/xray/__init__.py",
+      "sha256": "4940863eb3ff130ecc379ad47ed1a2e6df20e688a99e949494b485e13b35bb57"
+    },
+    {
+      "path": "app/xray/core.py",
+      "sha256": "19ec7421d88691d17d4967c367724bfd105140398a2017dfdf9da390148bb68a"
+    },
+    {
+      "path": "app/xray/operations.py",
+      "sha256": "44012e3feccdbc936fcde1eef0279f76b1d59402ac777da37fe749bef2d74d11"
+    },
+    {
+      "path": "app/xray/node.py",
+      "sha256": "cebea3bbf75e3d250c4f7cd23d374a9775e094228e89f1003e55b4fe5a0dce98"
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "tests/test_node_recovery.py",
+      "sha256": "29767872165ea69d7752766f284c1571d41d18ce39c1625c15f097ae0c95cd13"
+    },
+    {
+      "path": "tests/test_hysteria.py",
+      "sha256": "a851fcbcc6b96a289a119f0880c0ad8b72a99aad3e22f1e78e1a1e0566cd441d"
+    },
+    {
+      "path": "docs/screenshots/dashboard.png",
+      "sha256": "4f84751d278e96eae2d3cacaf34f2a5fc7aed2f9c366d022b62eaaab091eaad7"
+    },
+    {
+      "path": "docs/screenshots/user-devices.png",
+      "sha256": "8b9bf4ec44710d6aeb04a8d08e3f1d8ed0d59e7682ef569ad3e58de5ec24ecb5"
+    },
+    {
+      "path": "docs/screenshots/yuku-settings.png",
+      "sha256": "ec76b008978aa0f4163e260338f05fef6ad15f3ede5d1330b7bff80f9c5d4538"
+    },
+    {
+      "path": "cli/user.py",
+      "sha256": "995d9f1a6ffcfeaaf6461cfb54b7ea70bb8d22d74f35bf9b5058858fb8b9c00b"
+    },
+    {
+      "path": "cli/subscription.py",
+      "sha256": "5966cc49c30dba60810be772692ccf26037af724e357b3b09209ccab6c9f153f"
+    },
+    {
+      "path": "cli/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "cli/README.md",
+      "sha256": "159445ee2715701c0058cc4882bdafe84f6fb654a742a82018d990b95e85d27c"
+    },
+    {
+      "path": "cli/admin.py",
+      "sha256": "76311995c7bb8d6e1e4a57abfdeb30795b55693eae1088d0e367b8b20c0f3fb8"
+    },
+    {
+      "path": "cli/utils.py",
+      "sha256": "cc7b8bafa8bcdc5476a5a0b9f3391a5d8363594e0c38ebe8f0d41b42160b848a"
+    },
+    {
+      "path": "xray_api/proxyman.py",
+      "sha256": "953915b2501e6db8c4f7576722d7a0ace9f27a67c9a42e14c7f86f18769934c0"
+    },
+    {
+      "path": "xray_api/__init__.py",
+      "sha256": "fb0e199ce16cc34178c6a9f3530c8564bad5e338a5931b6104e237125c44ff3f"
+    },
+    {
+      "path": "xray_api/stats.py",
+      "sha256": "5debd563aa86a6ec05f0d94e8233dfa7179c8867fc258e5a9d0cf952f0b190ab"
+    },
+    {
+      "path": "xray_api/exceptions.py",
+      "sha256": "4706b14fd793e8716be91e7eb358337bd7da1e6bc7b891a12ff392777841062c"
+    },
+    {
+      "path": "xray_api/base.py",
+      "sha256": "be9ba12c530f8edb185d25024277cc92152e29b058a7437ec197d44b9badb387"
+    },
+    {
+      "path": "xray_api/types/__init__.py",
+      "sha256": "f428eda49e01d6352b9171c8e84a4f2d0350aa573d7ce6c677e2b7bcec53e42c"
+    },
+    {
+      "path": "xray_api/types/message.py",
+      "sha256": "9a300fe139c572ab78948ecfa9d515d7fa5b182dd8dab77dc3d760ed664bcb88"
+    },
+    {
+      "path": "xray_api/types/account.py",
+      "sha256": "ce2fd0ddc528bc8f5dcac3a0fd754064752076eb20ed04912044ef24dbc3ba9d"
+    },
+    {
+      "path": "xray_api/proto/compile.py",
+      "sha256": "ca69458164470c3b300a9980a6ec0b0dde7acc97a4d2b5b249d41295265957a0"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/config_pb2.py",
+      "sha256": "04de29080bfaaffbf51583b18552bc82770ae8af41189ca7c088222695fb2ebd"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/websocket/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/websocket/config_pb2.py",
+      "sha256": "022858213e8ae93230668fd967388fdaa25563922c933dd40692c4147456618a"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/splithttp/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/splithttp/config_pb2.py",
+      "sha256": "bd5d06458d27a40e7475655ddb120beedfc6b105399725b11b96c3c895315ebf"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/httpupgrade/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/httpupgrade/config_pb2.py",
+      "sha256": "603d01cd1be0620c20b6c7401b713d8177fabf6a25a63143fa217f8161dcc950"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/udp/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/udp/config_pb2.py",
+      "sha256": "921a54b62b36103eb800586278d1e314b3059333b146016a553adb34c55cae19"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/grpc/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/grpc/config_pb2.py",
+      "sha256": "7c0f1fa7abb73ed4a9322296c9bf2949d972a76ed5165b58fc3636855b14626d"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/grpc/encoding/stream_pb2_grpc.py",
+      "sha256": "8f18efbd39b2e62813fd7fa739ab6e605cce4677d7ab5c511fc0fa87f053cd76"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/grpc/encoding/stream_pb2.py",
+      "sha256": "232a101b1b49a709b0412ba8be1b9ef3e71042ab25992215d6851bbce16e92d9"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/domainsocket/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/domainsocket/config_pb2.py",
+      "sha256": "e66ee5b884cbb62d35f5254a6aadf5fcb8b17f4fd405a46ccdf616ee09de699e"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/xtls/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/xtls/config_pb2.py",
+      "sha256": "d245bf7f08e57e3d7ec1bf6a7b8bb90c963b09f52decf2f32382f2977728cec4"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/tls/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/tls/config_pb2.py",
+      "sha256": "211fc6a4a4f9b94e4b2198570c13100b78e4f6d3ba185df96458c301de7470eb"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/tcp/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/tcp/config_pb2.py",
+      "sha256": "69ceca7ec54a9ffaad745e5c5072bf3dc50e8970af0df11e47f228c9feb0b9b7"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/noop/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/noop/config_pb2.py",
+      "sha256": "4987775b670dfdf2357bb9bd9c2b3737f6ea708d5c7f1dedc25da4b90a984b78"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/wechat/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/wechat/config_pb2.py",
+      "sha256": "0d30a625e72cf3b671f5d5d2a41d5dd1f7856eebc5accaa123e78e0ee09ff357"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/tls/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/tls/config_pb2.py",
+      "sha256": "6b38348dae1727e6b89271caca77feab2d226f29f6c8448b68a23c5c0d687e65"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/http/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/http/config_pb2.py",
+      "sha256": "32c7821b364e4b4a1c7117e5829ec312154440297e1eccbc6e8bc66900bf1c54"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/wireguard/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/wireguard/config_pb2.py",
+      "sha256": "4b527f4fe270554de20bdecea53c9cbf9f85f1f0700f380b0a8b91f55939982d"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/dns/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/dns/config_pb2.py",
+      "sha256": "78ec1dda770b1daf2672688fec12ba6363059096615454acd6eb43a18f898e0d"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/srtp/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/srtp/config_pb2.py",
+      "sha256": "8f1d7c2cf247b1bb7c5861902e0ebe1e64e447ecf2ca5caa271b1564d6e705d6"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/utp/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/headers/utp/config_pb2.py",
+      "sha256": "2e231620def6686ecaf051cb7eac0bf8b2dc4091679ae6c1ccd36b8310c29feb"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/http/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/http/config_pb2.py",
+      "sha256": "5481760acf876b074cfac7e365e456ef6c9a2f6d7688418209c5384f6259761c"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/reality/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/reality/config_pb2.py",
+      "sha256": "c811a7a99543e1548ab14f3b124d984af3d8521d6fad6f094ca9aa5c2d1d796b"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/kcp/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/kcp/config_pb2.py",
+      "sha256": "0e20fa75e61954f318f82534551bfb4cd2920a07502bd5c1717d0c9a3978a560"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/quic/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/internet/quic/config_pb2.py",
+      "sha256": "b55bf97a0b684c17de83a7153dd3c87f3567eebfe9c83c06ce37019454e00c9d"
+    },
+    {
+      "path": "xray_api/proto/transport/global/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/transport/global/config_pb2.py",
+      "sha256": "f390028e5030ee1a75784ab287b7dc972dca410d10438f52ae95753742a19156"
+    },
+    {
+      "path": "xray_api/proto/core/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/core/config_pb2.py",
+      "sha256": "d399df36ebf86bb1ddd50159dc03c29715a301f3e4682fdfe2ac2cd9c991402e"
+    },
+    {
+      "path": "xray_api/proto/app/metrics/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/metrics/config_pb2.py",
+      "sha256": "2a7fbff7b861ded19d0cdc8957d3b8335187302ec9354cfabda8979e9a847808"
+    },
+    {
+      "path": "xray_api/proto/app/proxyman/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/proxyman/config_pb2.py",
+      "sha256": "dfcdfd78bc49827c7613f3ebcdf9dde83ecbc44e1159d28008578fdb0a384cc2"
+    },
+    {
+      "path": "xray_api/proto/app/proxyman/command/command_pb2.py",
+      "sha256": "19e52b2f69b9b1f4e367ad3630d6f1a0deb3529ea1bf14601e616bcd44a4eecc"
+    },
+    {
+      "path": "xray_api/proto/app/proxyman/command/command_pb2_grpc.py",
+      "sha256": "a50afb83e16ff06cb514fe73e83005b3d5a266a84867391bea9fdd82b5ffafb8"
+    },
+    {
+      "path": "xray_api/proto/app/commander/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/commander/config_pb2.py",
+      "sha256": "1dd8cf779bb4913689a97cf70225ca4c22b8f8428ee87106a9e01d6381840851"
+    },
+    {
+      "path": "xray_api/proto/app/observatory/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/observatory/config_pb2.py",
+      "sha256": "8fc3df012a4b417fa57fb3eca5166a9ecca8fc345a25abb922b704d2a1d8afaf"
+    },
+    {
+      "path": "xray_api/proto/app/observatory/burst/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/observatory/burst/config_pb2.py",
+      "sha256": "1f0b259fee97c930f25e8369e2f0327336109107f76fa3f4ec04152f9ed5e44e"
+    },
+    {
+      "path": "xray_api/proto/app/observatory/command/command_pb2.py",
+      "sha256": "9b7bb8929591cf1fa7ae083fd77561adb03a0b42fd4bbbe3b5b0a62af4eea106"
+    },
+    {
+      "path": "xray_api/proto/app/observatory/command/command_pb2_grpc.py",
+      "sha256": "05487c6e103efa75871cc725ea3881413b6c425a51240a55742df6d871c1c50a"
+    },
+    {
+      "path": "xray_api/proto/app/dispatcher/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/dispatcher/config_pb2.py",
+      "sha256": "ae9c3310087216844229090cda1bed172e49f995b94b2b81f104bc3ba4469a03"
+    },
+    {
+      "path": "xray_api/proto/app/reverse/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/reverse/config_pb2.py",
+      "sha256": "1ab26e88df1977696fd6afcb75fea507e8ec2aad513feb3978220785f08a8c87"
+    },
+    {
+      "path": "xray_api/proto/app/log/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/log/config_pb2.py",
+      "sha256": "bf96a301da059cceeee33babbef9205e6fc51ece8e75e18c4049335367e03c90"
+    },
+    {
+      "path": "xray_api/proto/app/log/command/config_pb2_grpc.py",
+      "sha256": "fdf9600b52b4883d2da3ff556db39796637377e2875227e664eb04dd96ca2b1b"
+    },
+    {
+      "path": "xray_api/proto/app/log/command/config_pb2.py",
+      "sha256": "fae7d75539367b9267b0fb09cb5b9775611222b1124ec3e1b3b5086093af525f"
+    },
+    {
+      "path": "xray_api/proto/app/dns/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/dns/config_pb2.py",
+      "sha256": "8f13bf50bf502ce664667b856215e9c84f0460e07fceb23e6f6e60845bc8bd5f"
+    },
+    {
+      "path": "xray_api/proto/app/dns/fakedns/fakedns_pb2.py",
+      "sha256": "a816a7bf6d0a1c97dc344e96c114a014732bf5f735bcdeb9db69cac358f7eece"
+    },
+    {
+      "path": "xray_api/proto/app/dns/fakedns/fakedns_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/stats/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/stats/config_pb2.py",
+      "sha256": "f9cc07c4d4ea9d43e6850dc1677ad7824c2ec1dff067cb280520dd32fc12035b"
+    },
+    {
+      "path": "xray_api/proto/app/stats/command/command_pb2.py",
+      "sha256": "657360c10fc69f2b2fba844195d1894a85b6cc80a34fa249e7dcce05dc17e26d"
+    },
+    {
+      "path": "xray_api/proto/app/stats/command/command_pb2_grpc.py",
+      "sha256": "be7335a6823127f62ca7bfc7bf22625b1411697317f8babbc9dc2e04508485fd"
+    },
+    {
+      "path": "xray_api/proto/app/policy/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/policy/config_pb2.py",
+      "sha256": "de72f541cb932aa1d2cdd16f709401cbb0c033e3fb46e98c0ccc0e7774534ed1"
+    },
+    {
+      "path": "xray_api/proto/app/router/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/app/router/config_pb2.py",
+      "sha256": "01cc55c36e6d86222aa5b0592623105a6f4b7df7f9e09c6036381bb68f5eb53c"
+    },
+    {
+      "path": "xray_api/proto/app/router/command/command_pb2.py",
+      "sha256": "e177637ba7398b363ad24ca2c9532e3616607b6013d9c9664e7876f2e0dd8073"
+    },
+    {
+      "path": "xray_api/proto/app/router/command/command_pb2_grpc.py",
+      "sha256": "e3199f4b72e7426df81c9ad8e48f37bb0031d8c6fed7343c2c8f550409eef97c"
+    },
+    {
+      "path": "xray_api/proto/proxy/shadowsocks_2022/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/shadowsocks_2022/config_pb2.py",
+      "sha256": "e92b354114fb81dbd83c0979a3ce6cb397d96bd6d958a534552c4aa42358099d"
+    },
+    {
+      "path": "xray_api/proto/proxy/freedom/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/freedom/config_pb2.py",
+      "sha256": "fd76ae3ee0701be3c680dd10e4ab91655c974280744ff115aa94f486527c932b"
+    },
+    {
+      "path": "xray_api/proto/proxy/trojan/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/trojan/config_pb2.py",
+      "sha256": "c40cef04eed5d3c083b6fd48bc89d110a2d00c18b2bcb816b445943139f3a59a"
+    },
+    {
+      "path": "xray_api/proto/proxy/hysteria/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "xray_api/proto/proxy/hysteria/account/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "xray_api/proto/proxy/hysteria/account/config_pb2.py",
+      "sha256": "d0cb439d9d50b38015d7bcd87f27f85f7e79179d01a5a8069aab150e6c8f8f8f"
+    },
+    {
+      "path": "xray_api/proto/proxy/hysteria/account/config.proto",
+      "sha256": "004111f6bee6e024b58869d55d916e84880d73be2144e12105bc34fc3e9e64c1"
+    },
+    {
+      "path": "xray_api/proto/proxy/mtproto/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/mtproto/config_pb2.py",
+      "sha256": "1c38c0f1b1a350ece4bbc2e3f219bed18ca846106f55d0b0ebcc49a2aa2a7ca7"
+    },
+    {
+      "path": "xray_api/proto/proxy/vmess/account_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vmess/account_pb2.py",
+      "sha256": "501699c7cc5556b45ba3ede4ed93a644e317b4a3148456b9d239d443ca2167c5"
+    },
+    {
+      "path": "xray_api/proto/proxy/vmess/inbound/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vmess/inbound/config_pb2.py",
+      "sha256": "198bcd214fb372309170741739e7fc5ac6eea74409b3444c59e31580d77038bb"
+    },
+    {
+      "path": "xray_api/proto/proxy/vmess/outbound/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vmess/outbound/config_pb2.py",
+      "sha256": "34ad0b211f7ecc5b22541e502143564739bb5f5d27e92689abc5a97ba1d30ef1"
+    },
+    {
+      "path": "xray_api/proto/proxy/http/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/http/config_pb2.py",
+      "sha256": "836c448524e1b6851e32d5253b2039e4b10fabd67d2712dfb2df60e0831422ac"
+    },
+    {
+      "path": "xray_api/proto/proxy/loopback/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/loopback/config_pb2.py",
+      "sha256": "4b8b629a379372606d8b454604efd8abbef56fb6499a7b9d4c2a9e6691c82d92"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/account_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/account_pb2.py",
+      "sha256": "b98dc027a75bbc3416e39cbae9fc1612d5f6fb567d17b26bd56abb6b1b85147b"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/encoding/addons_pb2.py",
+      "sha256": "bd1d05d14bd49a8dd509532cc673c9e6fc2c3ae6ccd131436ba34da184a23714"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/encoding/addons_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/inbound/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/inbound/config_pb2.py",
+      "sha256": "9723b90cab12c69c37e130d50ab63a7d8debd168c828b21055416e818cf2a508"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/outbound/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/vless/outbound/config_pb2.py",
+      "sha256": "6834310fa31fcaca128616ad2f398f89b63416913c8e0658f4dc88e1d9412d9e"
+    },
+    {
+      "path": "xray_api/proto/proxy/dokodemo/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/dokodemo/config_pb2.py",
+      "sha256": "667583256dd829bee6f477a5bd2be38a239d3f64f9b908f96b0af3bc7dfc7c05"
+    },
+    {
+      "path": "xray_api/proto/proxy/socks/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/socks/config_pb2.py",
+      "sha256": "5ea02cef8f7edfe25b125a3caeef1565245ba1ea398b2b4164b9b296814fa067"
+    },
+    {
+      "path": "xray_api/proto/proxy/blackhole/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/blackhole/config_pb2.py",
+      "sha256": "7073396cc0df9ca4309180876f1981debceba5c856fdac161841cfbd359b5c8f"
+    },
+    {
+      "path": "xray_api/proto/proxy/wireguard/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/wireguard/config_pb2.py",
+      "sha256": "8f1f53675f009a55eaea9653d9b0460cfbffa0b129bcc7d7c257dcc85c9bb1ab"
+    },
+    {
+      "path": "xray_api/proto/proxy/dns/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/dns/config_pb2.py",
+      "sha256": "c454819490055fb77f68d1ac2569639d9e6e832c251e6acd6a3d8d8ce7e3d536"
+    },
+    {
+      "path": "xray_api/proto/proxy/shadowsocks/config_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/proxy/shadowsocks/config_pb2.py",
+      "sha256": "c9333d4b68c11e242a0a418eb4f812cdef2cfd8ba597728e49cea2281982efcd"
+    },
+    {
+      "path": "xray_api/proto/common/net/destination_pb2.py",
+      "sha256": "49530718bd0c88033963511985c1999ad810909afaf139995443c1a62f3df4af"
+    },
+    {
+      "path": "xray_api/proto/common/net/address_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/net/port_pb2.py",
+      "sha256": "04958e961e38a9a252600ff3d1ab2bbe40a2b721d1a1cc3d95c51f2af9a87794"
+    },
+    {
+      "path": "xray_api/proto/common/net/port_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/net/network_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/net/destination_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/net/network_pb2.py",
+      "sha256": "ba4422b7953900e507118b56731983cb897c7ae9feac671b5d2cfd9102b25c46"
+    },
+    {
+      "path": "xray_api/proto/common/net/address_pb2.py",
+      "sha256": "23dd3b4b0c6e238223eff6f19d20d93970627fec2f52bb757728aca3ad1e6951"
+    },
+    {
+      "path": "xray_api/proto/common/protocol/headers_pb2.py",
+      "sha256": "cd7452500b64b9a5983573106a6cd8c3e9a958ac97d6f5139893b420ceabd0ca"
+    },
+    {
+      "path": "xray_api/proto/common/protocol/user_pb2.py",
+      "sha256": "7b9b4c67ec1c8f5151204369be386b6244d7db646dec612ced637fc95be43d19"
+    },
+    {
+      "path": "xray_api/proto/common/protocol/server_spec_pb2.py",
+      "sha256": "751a4f8026d289da5316c34a7a527e6dc9e6ef63de49768493ed986b43f04a98"
+    },
+    {
+      "path": "xray_api/proto/common/protocol/headers_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/protocol/user_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/protocol/server_spec_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/log/log_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/log/log_pb2.py",
+      "sha256": "4d1db008e924c416dcca4d8ba1d9ecefeeb4bf6a0db2920a914a0ece2f72167d"
+    },
+    {
+      "path": "xray_api/proto/common/serial/typed_message_pb2_grpc.py",
+      "sha256": "d686e804f171693117b7d030ec4023f205c70c234c8590f6557aa8702f65fe09"
+    },
+    {
+      "path": "xray_api/proto/common/serial/typed_message_pb2.py",
+      "sha256": "44726c1a9340d616e9f922efe87cb1fcd110aca14a9972b3749fa675405a041c"
+    }
+  ],
+  "dashboard_assets": [
+    {
+      "path": "index.html",
+      "sha256": "1c1942264dbc02241959304914902aab05c1be80b7f0c2af984fa20f6348a04b"
+    },
+    {
+      "path": "404.html",
+      "sha256": "1c1942264dbc02241959304914902aab05c1be80b7f0c2af984fa20f6348a04b"
+    },
+    {
+      "path": "statics/vendor.1bd1b272.js",
+      "sha256": "963646594a3349fbbe3814c6653598e9e2c3394d730ae944a138a61a66e1fba8"
+    },
+    {
+      "path": "statics/ajax-loader.e7b44c86.gif",
+      "sha256": "e7b44c86b050fca766a96ddac2d0932af0126da6f2305280342d909168dcce6b"
+    },
+    {
+      "path": "statics/index.ba01065d.css",
+      "sha256": "ba01065dc3973e223d5957d304965c8ad5bb357fb62655be35d644d4fcc23ae5"
+    },
+    {
+      "path": "statics/logo.2507bd68.svg",
+      "sha256": "2507bd68378f7b1064195a445ead93f70d6ed6f493af260f208fb73791ee148a"
+    },
+    {
+      "path": "statics/add_file.2cd9a851.svg",
+      "sha256": "2cd9a8513d2f453dc6b446dc56c911115b214eb0b7ffddc4adc386dbd66ab3a9"
+    },
+    {
+      "path": "statics/slick.12459f22.svg",
+      "sha256": "12459f221a0b787bf1eaebf2e4c48fca2bd9f8493f71256c3043e7a0c7e932f6"
+    },
+    {
+      "path": "statics/jsoneditor-icons.45c98bf0.svg",
+      "sha256": "45c98bf0ee865dac9104d0bf659253b9d9c7ba2dd43e45f55544855750cfd01e"
+    },
+    {
+      "path": "statics/index.e876fe0a.js",
+      "sha256": "70b50c06255b337ca53a04b7272ab19d9a0b726261ceb21154ea63c8e6eb8595"
+    },
+    {
+      "path": "statics/buttons.esm.8cc4448a.js",
+      "sha256": "ddbb38788aaebc0561a455d6d3a1c0f4c66f2222d155c465b4129658bcc22eb9"
+    },
+    {
+      "path": "statics/index.41b02e9f.js",
+      "sha256": "b746ebc2be99877ce0907d076bba092d90ab77235266ff3e825c171312abd2e0"
+    },
+    {
+      "path": "statics/vendor.e62c709a.js",
+      "sha256": "963646594a3349fbbe3814c6653598e9e2c3394d730ae944a138a61a66e1fba8"
+    },
+    {
+      "path": "statics/index.4a5b8ccf.js",
+      "sha256": "22d38858ac1d822c7dae7633092397083ef26a3d59a55ca5a2b8cdb4761badd5"
+    },
+    {
+      "path": "statics/vendor.51989656.js",
+      "sha256": "963646594a3349fbbe3814c6653598e9e2c3394d730ae944a138a61a66e1fba8"
+    },
+    {
+      "path": "statics/index.8e098040.js",
+      "sha256": "dbf174ef6e476c1f7f2ceb65e01cf39fb16d857b2ae293d0b85c53164ced8742"
+    },
+    {
+      "path": "statics/vendor.fd5f55eb.js",
+      "sha256": "963646594a3349fbbe3814c6653598e9e2c3394d730ae944a138a61a66e1fba8"
+    },
+    {
+      "path": "statics/favicon/favicon-32x32.png",
+      "sha256": "2604acc9050a18e5f6db1289e0b1f3aa62fb046fb012fd4e6107f0d9f0ef6335"
+    },
+    {
+      "path": "statics/favicon/favicon-16x16.png",
+      "sha256": "4b9c2ff36bbd6d0ba0471928f16dbfa412dc70beddda7405bbaaf9df75198abe"
+    },
+    {
+      "path": "statics/favicon/android-chrome-192x192.png",
+      "sha256": "445d5b725a80c0c664f45116e555f07fcd51a89b9b05e9972ceb5e80f8f7c213"
+    },
+    {
+      "path": "statics/favicon/site.webmanifest",
+      "sha256": "6fb02537b842f0b675662831031cc9d9a6c150d711706511158a52be0fd94078"
+    },
+    {
+      "path": "statics/favicon/apple-touch-icon.png",
+      "sha256": "c78cfe3f2b88eeb76b0ee4c3f09b6f6dd7ed9aabb7b5f97e427afbf339e1769d"
+    },
+    {
+      "path": "statics/favicon/mstile-150x150.png",
+      "sha256": "b8100a7ca8cfe8d6a6d3de2eee4d6e20bb0e58b8d0c437997178e3a9278a3685"
+    },
+    {
+      "path": "statics/favicon/favicon.ico",
+      "sha256": "6793b582c55933b46dad256c7658b4dc0236e55463270d46799c97b29b1780de"
+    },
+    {
+      "path": "statics/favicon/browserconfig.xml",
+      "sha256": "139cfdd55d21e5fd594b10941888d080298458405698b3f330812f6b2cd929a0"
+    },
+    {
+      "path": "statics/favicon/android-chrome-512x512.png",
+      "sha256": "5b7ce0861ee8b5b8352d80ef3128238ced8739b834c301666dc76bc3ea24a074"
+    },
+    {
+      "path": "statics/favicon/safari-pinned-tab.svg",
+      "sha256": "8ee578eab9c0598b56b116f8973671643db5128d3d3149d07222618f7c2b8411"
+    },
+    {
+      "path": "statics/locales/ru.json",
+      "sha256": "4cd42225a89308a5b35aa128b56c1fc0e8ba174863d5c72d788961339c12587c"
+    },
+    {
+      "path": "statics/locales/zh.json",
+      "sha256": "c57cc99e4d54486fd96d1499d2da8b665834356cbfbf58f82c65c687c9bb029e"
+    },
+    {
+      "path": "statics/locales/en.json",
+      "sha256": "f787dfcffdb12d3cbaf91b23a6a3c83c733c28eca84e54d0300eb804e4e922c2"
+    },
+    {
+      "path": "statics/locales/fa.json",
+      "sha256": "d1d85f17c4129dd9f6a4d5f50b12967f5de8dc18d1564eea1adceff5a253a4ba"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import datetime as dt
 from datetime import timedelta
 from typing import TYPE_CHECKING, List, Literal, Union
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from jdatetime import date as jd
 
@@ -25,6 +26,62 @@ from config import (
     LIMITED_STATUS_TEXT,
     ONHOLD_STATUS_TEXT,
 )
+
+YANDEX_HEADER_ADDRESSES = {"ycdn2.yuku-vpn.shop", "swd3.yuku-vpn.shop", "poland4.yuku-vpn.shop"}
+YANDEX_HEADER_EXTRA = {
+    "uplinkHTTPMethod": "GET", "uplinkDataPlacement": "header",
+    "uplinkDataKey": "X-Data", "uplinkChunkSize": 1024,
+    "scMaxEachPostBytes": 2048, "xPaddingBytes": "100-1000",
+}
+
+
+def _apply_yandex_header_transport(config_format: str, config: str) -> str:
+    # These two CDN edges reject request bodies above a tiny threshold.
+    if config_format == "v2ray":
+        links = []
+        for line in config.splitlines():
+            if not line.startswith("vless://"):
+                links.append(line)
+                continue
+            parsed = urlsplit(line)
+            if parsed.hostname not in YANDEX_HEADER_ADDRESSES:
+                links.append(line)
+                continue
+            params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+            params.update(mode="packet-up", alpn="h2", extra=json.dumps(YANDEX_HEADER_EXTRA, separators=(",", ":")))
+            links.append(urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(params), parsed.fragment)))
+        return "\n".join(links)
+
+    if config_format == "v2ray-json":
+        try:
+            data = json.loads(config)
+        except (ValueError, TypeError):
+            return config
+
+        def patch_outbound(value):
+            if isinstance(value, list):
+                for item in value:
+                    patch_outbound(item)
+            elif isinstance(value, dict):
+                stream = value.get("streamSettings")
+                vnext = value.get("settings", {}).get("vnext", [])
+                if stream and vnext and vnext[0].get("address") in YANDEX_HEADER_ADDRESSES:
+                    stream["network"] = "xhttp"
+                    stream.pop("splithttpSettings", None)
+                    stream["xhttpSettings"] = {
+                        "host": vnext[0]["address"], "path": "/yuku-yx-2026",
+                        "mode": "packet-up", "extra": YANDEX_HEADER_EXTRA.copy(),
+                    }
+                    tls = stream.setdefault("tlsSettings", {})
+                    tls["alpn"] = ["h2"]
+                for child in value.values():
+                    if isinstance(child, (dict, list)):
+                        patch_outbound(child)
+
+        patch_outbound(data)
+        return json.dumps(data, ensure_ascii=False)
+    return config
+
 
 SERVER_IP = get_public_ip()
 SERVER_IPV6 = get_public_ipv6()
@@ -47,16 +104,20 @@ STATUS_TEXTS = {
 
 
 def generate_v2ray_links(proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
-                         group_ctx: dict = None) -> list:
+                         group_ctx: dict = None,
+                         include_server_description: bool = False,
+                         prefix_notice_lines: list = None) -> list:
     format_variables = setup_format_variables(extra_data)
     conf = V2rayShareLink()
     return process_inbounds_and_tags(inbounds, proxies, format_variables, conf=conf,
-                                     reverse=reverse, group_ctx=group_ctx)
+                                     reverse=reverse, group_ctx=group_ctx,
+                                     include_server_description=include_server_description,
+                                     prefix_notice_lines=prefix_notice_lines)
 
 
 def generate_clash_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool, is_meta: bool = False,
-        group_ctx: dict = None
+        group_ctx: dict = None, prefix_notice_lines: list = None
 ) -> str:
     if is_meta is True:
         conf = ClashMetaConfiguration()
@@ -65,31 +126,34 @@ def generate_clash_subscription(
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx,
+        prefix_notice_lines=prefix_notice_lines,
     )
 
 
 def generate_singbox_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
-        group_ctx: dict = None
+        group_ctx: dict = None, prefix_notice_lines: list = None
 ) -> str:
     conf = SingBoxConfiguration()
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx,
+        prefix_notice_lines=prefix_notice_lines,
     )
 
 
 def generate_outline_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
-        group_ctx: dict = None
+        group_ctx: dict = None, prefix_notice_lines: list = None
 ) -> str:
     conf = OutlineConfiguration()
 
     format_variables = setup_format_variables(extra_data)
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx,
+        prefix_notice_lines=prefix_notice_lines,
     )
 
 
@@ -143,7 +207,8 @@ def subscription_auto_select() -> list:
 
 def generate_v2ray_json_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
-        group_ctx: dict = None, include_yuku_metadata: bool = False
+        group_ctx: dict = None, include_server_description: bool = False,
+        prefix_notice_lines: list = None, include_yuku_metadata: bool = False
 ) -> str:
     auto_select = subscription_auto_select()
     conf = V2rayJsonConfig(
@@ -163,7 +228,9 @@ def generate_v2ray_json_subscription(
             except Exception:
                 pass  # malformed display text must not break the subscription
     return process_inbounds_and_tags(
-        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx
+        inbounds, proxies, format_variables, conf=conf, reverse=reverse, group_ctx=group_ctx,
+        include_server_description=include_server_description,
+        prefix_notice_lines=prefix_notice_lines,
     )
 
 
@@ -485,7 +552,9 @@ def generate_subscription(
         as_base64: bool,
         reverse: bool,
         notice_lines: list = None,
+        include_server_description: bool = False,
         include_yuku_metadata: bool = False,
+        prefix_notice_lines: list = None,
 ) -> str:
     kwargs = {
         "proxies": user.proxies,
@@ -522,19 +591,28 @@ def generate_subscription(
         return config
 
     if config_format == "v2ray":
-        config = "\n".join(generate_v2ray_links(**kwargs))
+        config = "\n".join(generate_v2ray_links(
+            **kwargs, include_server_description=include_server_description,
+            prefix_notice_lines=prefix_notice_lines,
+        ))
     elif config_format == "clash-meta":
-        config = generate_clash_subscription(**kwargs, is_meta=True)
+        config = generate_clash_subscription(**kwargs, is_meta=True, prefix_notice_lines=prefix_notice_lines)
     elif config_format == "clash":
-        config = generate_clash_subscription(**kwargs)
+        config = generate_clash_subscription(**kwargs, prefix_notice_lines=prefix_notice_lines)
     elif config_format == "sing-box":
-        config = generate_singbox_subscription(**kwargs)
+        config = generate_singbox_subscription(**kwargs, prefix_notice_lines=prefix_notice_lines)
     elif config_format == "outline":
-        config = generate_outline_subscription(**kwargs)
+        config = generate_outline_subscription(**kwargs, prefix_notice_lines=prefix_notice_lines)
     elif config_format == "v2ray-json":
-        config = generate_v2ray_json_subscription(**kwargs, include_yuku_metadata=include_yuku_metadata)
+        config = generate_v2ray_json_subscription(
+            **kwargs, include_server_description=include_server_description,
+            include_yuku_metadata=include_yuku_metadata,
+            prefix_notice_lines=prefix_notice_lines,
+        )
     else:
         raise ValueError(f'Unsupported format "{config_format}"')
+
+    config = _apply_yandex_header_transport(config_format, config)
 
     if as_base64:
         config = base64.b64encode(config.encode()).decode()
@@ -667,6 +745,8 @@ def process_inbounds_and_tags(
         ],
         reverse=False,
         group_ctx: dict = None,
+        include_server_description: bool = False,
+        prefix_notice_lines: list = None,
 ) -> Union[List, str]:
     _inbounds = []
     for protocol, tags in inbounds.items():
@@ -678,6 +758,29 @@ def process_inbounds_and_tags(
         _inbounds, key=lambda x: index_dict.get(x[1][0], float('inf')))
 
     _noticed_groups: set = set()  # groups whose over-limit notice was already added
+
+    def add_client_notice_lines():
+        # Outline's subscription payload is a single access key; its format
+        # cannot carry a notice entry and real servers side by side.
+        if isinstance(conf, OutlineConfiguration):
+            return
+        for line in prefix_notice_lines or []:
+            protocol = "trojan" if type(conf) is ClashConfiguration else "vless"
+            inbound = {
+                "protocol": protocol, "network": "tcp", "multiMode": False,
+                "path": "", "port": 1, "tls": "", "sni": "", "host": "",
+                "header_type": "none", "alpn": "", "fp": "", "pbk": "",
+                "sid": "", "spx": "", "ais": "", "fragment_setting": "",
+                "noise_setting": "", "random_user_agent": False, "mux_enable": False,
+            }
+            settings = {
+                "id": DUMMY_NOTICE_UUID, "flow": "",
+                "password": DUMMY_NOTICE_UUID, "method": "chacha20-ietf-poly1305",
+            }
+            conf.add(remark=line, address="127.0.0.1", inbound=inbound, settings=settings)
+
+    if not reverse:
+        add_client_notice_lines()
 
     for protocol, tags in inbounds:
         settings = proxies.get(protocol)
@@ -693,6 +796,13 @@ def process_inbounds_and_tags(
             format_variables.update({"TRANSPORT": inbound["network"]})
             host_inbound = inbound.copy()
             for host in xray.hosts.get(tag, []):
+                # Keep VK LTE pilot host visible only in Real_admin subscription.
+                host_addresses = host.get("address") or []
+                if isinstance(host_addresses, str):
+                    host_addresses = [host_addresses]
+                if ("cdn.yukucontent.site" in host_addresses
+                        and format_variables.get("USERNAME") != "Real_admin"):
+                    continue
                 # host traffic group: inject per-group remark vars + enforce limit
                 group_over = False
                 group_notice = None
@@ -790,7 +900,7 @@ def process_inbounds_and_tags(
                         inbound=host_inbound,
                         settings=settings.model_dump(),
                     )
-                    if isinstance(conf, (V2rayShareLink, V2rayJsonConfig)):
+                    if include_server_description and isinstance(conf, (V2rayShareLink, V2rayJsonConfig)):
                         add_kwargs["server_description"] = host.get("server_description")
                     if isinstance(conf, V2rayJsonConfig) and getattr(conf, "yuku_metadata_enabled", False):
                         add_kwargs["yuku_metadata"] = metadata_for_host(host)
@@ -805,6 +915,8 @@ def process_inbounds_and_tags(
                             group=int(host["auto_select"]),
                         )
 
+    if reverse:
+        add_client_notice_lines()
     return conf.render(reverse=reverse)
 
 

@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { BoltIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { FC } from "react";
+import { validIntervalSeconds } from "./autoSelectInterval";
 import { EmptyState, Field, Hint, Section } from "../ui";
 import { AUTO_SELECT_STRATEGIES, EMPTY_GROUP, useYukuSettings } from "./yukuSettings";
 
@@ -26,7 +27,7 @@ export const AutoSelectSettings: FC = () => {
     <Section
       icon={BoltIcon}
       title="Автовыбор сервера"
-      description="Записи в подписке, где клиент сам держится самого быстрого сервера"
+      description="Записи в подписке, где клиент выбирает сервер по заданной стратегии"
       actions={
         <Button
           size="sm"
@@ -133,12 +134,18 @@ export const AutoSelectSettings: FC = () => {
                   </Text>
                 </Box>
 
-                <Box w={{ base: "full", md: "110px" }} flexShrink={0}>
-                  <Field label="Интервал" hint="Как часто клиент перезамеряет серверы. Меньше 30s — лишний трафик через каждый сервер.">
+                <Box w={{ base: "full", md: "160px" }} flexShrink={0}>
+                  <Field label="Интервал, секунд" hint="Целое число больше нуля. Изменение применяется после обновления подписки в клиенте.">
                     <Input
                       size="sm"
                       bg="ui.surface"
-                      placeholder="1m"
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      aria-label={`Интервал проверки группы ${index + 1}, секунд`}
+                      isInvalid={!validIntervalSeconds(group.interval)}
+                      placeholder="60"
                       value={group.interval}
                       onChange={(e) => patchGroup(index, { interval: e.target.value })}
                     />

@@ -124,6 +124,7 @@ const getDefaultValues = (): FormType => {
     proxies: {
       vless: { id: "", flow: "" },
       vmess: { id: "" },
+      hysteria: { auth: "" },
       trojan: { password: "" },
       shadowsocks: { password: "", method: "chacha20-ietf-poly1305" },
     },
@@ -163,6 +164,7 @@ const baseSchema = {
       };
       deleteIfEmpty(ins.vmess, "id");
       deleteIfEmpty(ins.vless, "id");
+      deleteIfEmpty(ins.hysteria, "auth");
       deleteIfEmpty(ins.trojan, "password");
       deleteIfEmpty(ins.shadowsocks, "password");
       deleteIfEmpty(ins.shadowsocks, "method");
@@ -1052,6 +1054,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
                               {
                                 title: "vless",
                                 description: t("userDialog.vlessDesc"),
+                              },
+                              {
+                                title: "hysteria",
+                                description: "Hysteria2 · QUIC / UDP",
                               },
                               {
                                 title: "trojan",

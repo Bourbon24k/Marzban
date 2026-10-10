@@ -84,6 +84,10 @@ class ReSTXRayNode:
         self._started = False
 
     def _prepare_config(self, config: XRayConfig):
+        # Never mutate the shared master config or distribute master-only TLS keys.
+        config = config.copy()
+        config['inbounds'] = [i for i in config.get('inbounds', [])
+                             if not i.get('yukuMasterOnly', False)]
         for inbound in config.get("inbounds", []):
             streamSettings = inbound.get("streamSettings") or {}
             tlsSettings = streamSettings.get("tlsSettings") or {}
@@ -398,6 +402,10 @@ class RPyCXRayNode:
         return self.remote.fetch_xray_version()
 
     def _prepare_config(self, config: XRayConfig):
+        # Never mutate the shared master config or distribute master-only TLS keys.
+        config = config.copy()
+        config['inbounds'] = [i for i in config.get('inbounds', [])
+                             if not i.get('yukuMasterOnly', False)]
         for inbound in config.get("inbounds", []):
             streamSettings = inbound.get("streamSettings") or {}
             tlsSettings = streamSettings.get("tlsSettings") or {}

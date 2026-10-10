@@ -12,6 +12,7 @@ from ..proto.proxy.shadowsocks.config_pb2 import \
 from ..proto.proxy.trojan.config_pb2 import Account as TrojanAccountPb2
 from ..proto.proxy.vless.account_pb2 import Account as VLESSAccountPb2
 from ..proto.proxy.vmess.account_pb2 import Account as VMessAccountPb2
+from ..proto.proxy.hysteria.account.config_pb2 import Account as HysteriaAccountPb2
 from .message import Message
 
 
@@ -48,6 +49,14 @@ class VLESSAccount(Account):
     @property
     def message(self):
         return Message(VLESSAccountPb2(id=str(self.id), flow=self.flow.value))
+
+
+class HysteriaAccount(Account):
+    auth: str
+
+    @property
+    def message(self):
+        return Message(HysteriaAccountPb2(auth=self.auth))
 
 
 class TrojanAccount(Account):

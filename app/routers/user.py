@@ -69,7 +69,7 @@ def add_user(
         )
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="User already exists")
+        raise HTTPException(status_code=409, detail="User or protocol credentials already exist")
 
     bg.add_task(xray.operations.add_user, dbuser=dbuser)
     user = UserResponse.model_validate(dbuser)
@@ -121,7 +121,11 @@ def modify_user(
     old_status = dbuser.status
     # snapshot before the update so the history can show old -> new per field
     before = audit.snapshot(UserResponse.model_validate(dbuser), _USER_FIELDS)
-    dbuser = crud.update_user(db, dbuser, modified_user)
+    try:
+        dbuser = crud.update_user(db, dbuser, modified_user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Protocol credentials already belong to another user")
     user = UserResponse.model_validate(dbuser)
     audit.detail(target_name=user.username,
                  before=before, after=audit.snapshot(user, _USER_FIELDS))

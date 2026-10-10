@@ -260,7 +260,8 @@ class ProxyInbound(Base):
     id = Column(Integer, primary_key=True)
     tag = Column(String(256), unique=True, nullable=False, index=True)
     hosts = relationship(
-        "ProxyHost", back_populates="inbound", cascade="all, delete-orphan"
+        "ProxyHost", back_populates="inbound", cascade="all, delete-orphan",
+        order_by="(ProxyHost.position, ProxyHost.id)"
     )
 
 
@@ -271,6 +272,7 @@ class ProxyHost(Base):
     # )
 
     id = Column(Integer, primary_key=True)
+    position = Column(Integer, nullable=False, default=0, server_default="0")
     remark = Column(String(256), unique=False, nullable=False)
     server_description = Column(String(30), nullable=True)
     address = Column(String(256), unique=False, nullable=False)

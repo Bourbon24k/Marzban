@@ -290,7 +290,7 @@ const RadioCard: FC<
             _dark={{ color: shouldBeDisabled ? "gray.500" : "gray.300" }}
             {...getLabelProps()}
           >
-            {title}
+            {title === "hysteria" ? "Hysteria2" : title}
           </Text>
           <Text
             fontWeight="medium"
@@ -395,7 +395,7 @@ const RadioCard: FC<
               </FormControl>
             </VStack>
           )}
-          {title === "trojan" && isSelected && (
+          {(title === "trojan" || title === "hysteria") && isSelected && (
             <VStack alignItems="flex-start" w="full">
               <FormControl height="66px">
                 <Text fontSize="sm" pb={1}>
@@ -408,7 +408,7 @@ const RadioCard: FC<
                   pl={2}
                   pr={2}
                   placeholder={t("userDialog.generatedByDefault")}
-                  {...form.register("proxies.trojan.password")}
+                  {...form.register(title === "hysteria" ? "proxies.hysteria.auth" : "proxies.trojan.password")}
                 />
               </FormControl>
             </VStack>

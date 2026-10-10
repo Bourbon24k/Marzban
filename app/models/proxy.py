@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.utils.system import random_password
 from xray_api.types.account import (
+    HysteriaAccount,
     ShadowsocksAccount,
     ShadowsocksMethods,
     TrojanAccount,
@@ -25,6 +26,7 @@ NOISE_PATTERN = re.compile(
 class ProxyTypes(str, Enum):
     # proxy_type = protocol
 
+    Hysteria = "hysteria"
     VMess = "vmess"
     VLESS = "vless"
     Trojan = "trojan"
@@ -32,6 +34,8 @@ class ProxyTypes(str, Enum):
 
     @property
     def account_model(self):
+        if self == self.Hysteria:
+            return HysteriaAccount
         if self == self.VMess:
             return VMessAccount
         if self == self.VLESS:
@@ -43,6 +47,8 @@ class ProxyTypes(str, Enum):
 
     @property
     def settings_model(self):
+        if self == self.Hysteria:
+            return HysteriaSettings
         if self == self.VMess:
             return VMessSettings
         if self == self.VLESS:
@@ -62,6 +68,13 @@ class ProxySettings(BaseModel, use_enum_values=True):
         if no_obj:
             return json.loads(self.json())
         return super().dict(**kwargs)
+
+
+class HysteriaSettings(ProxySettings):
+    auth: str = Field(default_factory=random_password, min_length=1, max_length=1024)
+
+    def revoke(self):
+        self.auth = random_password()
 
 
 class VMessSettings(ProxySettings):

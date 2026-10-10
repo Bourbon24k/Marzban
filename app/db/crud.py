@@ -124,6 +124,7 @@ def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> List[Proxy
     inbound.hosts.append(
         ProxyHost(
             remark=host.remark,
+            position=max((h.position for h in inbound.hosts), default=-1) + 1,
             server_description=host.server_description,
             address=host.address,
             port=host.port,
@@ -225,6 +226,8 @@ def update_hosts(db: Session, inbound_tag: str, modified_hosts: List[ProxyHostMo
         if row is None:
             row = ProxyHost(inbound=inbound)
             db.add(row)
+        # Preserve host IDs/group links while persisting the submitted order.
+        row.position = i
         for field in _HOST_EDITABLE_FIELDS:
             setattr(row, field, _host_column_value(field, getattr(incoming, field)))
 

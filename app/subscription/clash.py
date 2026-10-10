@@ -254,6 +254,8 @@ class ClashConfiguration(object):
         return node
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
+        if inbound['protocol'] == 'hysteria':
+            return  # legacy Clash does not implement Hysteria2
         # not supported by clash
         if inbound['network'] in ("kcp", "splithttp", "xhttp"):
             return
@@ -345,6 +347,12 @@ class ClashMetaConfiguration(ClashConfiguration):
         return node
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
+        if inbound['protocol'] == 'hysteria':
+            from .hysteria import mihomo_node
+            remark = self._remark_validation(remark)
+            self.data['proxies'].append(mihomo_node(remark, address, inbound, settings))
+            self.proxy_remarks.append(remark)
+            return
         # not supported by clash-meta
         if inbound['network'] in ("kcp", "splithttp", "xhttp") or (inbound['network'] == "quic" and inbound["header_type"] != "none"):
             return

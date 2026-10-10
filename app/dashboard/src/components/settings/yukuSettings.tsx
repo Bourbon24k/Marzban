@@ -16,6 +16,7 @@ import {
   useState,
 } from "react";
 import { fetch } from "service/http";
+import { intervalToSeconds, validIntervalSeconds } from "./autoSelectInterval";
 
 export type Settings = {
   expired_notice: string;
@@ -43,7 +44,7 @@ export const EMPTY_GROUP: AutoSelectGroup = {
   remark: "",
   server_description: "",
   strategy: "leastLoad",
-  interval: "1m",
+  interval: "60",
   destination: "",
 };
 
@@ -56,7 +57,7 @@ export const EMPTY_SETTINGS: Settings = {
   subscription_routing: "off",
   auto_select_remark: "",
   auto_select_strategy: "leastLoad",
-  auto_select_interval: "1m",
+  auto_select_interval: "60",
   auto_select_destination: "",
   auto_select_groups: "",
 };
@@ -66,7 +67,7 @@ export const AUTO_SELECT_STRATEGIES: Array<[string, string, string]> = [
   [
     "leastLoad",
     "leastLoad",
-    "Самый быстрый по замерам скорости (burstObservatory). Точнее пинга, но нагружает серверы.",
+    "Выбор по задержке и стабильности ответов (burstObservatory). Скорость скачивания не измеряется.",
   ],
   ["leastPing", "leastPing", "Самый низкий пинг (observatory). Дешевле по трафику, чем leastLoad."],
   ["roundRobin", "roundRobin", "По очереди, без замеров. Простое равномерное распределение."],
@@ -96,7 +97,7 @@ export const readGroups = (settings: Settings): AutoSelectGroup[] => {
       destination: settings.auto_select_destination || "",
     });
   }
-  return groups;
+  return groups.map((group) => ({ ...group, interval: intervalToSeconds(group.interval) }));
 };
 
 type YukuSettingsApi = {
@@ -162,13 +163,28 @@ export const YukuSettingsProvider: FC<PropsWithChildren> = ({ children }) => {
     );
 
   const save = () => {
+    const invalidIndex = groups.findIndex((group) => !validIntervalSeconds(group.interval));
+    if (invalidIndex !== -1) {
+      toast({
+        title: "Проверьте интервал",
+        description: `Группа ${invalidIndex + 1}: введите целое число секунд больше нуля.`,
+        status: "error",
+        isClosable: true,
+        duration: 5000,
+        position: "top",
+      });
+      return;
+    }
     setSaving(true);
+    const storedGroups = groups.map((group) => ({
+      ...group, interval: `${Number(group.interval)}s`,
+    }));
     // the group list is the source of truth from here on; group 1 also
     // overwrites the single-group keys so both stay in step
-    const first = groups[0] ?? EMPTY_GROUP;
+    const first = storedGroups[0] ?? { ...EMPTY_GROUP, interval: "60s" };
     const body = {
       ...data,
-      auto_select_groups: JSON.stringify(groups),
+      auto_select_groups: JSON.stringify(storedGroups),
       auto_select_remark: first.remark,
       auto_select_strategy: first.strategy,
       auto_select_interval: first.interval,

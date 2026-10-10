@@ -6,4 +6,4 @@ Physical profiles include `schemaVersion`, `hostID`, `networkRole` and `autoSele
 
 Set `YUKU_CLIENT_METADATA_PATH` to a small JSON file readable by the panel; default `/var/lib/marzban/yuku-native-hosts.json`. Start with `yuku-native-hosts.example.json` and replace placeholder host IDs and roles. The mapping is reread per subscription; do not publish real subscriber configurations or credentials.
 
-This change was ported from the client integration patch to this fork's current source. It does not import unrelated production-only protocol changes. Deployment and real iPhone VPN traffic are separate checks.
+The initial client integration was ported separately. A subsequent read-only audit synchronized all deployed Marzban source changes; see production-sync-20261010.md. Deployment and real iPhone VPN traffic are separate checks.

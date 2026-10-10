@@ -183,6 +183,8 @@ class UserCreate(User):
                 for tag in tags:
                     if tag not in xray.config.inbounds_by_tag:
                         raise ValueError(f"Inbound {tag} doesn't exist")
+                    if xray.config.inbounds_by_tag[tag]["protocol"] != proxy_type:
+                        raise ValueError(f"Inbound {tag} is not a {proxy_type} inbound")
 
             # elif isinstance(tags, list) and not tags:
             #     raise ValueError(f"{proxy_type} inbounds cannot be empty")
@@ -260,6 +262,8 @@ class UserModify(User):
                 for tag in tags:
                     if tag not in xray.config.inbounds_by_tag:
                         raise ValueError(f"Inbound {tag} doesn't exist")
+                    if xray.config.inbounds_by_tag[tag]["protocol"] != proxy_type:
+                        raise ValueError(f"Inbound {tag} is not a {proxy_type} inbound")
 
         return inbounds
 

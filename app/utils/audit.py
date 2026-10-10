@@ -30,7 +30,7 @@ logger = logging.getLogger("uvicorn.error")
 SENSITIVE_KEYS = frozenset({
     "password", "new_password", "hashed_password", "old_password",
     "token", "access_token", "refresh_token", "secret", "secret_key",
-    "private_key", "api_key", "jwt",
+    "private_key", "api_key", "jwt", "auth", "obfs-password",
 })
 
 MAX_STR = 2000  # keep a rogue xray config from bloating a log row

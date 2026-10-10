@@ -22,6 +22,19 @@ from config import (
 )
 
 
+POLAND_LTE_XHTTP_ADDRESS = "poland4.yuku-vpn.shop"
+POLAND_LTE_XHTTP_EXTRA = {'noSSEHeader': True, 'scMaxEachPostBytes': '500000-1000000', 'scMinPostsIntervalMs': '50-150', 'scStreamUpServerSecs': '60-180', 'uplinkDataPlacement': 'body', 'uplinkHTTPMethod': 'GET', 'xmux': {'cMaxReuseTimes': '0', 'hKeepAlivePeriod': 30, 'hMaxRequestTimes': '100-200', 'hMaxReusableSecs': '900-1800', 'maxConnections': '2'}, 'xPaddingBytes': '16-64', 'xPaddingHeader': 'X-Signature', 'xPaddingKey': '_token', 'xPaddingMethod': 'tokenish', 'xPaddingObfsMode': True, 'xPaddingPlacement': 'query'}
+
+def _is_poland_lte_xhttp(address, network):
+    return address == POLAND_LTE_XHTTP_ADDRESS and network in ("xhttp", "splithttp")
+
+
+TIMEWEB_LTE_ADDRESSES = {'d2t2tgoc5g.cdn.twcstorage.ru', '2jlpensgzi.cdn.twcstorage.ru', 'wq9mogq79p.cdn.twcstorage.ru', 'finland3.yuku-vpn.shop', 'netherlands3.yuku-vpn.shop'}
+TIMEWEB_LTE_EXTRA = {'uplinkHTTPMethod': 'GET', 'uplinkDataPlacement': 'body', 'scMaxEachPostBytes': 262144, 'xPaddingBytes': '100-1000', 'xPaddingObfsMode': True, 'xPaddingPlacement': 'header', 'xPaddingHeader': 'X-Signature', 'xPaddingMethod': 'tokenish', 'sessionIDPlacement': 'query', 'seqPlacement': 'query'}
+
+def _is_timeweb_lte(address, network):
+    return address in TIMEWEB_LTE_ADDRESSES and network in ("xhttp", "splithttp")
+
 def _server_fragment(remark: str, server_description: str = None) -> str:
     """INCY/Happ parse description metadata after the encoded server title."""
     fragment = urlparse.quote(remark)
@@ -47,6 +60,10 @@ class V2rayShareLink(str):
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict,
             server_description: str = None):
+        if inbound['protocol'] == 'hysteria':
+            from .hysteria import share_link
+            self.add_link(share_link(remark, address, inbound, settings, server_description))
+            return
         net = inbound["network"]
         multi_mode = inbound.get("multiMode", False)
         old_path: str = inbound["path"]
@@ -432,6 +449,14 @@ class V2rayShareLink(str):
             payload["sid"] = sid
             if spx:
                 payload["spx"] = spx
+
+        if _is_poland_lte_xhttp(address, net):
+            payload.update(mode="packet-up", fp="firefox", alpn="h2",
+                           extra=json.dumps(POLAND_LTE_XHTTP_EXTRA))
+
+        if _is_timeweb_lte(address, net):
+            payload.update(mode="packet-up", fp="firefox", alpn="h2",
+                           extra=json.dumps(TIMEWEB_LTE_EXTRA))
 
         return (
             "vless://"
@@ -1216,6 +1241,9 @@ class V2rayJsonConfig(str):
         members with fragment/noise settings can't collide.
         """
 
+        if inbound['protocol'] == 'hysteria':
+            from .hysteria import xray_outbound
+            return [xray_outbound(address, inbound, settings, tag)]
         net = inbound['network']
         protocol = inbound['protocol']
         port = inbound['port']
@@ -1310,6 +1338,26 @@ class V2rayJsonConfig(str):
             heartbeatPeriod=inbound.get("heartbeatPeriod", 0),
             keepAlivePeriod=inbound.get("keepAlivePeriod", 0),
         )
+
+        if _is_poland_lte_xhttp(address, net):
+            stream = outbound["streamSettings"]
+            stream["xhttpSettings"] = {
+                "host": inbound["host"], "path": path, "mode": "packet-up",
+                "extra": copy.deepcopy(POLAND_LTE_XHTTP_EXTRA),
+            }
+            stream.pop("splithttpSettings", None)
+            stream["network"] = "xhttp"
+            stream["tlsSettings"].update(fingerprint="firefox", alpn=["h2"])
+
+        if _is_timeweb_lte(address, net):
+            stream = outbound["streamSettings"]
+            stream["xhttpSettings"] = {
+                "host": inbound["host"], "path": path, "mode": "packet-up",
+                "extra": copy.deepcopy(TIMEWEB_LTE_EXTRA),
+            }
+            stream.pop("splithttpSettings", None)
+            stream["network"] = "xhttp"
+            stream["tlsSettings"].update(fingerprint="firefox", alpn=["h2"])
 
         mux_json = json.loads(self.mux_template)
         mux_config = mux_json["v2ray"]
@@ -1441,7 +1489,7 @@ class V2rayJsonConfig(str):
         routing["balancers"] = [{
             "tag": AUTO_BALANCER_TAG,
             "selector": ["proxy"],
-            "fallbackTag": "direct",
+            "fallbackTag": "block",
             "strategy": AUTO_SELECT_STRATEGIES[strategy],
         }]
         config["routing"] = routing
@@ -1450,11 +1498,11 @@ class V2rayJsonConfig(str):
         outbounds = (list(self.auto_outbounds.get(group) or [])
                      + self.base_outbounds + self.profile_outbounds)
         tags = {o.get("tag") for o in outbounds}
-        # fallbackTag and the bittorrent rule point at "direct"; a rule aimed at
-        # a tag that doesn't exist silently falls through to the first outbound
+        # Explicit bypass rules retain direct; failed proxy selection must block.
+        # Both outbounds must exist even when the template omits them.
         if "direct" not in tags:
             outbounds.append({"protocol": "freedom", "tag": "direct"})
-        if "block" not in tags and any(r.get("outboundTag") == "block" for r in rules):
+        if "block" not in tags:
             outbounds.append({"protocol": "blackhole", "tag": "block"})
         config["outbounds"] = outbounds
 
