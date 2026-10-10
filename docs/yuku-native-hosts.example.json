@@ -1,0 +1,4 @@
+{
+  "REPLACE_WITH_NORMAL_HOST_ID": {"networkRole": "normal", "countryCode": "FI", "latitude": 64.0, "longitude": 26.0},
+  "REPLACE_WITH_LTE_HOST_ID": {"networkRole": "lte", "countryCode": "DE", "latitude": 51.0, "longitude": 10.0}
+}

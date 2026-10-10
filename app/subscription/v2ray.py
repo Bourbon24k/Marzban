@@ -692,12 +692,14 @@ class V2rayJsonConfig(str):
                 if sniffing and sniffing.get("enabled"):
                     sniffing["destOverride"] = list(dest_override)
 
-    def add_config(self, remarks, outbounds, server_description: str = None):
+    def add_config(self, remarks, outbounds, server_description: str = None, yuku_metadata: dict = None):
         config = dict(self.base)
         config["remarks"] = remarks
         config["outbounds"] = outbounds + self.base_outbounds + self.profile_outbounds
         if server_description:
             config["meta"] = {"serverDescription": server_description}
+        if yuku_metadata:
+            config["meta"] = {**config.get("meta", {}), "yuku": yuku_metadata}
         self.config.append(config)
 
     def render(self, reverse=False):
@@ -707,6 +709,8 @@ class V2rayJsonConfig(str):
         for group in sorted(self.auto_member_tags, reverse=True):
             auto_config = self.build_auto_config(group)
             if auto_config:
+                if getattr(self, "yuku_metadata_enabled", False):
+                    auto_config["meta"] = {**auto_config.get("meta", {}), "yuku": {"schemaVersion": 1, "kind": "automatic"}}
                 self.config.insert(0, auto_config)
         if self.routing_profile:
             # the profile repeats per config; indentation alone would add
@@ -1317,11 +1321,12 @@ class V2rayJsonConfig(str):
         return outbounds
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict,
-            server_description: str = None):
+            server_description: str = None, yuku_metadata: dict = None):
         self.add_config(
             remarks=remark,
             outbounds=self.make_outbounds(address, inbound, settings),
             server_description=server_description,
+            yuku_metadata=yuku_metadata,
         )
 
     def add_auto_member(self, address: str, inbound: dict, settings: dict,

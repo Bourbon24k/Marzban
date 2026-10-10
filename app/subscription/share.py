@@ -1,3 +1,4 @@
+from app.subscription.native_metadata import metadata_for_host
 import base64
 import json
 import random
@@ -142,13 +143,14 @@ def subscription_auto_select() -> list:
 
 def generate_v2ray_json_subscription(
         proxies: dict, inbounds: dict, extra_data: dict, reverse: bool,
-        group_ctx: dict = None
+        group_ctx: dict = None, include_yuku_metadata: bool = False
 ) -> str:
     auto_select = subscription_auto_select()
     conf = V2rayJsonConfig(
         routing_profile=subscription_routing_profile(),
         auto_select=auto_select,
     )
+    conf.yuku_metadata_enabled = bool(include_yuku_metadata)
 
     format_variables = setup_format_variables(extra_data)
     for group in auto_select:
@@ -483,6 +485,7 @@ def generate_subscription(
         as_base64: bool,
         reverse: bool,
         notice_lines: list = None,
+        include_yuku_metadata: bool = False,
 ) -> str:
     kwargs = {
         "proxies": user.proxies,
@@ -529,7 +532,7 @@ def generate_subscription(
     elif config_format == "outline":
         config = generate_outline_subscription(**kwargs)
     elif config_format == "v2ray-json":
-        config = generate_v2ray_json_subscription(**kwargs)
+        config = generate_v2ray_json_subscription(**kwargs, include_yuku_metadata=include_yuku_metadata)
     else:
         raise ValueError(f'Unsupported format "{config_format}"')
 
@@ -789,6 +792,8 @@ def process_inbounds_and_tags(
                     )
                     if isinstance(conf, (V2rayShareLink, V2rayJsonConfig)):
                         add_kwargs["server_description"] = host.get("server_description")
+                    if isinstance(conf, V2rayJsonConfig) and getattr(conf, "yuku_metadata_enabled", False):
+                        add_kwargs["yuku_metadata"] = metadata_for_host(host)
                     conf.add(**add_kwargs)
                     # auto-select candidates: v2ray-json only (no other format
                     # can express an Xray balancer), and never a cut-off host

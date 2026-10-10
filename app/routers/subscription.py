@@ -98,7 +98,7 @@ def resolve_format(user_agent: str):
         else:
             return "v2ray", "text/plain", True, False
 
-    elif re.match(r'^INCY/', user_agent, re.IGNORECASE):
+    elif re.match(r'^(?:INCY|Yuku)/', user_agent, re.IGNORECASE):
         return "v2ray-json", "application/json", False, False
 
     else:
@@ -182,6 +182,7 @@ def user_subscription(
         as_base64=as_base64,
         reverse=reverse,
         notice_lines=notice_lines,
+        include_yuku_metadata=bool(re.match(r"^Yuku/", user_agent or "", re.IGNORECASE)),
     )
     return Response(content=conf, media_type=media_type, headers=response_headers)
 
