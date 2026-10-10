@@ -1904,5 +1904,19 @@
       "path": "statics/locales/fa.json",
       "sha256": "d1d85f17c4129dd9f6a4d5f50b12967f5de8dc18d1564eea1adceff5a253a4ba"
     }
+  ],
+  "mounted_templates": [
+    {
+      "path": "v2ray/yuku_routing.json",
+      "sha256": "5e47354bf41723d29468da9bf1568cda6d6fe3e36ff0f1e8a7801adc4313585c"
+    },
+    {
+      "path": "v2ray/default.json",
+      "sha256": "3deef7a6ce406ba7d464ec58bd393c3edc1905f724a8eab4ff66d71d84b92dfa"
+    },
+    {
+      "path": "subscription/index.html",
+      "sha256": "6d5eeab1ccf8b6b7a04c5df1832a9fa2a92480ca3a67185ada3555831f5c13cf"
+    }
   ]
 }
